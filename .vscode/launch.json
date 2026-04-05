@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-PrjAppApplication<prjApp>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "JAVAGROUP.prjApp.PrjAppApplication",
+            "projectName": "prjApp",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
