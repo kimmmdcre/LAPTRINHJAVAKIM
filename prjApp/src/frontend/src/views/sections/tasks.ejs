@@ -1,0 +1,42 @@
+<section class="card section-card" id="sec-tasks">
+  <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+        <h2 class="section-title">Nhiệm vụ & yêu cầu</h2>
+        <p class="section-desc">Đọc yêu cầu từ Jira và quản lý tiến độ thực hiện.</p>
+    </div>
+    <div class="btn-row" style="margin:0">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('task-actions').toggleAttribute('hidden')">⚙️ Thao tác</button>
+    </div>
+  </div>
+
+  <div id="task-actions" class="form-grid" hidden style="margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+    <form id="updateTaskStatusForm" class="stack">
+      <span class="form-legend">Cập nhật trạng thái</span>
+      <input name="taskId" class="input input-sm" placeholder="Mã nhiệm vụ" required />
+      <select name="status" class="input input-sm">
+          <option value="TODO">TODO</option>
+          <option value="IN_PROGRESS">IN_PROGRESS</option>
+          <option value="DONE">DONE</option>
+      </select>
+      <button type="submit" class="btn btn-secondary btn-sm">Lưu</button>
+    </form>
+    <form id="assignTaskForm" class="stack">
+      <span class="form-legend">Phân công</span>
+      <input name="taskId" class="input input-sm" placeholder="Mã nhiệm vụ" required />
+      <input name="idSinhVien" class="input input-sm" placeholder="UUID sinh viên" required />
+      <button type="submit" class="btn btn-primary btn-sm">Gán</button>
+    </form>
+    <!-- Placeholder for direct task creation if wanted later -->
+  </div>
+  </div>
+
+  <div id="tasks-container">
+    <div class="stack" id="requirement-list">
+        <!-- Dynamic list of requirements -->
+    </div>
+    <div class="stack" id="task-list" style="margin-top: 1.5rem;">
+        <!-- Dynamic list of tasks -->
+        <p class="hint">Chọn một dự án để xem các nhiệm vụ.</p>
+    </div>
+  </div>
+</section>

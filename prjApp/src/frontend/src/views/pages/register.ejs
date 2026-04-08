@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <%- include('../partials/head', { title: 'Đăng ký tài khoản' }) %>
+</head>
+<body class="auth-body">
+  <div class="auth-shell">
+    <div class="auth-hero">
+      <div class="auth-hero-inner">
+        <h1 class="auth-hero-title">Tham gia hệ thống quản lý dự án</h1>
+        <p class="auth-hero-text">
+          Đăng ký tài khoản sinh viên để bắt đầu tham gia các nhóm dự án, nhận nhiệm vụ từ Jira và đóng góp mã nguồn qua GitHub.
+        </p>
+        <ul class="auth-list">
+          <li>Tự động đồng bộ tiến độ từ Jira</li>
+          <li>Theo dõi đóng góp qua GitHub commit</li>
+          <li>Báo cáo tiến độ trực quan</li>
+        </ul>
+      </div>
+    </div>
+    <div class="auth-panel">
+      <div class="auth-card card">
+        <h2 class="auth-title">Đăng ký</h2>
+        <input type="hidden" id="backendUrl" value="<%= backendUrl %>" />
+        <p class="auth-sub">Tạo tài khoản sinh viên mới.</p>
+
+        <form id="registerForm" class="stack auth-form">
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+              <input name="username" class="input" placeholder="Tên đăng nhập" required autocomplete="username" />
+              <input name="password" class="input" type="password" placeholder="Mật khẩu" required autocomplete="new-password" />
+          </div>
+          <input name="hoTen" class="input" placeholder="Họ và tên" required />
+          <input name="email" class="input" type="email" placeholder="Email" required />
+          
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+              <input name="maSo" class="input" placeholder="Mã số sinh viên (MSSV)" required />
+              <input name="lop" class="input" placeholder="Lớp (ví dụ: CNTT1)" />
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-block">Tạo tài khoản</button>
+          
+          <div style="text-align: center; margin-top: 1rem;">
+              <p class="hint">Đã có tài khoản? <a href="/dang-nhap" style="color: var(--primary); font-weight: 600;">Đăng nhập ngay</a></p>
+          </div>
+        </form>
+
+        <pre id="output" class="auth-output" style="display:none"></pre>
+      </div>
+    </div>
+  </div>
+  <script src="/js/register.js"></script>
+</body>
+</html>
