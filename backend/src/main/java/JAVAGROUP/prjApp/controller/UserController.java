@@ -20,6 +20,24 @@ public class UserController {
     }
 
     /**
+     * GET /api/users
+     * Lấy danh sách tất cả người dùng
+     */
+    @GetMapping
+    public ResponseEntity<java.util.List<JAVAGROUP.prjApp.dto.UserDTO>> layDanhSachNguoiDung() {
+        return ResponseEntity.ok(userService.layDanhSachNguoiDung());
+    }
+
+    /**
+     * GET /api/users/teachers
+     * Lấy danh sách chỉ các giảng viên
+     */
+    @GetMapping("/teachers")
+    public ResponseEntity<java.util.List<JAVAGROUP.prjApp.dto.UserDTO>> layDanhSachGiangVien() {
+        return ResponseEntity.ok(userService.layDanhSachGiangVien());
+    }
+
+    /**
      * POST /api/users
      * Body: UserDTO (tạo tài khoản mới)
      */

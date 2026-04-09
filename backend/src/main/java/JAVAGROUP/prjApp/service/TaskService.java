@@ -17,13 +17,17 @@ public class TaskService {
 
     private final YeuCauRepository yeuCauRepository;
     private final NhiemVuRepository nhiemVuRepository;
+    private final JAVAGROUP.prjApp.repository.NhomRepository nhomRepository;
 
-    public TaskService(YeuCauRepository yeuCauRepository, NhiemVuRepository nhiemVuRepository) {
+    public TaskService(YeuCauRepository yeuCauRepository, 
+                       NhiemVuRepository nhiemVuRepository,
+                       JAVAGROUP.prjApp.repository.NhomRepository nhomRepository) {
         this.yeuCauRepository = yeuCauRepository;
         this.nhiemVuRepository = nhiemVuRepository;
+        this.nhomRepository = nhomRepository;
     }
 
-    public List<YeuCauDTO> layYeuCauNhom(UUID idNhom) {
+    public java.util.List<YeuCauDTO> layYeuCauNhom(UUID idNhom) {
         return yeuCauRepository.findByNhom_IdNhom(idNhom)
                 .stream()
                 .map(yc -> new YeuCauDTO(
@@ -34,6 +38,41 @@ public class TaskService {
                         yc.getTrangThai()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    public java.util.List<NhiemVuDTO> layNhiemVuNhom(UUID idNhom) {
+        // Mocking task retrieval for leader view based on group ID
+        return nhiemVuRepository.findAll().stream()
+                .filter(nv -> nv.getYeuCau() != null && nv.getYeuCau().getNhom().getIdNhom().equals(idNhom))
+                .map(this::toNhiemVuDTO)
+                .collect(Collectors.toList());
+    }
+
+    public void syncJira(UUID idNhom) {
+        JAVAGROUP.prjApp.entity.Nhom nhom = nhomRepository.findById(idNhom)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhóm: " + idNhom));
+        
+        // Mock sync: Create 3 requirements if not exist
+        for (int i = 1; i <= 3; i++) {
+            String jiraKey = "JIRA-" + (100 + i);
+            if (!yeuCauRepository.existsById(jiraKey)) {
+                JAVAGROUP.prjApp.entity.YeuCau yc = new JAVAGROUP.prjApp.entity.YeuCau();
+                yc.setIdYeuCau(jiraKey);
+                yc.setNhom(nhom);
+                yc.setTieuDe("Yêu cầu hệ thống " + i);
+                yc.setMoTa("Mô tả yêu cầu được đồng bộ từ Jira...");
+                yc.setTrangThai("OPEN");
+                yeuCauRepository.save(yc);
+
+                // Create a corresponding task
+                NhiemVu nv = new NhiemVu();
+                nv.setIdNhiemVu(java.util.UUID.randomUUID().toString());
+                nv.setYeuCau(yc);
+                nv.setTieuDe("Xử lý " + yc.getTieuDe());
+                nv.setTrangThai("TODO");
+                nhiemVuRepository.save(nv);
+            }
+        }
     }
 
     public List<NhiemVuDTO> layNhiemVuCaNhan(UUID idSinhVien) {

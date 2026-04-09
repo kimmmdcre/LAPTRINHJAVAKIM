@@ -55,11 +55,13 @@ public class GroupController {
     }
 
     /**
+     * GET /api/groups
      * GET /api/groups?idGiangVien={uuid}
-     * Lấy danh sách nhóm của một giảng viên
+     * Lấy danh sách nhóm (tất cả hoặc theo giảng viên)
      */
     @GetMapping
-    public ResponseEntity<List<NhomDTO>> layDanhSachNhom(@RequestParam UUID idGiangVien) {
+    public ResponseEntity<java.util.List<NhomDTO>> layDanhSachNhom(
+            @RequestParam(required = false) UUID idGiangVien) {
         return ResponseEntity.ok(groupService.layDanhSachNhom(idGiangVien));
     }
 

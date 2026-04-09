@@ -52,6 +52,24 @@ public class ReportController {
     }
 
     /**
+     * GET /api/reports/{idNhom}/history
+     * Lấy lịch sử biến động tiến độ phục vụ biểu đồ AreaChart
+     */
+    @GetMapping("/{idNhom}/history")
+    public ResponseEntity<List<java.util.Map<String, Object>>> xemLichSuTienDo(@PathVariable UUID idNhom) {
+        return ResponseEntity.ok(reportService.xemLichSuTienDo(idNhom));
+    }
+
+    /**
+     * GET /api/reports/personal/{idSinhVien}/history
+     * Lấy lịch sử commit cá nhân để vẽ biểu đồ line/area
+     */
+    @GetMapping("/personal/{idSinhVien}/history")
+    public ResponseEntity<List<java.util.Map<String, Object>>> xemLichSuCommitCaNhan(@PathVariable UUID idSinhVien) {
+        return ResponseEntity.ok(reportService.xemLichSuCommitCaNhan(idSinhVien));
+    }
+
+    /**
      * GET /api/reports/{idNhom}/export
      * Xuất báo cáo tổng hợp dưới dạng file CSV
      */

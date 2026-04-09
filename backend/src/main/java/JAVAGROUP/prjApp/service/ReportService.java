@@ -63,6 +63,36 @@ public class ReportService {
         return new ThongKeGitDTO(idNhom, commits.size(), commitPerSV);
     }
 
+    public List<Map<String, Object>> xemLichSuTienDo(UUID idNhom) {
+        // Trả về dữ liệu giả lập lịch sử tiến độ (Burn-down)
+        List<Map<String, Object>> data = new ArrayList<>();
+        String[] days = {"04-01", "04-02", "04-03", "04-04", "04-05", "04-06", "04-07"};
+        int[] progress = {10, 25, 40, 40, 65, 80, 95};
+        
+        for (int i = 0; i < days.length; i++) {
+            Map<String, Object> point = new HashMap<>();
+            point.put("ngay", days[i]);
+            point.put("hoanThanh", progress[i]);
+            data.add(point);
+        }
+        return data;
+    }
+
+    public List<Map<String, Object>> xemLichSuCommitCaNhan(UUID idSinhVien) {
+        // Trả về dữ liệu giả lập lịch sử commit cho sinh viên
+        List<Map<String, Object>> data = new ArrayList<>();
+        String[] days = {"04-01", "04-02", "04-03", "04-04", "04-05", "04-06", "04-07"};
+        int[] counts = {2, 5, 3, 0, 8, 4, 6};
+        
+        for (int i = 0; i < days.length; i++) {
+            Map<String, Object> point = new HashMap<>();
+            point.put("date", days[i]);
+            point.put("count", counts[i]);
+            data.add(point);
+        }
+        return data;
+    }
+
     public List<DongGopDTO> xemDongGopCaNhan(UUID idNhom) {
         return thanhVienNhomRepository.findById_IdNhom(idNhom).stream()
                 .map(tv -> {

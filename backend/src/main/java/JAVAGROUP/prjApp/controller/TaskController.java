@@ -22,6 +22,26 @@ public class TaskController {
     }
 
     /**
+     * GET /api/tasks/{idNhom}
+     * Lấy danh sách nhiệm vụ của cả nhóm (dành cho Trưởng nhóm/Giảng viên)
+     */
+    @GetMapping("/{idNhom}")
+    public ResponseEntity<java.util.List<JAVAGROUP.prjApp.dto.NhiemVuDTO>> layNhiemVuNhom(
+            @PathVariable UUID idNhom) {
+        return ResponseEntity.ok(taskService.layNhiemVuNhom(idNhom));
+    }
+
+    /**
+     * GET /api/tasks/jira/sync/{idNhom}
+     * Kích hoạt đồng bộ hóa từ Jira cho nhóm
+     */
+    @GetMapping("/jira/sync/{idNhom}")
+    public ResponseEntity<Map<String, String>> syncJira(@PathVariable UUID idNhom) {
+        taskService.syncJira(idNhom);
+        return ResponseEntity.ok(Map.of("message", "Đồng bộ Jira thành công"));
+    }
+
+    /**
      * GET /api/tasks/yeu-cau?idNhom={uuid}
      * Lấy danh sách yêu cầu (Jira Issues) của một nhóm
      */

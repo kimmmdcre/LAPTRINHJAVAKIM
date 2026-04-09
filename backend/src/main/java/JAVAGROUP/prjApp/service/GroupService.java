@@ -51,11 +51,15 @@ public class GroupService {
         nhomRepository.save(nhom);
     }
 
-    public List<NhomDTO> layDanhSachNhom(UUID idGV) {
+    public java.util.List<NhomDTO> layDanhSachNhom(UUID idGV) {
+        if (idGV == null) {
+            return nhomRepository.findAll()
+                    .stream().map(this::toDTO).collect(java.util.stream.Collectors.toList());
+        }
         GiangVien gv = giangVienRepository.findById(idGV)
                 .orElseThrow(() -> new RuntimeException("Giảng viên không tồn tại: " + idGV));
-        return (gv.getNhoms() == null ? List.<Nhom>of() : gv.getNhoms())
-                .stream().map(this::toDTO).collect(Collectors.toList());
+        return (gv.getNhoms() == null ? java.util.List.<Nhom>of() : gv.getNhoms())
+                .stream().map(this::toDTO).collect(java.util.stream.Collectors.toList());
     }
 
     public NhomDTO xemThongTinNhom(UUID idNhom) {
