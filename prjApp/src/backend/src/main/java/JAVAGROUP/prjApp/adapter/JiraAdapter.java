@@ -3,6 +3,7 @@ package JAVAGROUP.prjApp.adapter;
 import JAVAGROUP.prjApp.dto.YeuCauDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -29,13 +30,12 @@ public class JiraAdapter implements IJiraClient {
             String auth = email + ":" + token;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
 
-            @SuppressWarnings("unchecked")
             Map<String, Object> response = webClient.get()
                     .uri(url + "/rest/api/3/search?jql=project={key}", projectKey)
                     .header("Authorization", "Basic " + encodedAuth)
                     .header("Accept", "application/json")
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block();
 
             List<YeuCauDTO> result = new ArrayList<>();

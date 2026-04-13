@@ -3,6 +3,7 @@ package JAVAGROUP.prjApp.adapter;
 import JAVAGROUP.prjApp.dto.CommitDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -35,28 +36,29 @@ public class GitHubAdapter implements IGitHubClient {
             }
             log.info("Calling GitHub API: https://api.github.com{}", uri);
             
-            List<Map<?, ?>> rawCommits = webClient.get()
+            List<Map<String, Object>> rawCommits = webClient.get()
                     .uri(uri)
                     .header("Authorization", "token " + token)
                     .header("Accept", "application/vnd.github+json")
                     .retrieve()
-                    .bodyToFlux(Map.class)
-                    .collectList()
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
                     .block();
 
             List<CommitDTO> result = new ArrayList<>();
             if (rawCommits == null) return result;
 
-            for (Map<?, ?> raw : rawCommits) {
+            for (Map<String, Object> raw : rawCommits) {
                 String sha = (String) raw.get("sha");
-                Map<?, ?> commitInfo = (Map<?, ?>) raw.get("commit");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> commitInfo = (Map<String, Object>) raw.get("commit");
                 if (commitInfo == null) continue;
                 String message = (String) commitInfo.get("message");
                 
                 // Parse date if available
                 LocalDateTime time = LocalDateTime.now();
                 try {
-                    Map<?, ?> author = (Map<?, ?>) commitInfo.get("author");
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> author = (Map<String, Object>) commitInfo.get("author");
                     if (author != null && author.get("date") != null) {
                         time = ZonedDateTime.parse((String) author.get("date")).toLocalDateTime();
                     }
