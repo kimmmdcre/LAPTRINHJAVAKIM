@@ -1,103 +1,111 @@
-# 🎓 JiraGit Support - Hệ Thống Quản Lý Dự Án Sinh Viên 🚀
+# 🎓 Out-Trình Student Project Management System 🚀
 
-**JiraGit Support** là một nền tảng quản lý dự án học thuật toàn diện, được thiết kế để kết nối quy trình giảng dạy với các công cụ phát triển chuyên nghiệp như **Jira** (quản lý nhiệm vụ) và **GitHub** (quản lý mã nguồn). Hệ thống giúp sinh viên rèn luyện tác phong làm việc thực tế và giúp giảng viên theo dõi tiến độ một cách trực quan qua dữ liệu thực.
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.11-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
+[![Status](https://img.shields.io/badge/Status-Stable-success.svg)](https://github.com/kimmmdcre/LAPTRINHJAVAKIM)
+
+**JiraGit System** là nền tảng quản lý dự án học thuật thế hệ mới, được thiết kế để kết nối quy trình giảng dạy với các công cụ phát triển chuyên nghiệp như **Jira** và **GitHub**. Hệ thống không chỉ quản lý nhiệm vụ mà còn phân tích dữ liệu thực (Real-world Data) để đưa ra các báo cáo khách quan về năng lực sinh viên.
 
 ---
 
 ## 🌟 Tính Năng Nổi Bật
 
-### 🟢 Quản Trị Viên (Admin)
-- **Quản lý Nhân sự**: Tạo và quản lý tài khoản cho Giảng viên, Sinh viên. Phân quyền truy cập hệ thống.
-- **Điều phối Nhóm**: Thành lập các nhóm sinh viên, bàn giao đề tài và chỉ định Giảng viên hướng dẫn.
-- **Trung tâm Tích hợp**: Cấu hình URL Jira và GitHub Token cho từng dự án một cách bảo mật.
+### 🏛️ Quản Trị Viên (Admin)
 
-### 🟡 Giảng Viên (Teacher)
-- **Quản lý Lớp học**: Xem danh sách các nhóm được phân công hướng dẫn.
-- **Báo cáo Tiến độ**: Theo dõi tiến độ dự án qua biểu đồ **Burn-down** và tần suất commit code thực tế.
-- **Đánh giá & Tổng hợp**: Xuất báo cáo tổng hợp kết quả của nhóm dưới dạng file CSV/PDF.
+- **Quản lý thực thể tập trung**: Phân quyền Giảng viên, Sinh viên và quản lý danh sách phòng ban/nhóm.
+- **Trung tâm Tích hợp (Real-time Config)**: Cấu hình API Jira và GitHub Token với bộ kiểm tra kết nối trực tiếp (**Live Connection Test**) đảm bảo tính sẵn sàng của hệ thống.
+- **Validation Chặt chẽ**: Hệ thống tự động kiểm tra định dạng Repo và Token trước khi lưu trữ.
 
-### 🔴 Trưởng Nhóm (Leader)
-- **Đồng bộ hóa Jira**: Kết nối và kéo các yêu cầu (Issues) từ Jira về hệ thống nội bộ.
-- **Phân chia Nhiệm vụ**: Gán các nhiệm vụ lấy từ Jira cho từng thành viên trong nhóm.
-- **Bảng Kanban**: Theo dõi luồng công việc của nhóm (TODO, IN PROGRESS, DONE).
+### 👨‍🏫 Giảng Viên (Teacher)
 
-### 🔵 Sinh Viên (Member)
-- **Quản lý Cá nhân**: Xem danh sách nhiệm vụ được gán.
-- **Cập nhật Trạng thái**: Thay đổi trạng thái nhiệm vụ và xem lịch sử đóng góp code (Commits) cá nhân.
+- **Dashboard Lớp học**: Quản lý và theo dõi danh sách các nhóm dự án được phân công.
+- **Analytics Chuyên sâu**: Theo dõi tiến độ qua biểu đồ nhiệt (**Heatmap**) và biểu đồ biến động code cá nhân.
+- **Báo cáo Đa định dạng**: Xuất báo cáo kết quả (PDF/Word) chuyên nghiệp phục vụ công tác chấm điểm.
+
+### 👑 Trưởng Nhóm (Leader)
+
+- **Auto-Sync 1-Click**: Đồng bộ hóa toàn bộ Issues từ Jira và Commits từ GitHub chỉ trong vài giây.
+- **Smart Mapping**: Tự động liên kết Commit với Nhiệm vụ dựa trên mã Jira (e.g. `PROJ-123`) trong message commit.
+- **Ghost Task Detection**: Hệ thống tự động cảnh báo các nhiệm vụ "DONE" nhưng không có commit tương ứng (vấn đề sinh viên làm giả tiến độ).
+
+### 💻 Sinh Viên (Member)
+
+- **Task Management**: Giao diện Kanban hiện đại để cập nhật trạng thái công việc.
+- **Contribution Tracking**: Theo dõi lịch sử đóng góp và điểm đóng góp cá nhân để tự điều chỉnh hiệu suất.
 
 ---
 
-## 🛠️ Công Nghệ Sử Dụng
+## 🛠️ Tech Stack
 
 ### Backend
-- **Framework**: Spring Boot 3.5.11
-- **Database**: SQL Server
-- **ORM**: Spring Data JPA / Hibernate
-- **Security**: Role-based Access Control (RBAC)
-- **Integration**: Spring WebClient (Jira & GitHub API)
+
+- **Core**: Spring Boot 3.5.11 (Java 21)
+- **Database**: SQL Server (MSSQL)
+- **Client**: Spring WebClient (Tích hợp API GitHub/Jira không đồng bộ)
+- **Security**: Type-safe integration với `ParameterizedTypeReference`.
 
 ### Frontend
+
 - **Framework**: React 19 (Vite)
-- **Chế độ hiển thị**: Dark Mode (Glassmorphism design)
-- **Thư viện chính**: Lucide React (Icons), Recharts (Biểu đồ), Axios (API)
-- **Hệ thống Toast**: Thông báo thời gian thực cho trải nghiệm người dùng cao cấp.
+- **Styling**: Vanilla CSS with Glassmorphism Design System.
+- **Data Viz**: Recharts (Hiển thị biểu đồ phức tạp).
+- **Icons**: Lucide React.
 
 ---
 
-## 📁 Cấu Trúc Dự Án
+## 🚀 Hướng Dẫn Cài Đặt
 
-```bash
-LAPTRINHJAVAKIM/
-├── backend/            # Mã nguồn Spring Boot REST API
-│   ├── src/main/java   # Controller, Service, Repository, Entity, DTO
-│   └── resources/      # application.properties (Cấu hình DB)
-├── frontend/           # Mã nguồn ReactJS (Vite)
-│   ├── src/pages       # Dashboard theo vai trò (Admin, Teacher, Leader, Student)
-│   ├── src/components  # Sidebar, Header, UI Elements
-│   └── src/context     # AuthContext, UIContext (Global State)
-└── README.md           # Tài liệu hướng dẫn
-```
+### 1. Backend Setup
 
----
+1. Đảm bảo đã cài đặt **JDK 21** và **Maven**.
+2. Tạo cơ sở dữ liệu `prjAppDB` trong SQL Server.
+3. Cấu hình thông tin kết nối trong `backend/src/main/resources/application.properties`:
 
-## 🚀 Hướng Dẫn Cài Đặt & Chạy
+   ```properties
+   spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=prjAppDB;encrypt=true;trustServerCertificate=true;
+   spring.datasource.username=YOUR_USER
+   spring.datasource.password=YOUR_PASSWORD
+   ```
 
-### 1. Backend
-- Yêu cầu: Java 21+, Maven.
-- Tạo Database `prjAppDB` trong SQL Server.
-- Cấu hình SA/Password trong `backend/src/main/resources/application.properties`.
-- Chạy lệnh:
-```bash
-cd backend
-mvn spring-boot:run
-```
-- API sẽ chạy tại: `http://localhost:8080`
+4. Chạy lệnh: `mvn spring-boot:run`
 
-### 2. Frontend
-- Yêu cầu: NodeJS 18+.
-- Cài đặt Dependencies:
-```bash
-cd frontend
-npm install
-```
-- Chạy lệnh phát triển:
-```bash
-npm run dev -- --port 5174
-```
-- Ứng dụng sẽ chạy tại: `http://localhost:5174`
+### 2. Frontend Setup
+
+1. Đảm bảo đã cài đặt **Node.js 18+**.
+2. Cài đặt dependencies:
+
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+3. Khởi chạy:
+
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-## 🔐 Tài Khoản Truy Cập Mẫu (Demo)
+## 🔑 Quy Tắc Cấu Hình Tích Hợp
 
-| Vai trò | Username | Password |
-|---------|----------|----------|
-| **Admin** | `admin` | `123456` |
-| **Giảng Viên** | `giangvien` | `123456` |
-| **Trưởng Nhóm** | `truongnhom` | `123456` |
+> [!IMPORTANT]
+> **GitHub**: Yêu cầu Personal Access Token (PAT) với quyền `repo`.
+> **Jira**: Sử dụng API Token kết hợp với Email đăng ký Jira.
+
+**Mẫu Commit Message chuẩn:**
+`[PROJ-123] Mô tả chi tiết các thay đổi của bạn`
+*(Hệ thống sẽ dựa vào mã `PROJ-123` để tự động tích hợp dữ liệu)*
 
 ---
 
 ## 👥 Nhóm Phát Triển - Kimmmdcre
 
-Dự án được thực hiện với tiêu chuẩn thẩm mỹ cao và quy trình tích hợp hệ thống chuyên nghiệp.
+Dự án được xây dựng với tâm huyết mang lại một công cụ làm việc thực tế nhất cho môi trường đại học. Mọi đóng góp ý kiến vui lòng liên hệ đội ngũ phát triển.
+
+---
+
+### 📝 Bản quyền
+
+© 2026 - Phát triển bởi Kimmmdcre Team

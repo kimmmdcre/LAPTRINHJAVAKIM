@@ -30,7 +30,13 @@ const TeacherReports = () => {
       ]);
       setGroupInfo(infoRes.data);
       setProgressData(progressRes.data);
-      setGitData(gitRes.data);
+      
+      const commitMap = gitRes.data?.commitPerSinhVien || {};
+      const formattedGitData = Object.keys(commitMap).map(key => ({
+        username: key,
+        commits: commitMap[key]
+      }));
+      setGitData(formattedGitData);
     } catch (err) {
       console.error('Lỗi tải báo cáo:', err);
     } finally {

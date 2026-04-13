@@ -1,33 +1,25 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
+import Dashboard from './pages/Dashboard';
+
 import AdminUsers from './pages/AdminUsers';
 import AdminGroups from './pages/AdminGroups';
 import AdminConfig from './pages/AdminConfig';
-import TeacherReports from './pages/TeacherReports';
+
 import TeacherClasses from './pages/TeacherClasses';
+import TeacherReports from './pages/TeacherReports';
+import SprintProgress from './pages/SprintProgress';
+import ContributionTracking from './pages/ContributionTracking';
+
 import MemberTasks from './pages/MemberTasks';
 import MemberCommits from './pages/MemberCommits';
 import LeaderTasks from './pages/LeaderTasks';
-
-// Dashboard landing page
-const Dashboard = () => {
-  const { user } = useAuth();
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-      <div className="glass-card" style={{ padding: '2rem' }}>
-        <h3 style={{ marginBottom: '1rem' }}>Chào {user?.hoTen}! 🚀</h3>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Bạn đang đăng nhập với vai trò <strong>{user?.role}</strong>. 
-          Chọn các chức năng từ menu bên trái để bắt đầu làm việc.
-        </p>
-      </div>
-    </div>
-  );
-};
+import ReportGenerator from './pages/ReportGenerator';
+import PersonalProfile from './pages/PersonalProfile';
 
 function App() {
   return (
@@ -53,6 +45,12 @@ function App() {
             <Route path="/member/tasks" element={<MemberTasks />} />
             <Route path="/member/commits" element={<MemberCommits />} />
             <Route path="/leader/tasks" element={<LeaderTasks />} />
+            
+            <Route path="/project/sprint" element={<SprintProgress />} />
+            <Route path="/project/heatmap" element={<ContributionTracking />} />
+            
+            <Route path="/reports/generate" element={<ReportGenerator />} />
+            <Route path="/profile" element={<PersonalProfile />} />
             
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Route>

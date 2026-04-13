@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { taskService, groupService } from '../services/api';
 import { useUI } from '../context/UIContext';
-import { Kanban, Filter, UserPlus, Calendar, MoreHorizontal, CheckCircle, RefreshCw, AlertCircle, X, Check } from 'lucide-react';
+import { Kanban, Filter, UserPlus, Calendar, MoreHorizontal, CheckCircle, RefreshCw, AlertCircle, X, Check, GitBranch } from 'lucide-react';
 
 const LeaderTasks = () => {
   const [tasks, setTasks] = useState([]);
@@ -13,16 +13,17 @@ const LeaderTasks = () => {
 
   const { showToast } = useUI();
 
+  const groupId = localStorage.getItem('groupId') || 'd4c5b6a7-8901-2345-6789-0123456789ab';
+
   useEffect(() => {
     fetchTasks();
-    // In real app, we would get the actual group ID from user profile
-    fetchMembers('d4c5b6a7-8901-2345-6789-0123456789ab'); 
+    fetchMembers(groupId); 
   }, []);
 
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const res = await taskService.getMine(); // Placeholder for group tasks
+      const res = await taskService.getGroupTasks(groupId);
       setTasks(res.data);
     } catch (err) {
       console.error('Lỗi tải nhiệm vụ:', err);
@@ -43,10 +44,11 @@ const LeaderTasks = () => {
   const handleSync = async () => {
     try {
       setIsSyncing(true);
-      await taskService.syncJira('my-group-id');
+      await taskService.syncJira(groupId);
       showToast('Đã đồng bộ nhiệm vụ từ Jira.');
       fetchTasks();
     } catch (err) {
+      console.error(err);
       showToast('Đồng bộ Jira thất bại.', 'danger');
     } finally {
       setIsSyncing(false);
@@ -55,11 +57,13 @@ const LeaderTasks = () => {
 
   const handleAssignMember = async (memberId) => {
     try {
-      // Logic for assignment would go here (Backend endpoint needed)
+      if (!selectedTask) return;
+      await taskService.assignMember(selectedTask.idNhiemVu, memberId);
       showToast(`Đã gán nhiệm vụ cho thành viên.`);
       setShowAssignModal(false);
       fetchTasks();
     } catch (err) {
+      console.error(err);
       showToast('Lỗi khi gán nhiệm vụ.', 'danger');
     }
   };
@@ -124,9 +128,42 @@ const LeaderTasks = () => {
                       <MoreHorizontal size={14} />
                     </button>
                   </div>
-                  <p style={{ fontSize: '0.9rem', fontWeight: '500', marginBottom: '1.25rem', lineHeight: '1.5', color: 'var(--text-primary)' }}>
+                  <p style={{ fontSize: '0.9rem', fontWeight: '500', marginBottom: '1rem', lineHeight: '1.5', color: 'var(--text-primary)' }}>
                     {task.tenNhiemVu}
                   </p>
+                  
+                  {/* Indicators for GitHub and Ghost Tasks */}
+                  <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                    {task.commitCount > 0 ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--success)', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                        <GitBranch size={12} />
+                        {task.commitCount} Commits
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)', fontSize: '0.7rem' }}>
+                        <GitBranch size={12} />
+                        0 Commits
+                      </div>
+                    )}
+
+                    {status === 'DONE' && task.commitCount === 0 && (
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '4px', 
+                        color: 'var(--danger)', 
+                        fontSize: '0.7rem', 
+                        fontWeight: 'bold',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        animation: 'pulse 2s infinite'
+                      }}>
+                        <AlertCircle size={12} />
+                        GHOST TASK
+                      </div>
+                    )}
+                  </div>
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

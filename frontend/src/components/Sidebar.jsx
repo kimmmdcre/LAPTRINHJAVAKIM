@@ -10,7 +10,10 @@ import {
   LayoutDashboard,
   FileText,
   Layers,
-  Kanban
+  Kanban,
+  Activity,
+  Briefcase,
+  UserCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -19,27 +22,40 @@ const Sidebar = () => {
   const location = useLocation();
 
   const getLinks = () => {
-    const role = user?.role;
+    const role = user?.role?.toUpperCase();
     const links = [];
 
     // Common dashboard link
     links.push({ icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/dashboard' });
 
-    if (role === 'ADMIN') {
-      links.push({ icon: <Users size={20} />, label: 'Quản lý Người dùng', path: '/admin/users' });
-      links.push({ icon: <Layers size={20} />, label: 'Quản lý Nhóm', path: '/admin/groups' });
+    if (role === 'ADMIN' || role === 'QUAN_TRI_VIEN') {
+      links.push({ isHeader: true, label: 'QUẢN TRỊ' });
+      links.push({ icon: <Users size={20} />, label: 'Người dùng', path: '/admin/users' });
+      links.push({ icon: <Layers size={20} />, label: 'Nhóm Dự án', path: '/admin/groups' });
       links.push({ icon: <Settings size={20} />, label: 'Cấu hình HT', path: '/admin/config' });
     } else if (role === 'GIANG_VIEN') {
-      links.push({ icon: <Users size={20} />, label: 'Quản lý Sinh viên', path: '/teacher/classes' });
-      links.push({ icon: <BarChart3 size={20} />, label: 'Báo cáo Tiến độ', path: '/teacher/reports' });
+      links.push({ isHeader: true, label: 'QUẢN LÝ LỚP' });
+      links.push({ icon: <Users size={20} />, label: 'Danh sách SV', path: '/teacher/classes' });
+      links.push({ isHeader: true, label: 'BÁO CÁO' });
+      links.push({ icon: <BarChart3 size={20} />, label: 'Tiến độ chung', path: '/teacher/reports' });
+      links.push({ icon: <Activity size={20} />, label: 'Thống kê Sprint', path: '/project/sprint' });
+      links.push({ icon: <GitCommit size={20} />, label: 'Heatmap Git', path: '/project/heatmap' });
+      links.push({ icon: <FileText size={20} />, label: 'Sinh tài liệu SRS', path: '/reports/generate' });
     } else if (role === 'SINH_VIEN' || role === 'TRUONG_NHOM') {
-      links.push({ icon: <CheckSquare size={20} />, label: 'Nhiệm vụ cá nhân', path: '/member/tasks' });
-      links.push({ icon: <GitCommit size={20} />, label: 'Đóng góp Git', path: '/member/commits' });
+      links.push({ isHeader: true, label: 'CÁ NHÂN' });
+      links.push({ icon: <CheckSquare size={20} />, label: 'Nhiệm vụ', path: '/member/tasks' });
+      links.push({ icon: <GitCommit size={20} />, label: 'Commits', path: '/member/commits' });
       
       if (role === 'TRUONG_NHOM') {
-        links.push({ icon: <Kanban size={20} />, label: 'Bảng Nhiệm vụ Nhóm', path: '/leader/tasks' });
+        links.push({ isHeader: true, label: 'DỰ ÁN CỦA NHÓM' });
+        links.push({ icon: <Kanban size={20} />, label: 'Bảng Kanban', path: '/leader/tasks' });
+        links.push({ icon: <Activity size={20} />, label: 'Tiến độ Sprint', path: '/project/sprint' });
+        links.push({ icon: <FileText size={20} />, label: 'Sinh báo cáo', path: '/reports/generate' });
       }
     }
+
+    links.push({ isHeader: true, label: 'TÀI KHOẢN' });
+    links.push({ icon: <UserCircle size={20} />, label: 'Hồ sơ Năng lực', path: '/profile' });
 
     return links;
   };
@@ -70,19 +86,25 @@ const Sidebar = () => {
         </h2>
       </div>
 
-      <nav style={{ flex: 1 }}>
-        <ul style={{ listStyle: 'none' }}>
-          {getLinks().map((link) => (
-            <li key={link.path} style={{ marginBottom: '0.5rem' }}>
-              <Link 
-                to={link.path} 
-                className={`btn ${location.pathname === link.path ? 'btn-primary' : 'btn-outline'}`}
-                style={{ width: '100%', justifyContent: 'flex-start', padding: '0.75rem 1rem' }}
-              >
-                {link.icon}
+      <nav style={{ flex: 1, overflowY: 'auto' }}>
+        <ul style={{ listStyle: 'none', paddingRight: '0.5rem' }}>
+          {getLinks().map((link, index) => (
+            link.isHeader ? (
+              <li key={`header-${index}`} style={{ margin: '1.5rem 0 0.5rem 0.5rem', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
                 {link.label}
-              </Link>
-            </li>
+              </li>
+            ) : (
+              <li key={link.path} style={{ marginBottom: '0.25rem' }}>
+                <Link 
+                  to={link.path} 
+                  className={`btn ${location.pathname === link.path ? 'btn-primary' : 'btn-outline'}`}
+                  style={{ width: '100%', justifyContent: 'flex-start', padding: '0.65rem 1rem', border: location.pathname === link.path ? '' : 'none' }}
+                >
+                  {link.icon}
+                  {link.label}
+                </Link>
+              </li>
+            )
           ))}
         </ul>
       </nav>

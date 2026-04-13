@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { taskService } from '../services/api';
-import { CheckCircle2, Clock, PlayCircle, AlertCircle, ExternalLink, Calendar, Search } from 'lucide-react';
+import { CheckCircle2, Clock, PlayCircle, AlertCircle, ExternalLink, Calendar, Search, GitBranch } from 'lucide-react';
 
 const MemberTasks = () => {
   const [tasks, setTasks] = useState([]);
@@ -97,6 +97,16 @@ const MemberTasks = () => {
                       <AlertCircle size={14} />
                       Độ ưu tiên: Cao
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: task.commitCount > 0 ? 'var(--success)' : 'var(--text-secondary)' }}>
+                      <GitBranch size={14} />
+                      {task.commitCount} Commits
+                    </div>
+                    {task.trangThai === 'DONE' && task.commitCount === 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--danger)', fontWeight: 'bold' }}>
+                        <AlertCircle size={14} />
+                        GHOST TASK
+                      </div>
+                    )}
                   </div>
                 </div>
 

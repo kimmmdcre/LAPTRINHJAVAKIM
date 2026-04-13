@@ -105,7 +105,9 @@ const MemberCommits = () => {
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '0.95rem', fontWeight: '500', marginBottom: '0.25rem' }}>{c.message}</p>
                   <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    <span>{c.sha}</span>
+                    <a href={`https://github.com/example/repo/commit/${c.sha}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
+                      {c.sha}
+                    </a>
                     <span>{c.time}</span>
                     <span style={{ color: 'var(--accent)' }}>#{c.branch}</span>
                   </div>

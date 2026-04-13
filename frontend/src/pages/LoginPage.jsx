@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Lock, User, ShieldCheck } from 'lucide-react';
+import { LogIn, Lock, User, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -27,23 +29,23 @@ const LoginPage = () => {
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       height: '100vh',
       padding: '1rem'
     }}>
-      <div className="glass-card animate-fade-in" style={{ 
-        width: '100%', 
-        maxWidth: '420px', 
+      <div className="glass-card animate-fade-in" style={{
+        width: '100%',
+        maxWidth: '420px',
         padding: '2.5rem',
         textAlign: 'center'
       }}>
-        <div style={{ 
-          width: '64px', 
-          height: '64px', 
-          borderRadius: '16px', 
+        <div style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '16px',
           background: 'linear-gradient(135deg, var(--primary), var(--accent))',
           margin: '0 auto 1.5rem',
           display: 'flex',
@@ -58,10 +60,10 @@ const LoginPage = () => {
         <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Đăng nhập vào hệ thống JiraGit Support</p>
 
         {error && (
-          <div className="glass-card" style={{ 
-            padding: '0.75rem', 
-            marginBottom: '1.5rem', 
-            background: 'rgba(239, 68, 68, 0.1)', 
+          <div className="glass-card" style={{
+            padding: '0.75rem',
+            marginBottom: '1.5rem',
+            background: 'rgba(239, 68, 68, 0.1)',
             borderColor: 'rgba(239, 68, 68, 0.2)',
             color: 'var(--danger)',
             fontSize: '0.875rem'
@@ -75,9 +77,9 @@ const LoginPage = () => {
             <label className="input-label">Tên đăng nhập</label>
             <div style={{ position: 'relative' }}>
               <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-              <input 
-                type="text" 
-                className="input-field" 
+              <input
+                type="text"
+                className="input-field"
                 style={{ paddingLeft: '40px' }}
                 placeholder="Nhập username..."
                 value={username}
@@ -91,22 +93,29 @@ const LoginPage = () => {
             <label className="input-label">Mật khẩu</label>
             <div style={{ position: 'relative' }}>
               <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-              <input 
-                type="password" 
-                className="input-field" 
-                style={{ paddingLeft: '40px' }}
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="input-field"
+                style={{ paddingLeft: '40px', paddingRight: '40px' }}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            style={{ width: '100%', justifyContent: 'center', height: '48px' }}
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ width: '100%', justifyContent: 'center', height: '48px', marginBottom: '1.5rem' }}
             disabled={isLoading}
           >
             {isLoading ? 'Đang xác thực...' : (
@@ -117,6 +126,7 @@ const LoginPage = () => {
             )}
           </button>
         </form>
+
 
         <p style={{ marginTop: '2rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
           Quên mật khẩu? Liên hệ <span style={{ color: 'var(--primary)', cursor: 'pointer' }}>Quản trị viên</span>

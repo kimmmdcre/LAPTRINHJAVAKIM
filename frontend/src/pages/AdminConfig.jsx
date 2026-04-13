@@ -1,29 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { groupService, configService } from '../services/api';
 import { useUI } from '../context/UIContext';
-import { Settings, Link2, GitBranch, Globe, Save, Info, RefreshCw } from 'lucide-react';
+import { Settings, Link2, GitBranch, Globe, Save, Info, RefreshCw, Layers } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { taskService } from '../services/api';
 
 const AdminConfig = () => {
+  const location = useLocation();
   const [groups, setGroups] = useState([]);
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [jiraData, setJiraData] = useState({ url: '', token: '' });
+  const [jiraData, setJiraData] = useState({ url: '', email: '', token: '', projectKey: '', doneStatusName: 'Done' });
   const [githubData, setGithubData] = useState({ repo: '', token: '', since: '2024-01-01T00:00:00Z' });
+  const [syncing, setSyncing] = useState({ jira: false, github: false, mapping: false });
 
   const { showToast } = useUI();
 
   useEffect(() => {
     fetchGroups();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeGroupId) {
+      fetchCurrentConfig();
+    }
+  }, [activeGroupId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchCurrentConfig = async () => {
+    try {
+      const res = await configService.getConfig(activeGroupId);
+      const configs = res.data;
+      
+      // Reset forms first
+      setJiraData({ url: '', email: '', token: '', projectKey: '', doneStatusName: 'Done' });
+      setGithubData({ repo: '', token: '', since: '2024-01-01T00:00:00Z' });
+
+      configs.forEach(conf => {
+        if (conf.loaiNenTang === 'JIRA') {
+          setJiraData({
+            url: conf.url || '',
+            email: conf.email || '',
+            token: conf.apiToken || '',
+            projectKey: conf.projectKey || '',
+            doneStatusName: conf.doneStatusName || 'Done'
+          });
+        } else if (conf.loaiNenTang === 'GITHUB') {
+          setGithubData({
+            repo: conf.repoUrl || '',
+            token: conf.apiToken || '',
+            since: '2024-01-01T00:00:00Z'
+          });
+        }
+      });
+    } catch (err) {
+      console.error('Lỗi tải cấu hình hiện tại:', err);
+    }
+  };
 
   const fetchGroups = async () => {
     try {
       setLoading(true);
       const res = await groupService.getAll();
       setGroups(res.data);
-      if (res.data.length > 0) setActiveGroupId(res.data[0].idNhom);
+      if (res.data.length > 0) {
+        if (location.state?.groupId) {
+          setActiveGroupId(location.state.groupId);
+          // Optional: clear state so refresh doesn't force it again
+          window.history.replaceState({}, document.title);
+        } else {
+          setActiveGroupId(res.data[0].idNhom);
+        }
+      }
     } catch (err) {
       console.error('Lỗi tải nhóm:', err);
     } finally {
@@ -31,19 +80,94 @@ const AdminConfig = () => {
     }
   };
 
-  const handleSave = async () => {
-    if (!activeGroupId) return;
+  const handleSaveJira = async () => {
+    if (!activeGroupId) {
+      showToast('Chưa chọn nhóm nào.', 'danger');
+      return;
+    }
+    if (!jiraData.url || !jiraData.email || !jiraData.token || !jiraData.projectKey) {
+      showToast('Vui lòng điền đầy đủ thông tin Jira trước khi lưu.', 'warning');
+      return;
+    }
     try {
       setIsSaving(true);
-      await Promise.all([
-        configService.saveJira(activeGroupId, jiraData),
-        configService.saveGithub(activeGroupId, githubData)
-      ]);
-      showToast('Đã lưu cấu hình tích hợp thành công!');
+      await configService.saveJira(activeGroupId, jiraData);
+      showToast('Đã lưu cấu hình Jira thành công!');
     } catch (err) {
-      showToast('Lỗi khi lưu cấu hình.', 'danger');
+      const msg = err.response?.data?.message || err.message || 'Lưu Jira thất bại.';
+      console.error('Lỗi lưu Jira:', err);
+      showToast(msg, 'danger');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveGithub = async () => {
+    if (!activeGroupId) {
+      showToast('Chưa chọn nhóm nào.', 'danger');
+      return;
+    }
+    if (!githubData.repo || !githubData.token) {
+      showToast('Vui lòng điền Repository và Token trước khi lưu.', 'warning');
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await configService.saveGithub(activeGroupId, githubData);
+      showToast('Đã lưu cấu hình GitHub thành công!');
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Lưu GitHub thất bại.';
+      console.error('Lỗi lưu GitHub:', err);
+      showToast(msg, 'danger');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestConnection = async (type) => {
+    const lcType = type.toLowerCase();
+    if (lcType === 'jira' && (!jiraData.url || !jiraData.email || !jiraData.token || !jiraData.projectKey)) {
+      showToast('Vui lòng điền đầy đủ thông tin Jira trước khi test.', 'warning');
+      return;
+    }
+    if (lcType === 'github' && (!githubData.repo || !githubData.token)) {
+      showToast('Vui lòng điền Repository và Token trước khi test.', 'warning');
+      return;
+    }
+    try {
+      showToast(`Đang kiểm tra kết nối tới ${type}...`, 'info');
+      
+      let res;
+      if (lcType === 'jira') {
+        res = await configService.testJira(jiraData);
+      } else {
+        res = await configService.testGithub(githubData);
+      }
+      
+      showToast(res.data.message || `Kết nối ${type} thành công!`, 'success');
+    } catch (err) {
+      console.error(`Lỗi test ${type}:`, err);
+      const errorMsg = err.response?.data?.message || err.message || `Không thể kết nối tới ${type}.`;
+      showToast(errorMsg, 'danger');
+    }
+  };
+
+  const handleSync = async (type) => {
+    if (!activeGroupId) return;
+    try {
+      setSyncing(prev => ({ ...prev, [type]: true }));
+      showToast(`Đang bắt đầu đồng bộ ${type}...`, 'info');
+      
+      if (type === 'jira') await taskService.syncJira(activeGroupId);
+      else if (type === 'github') await taskService.syncGithub(activeGroupId);
+      else if (type === 'mapping') await taskService.mapping();
+      
+      showToast(`Đồng bộ ${type} thành công!`);
+    } catch (err) {
+      console.error('Lỗi sync:', err);
+      showToast('Đồng bộ thất bại.', 'danger');
+    } finally {
+      setSyncing(prev => ({ ...prev, [type]: false }));
     }
   };
 
@@ -119,6 +243,17 @@ const AdminConfig = () => {
                 </div>
 
                 <div className="input-group">
+                  <label className="input-label">Jira Email</label>
+                  <input
+                    type="email"
+                    className="input-field"
+                    placeholder="example@company.com"
+                    value={jiraData.email}
+                    onChange={e => setJiraData({ ...jiraData, email: e.target.value })}
+                  />
+                </div>
+
+                <div className="input-group">
                   <label className="input-label">Atlassian API Token</label>
                   <input
                     type="password"
@@ -127,6 +262,60 @@ const AdminConfig = () => {
                     value={jiraData.token}
                     onChange={e => setJiraData({ ...jiraData, token: e.target.value })}
                   />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">Project Key</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="e.g. PROJ"
+                    value={jiraData.projectKey}
+                    onChange={e => setJiraData({ ...jiraData, projectKey: e.target.value })}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">Done Status Name</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="e.g. Done or Hoàn thành"
+                    value={jiraData.doneStatusName}
+                    onChange={e => setJiraData({ ...jiraData, doneStatusName: e.target.value })}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '1.5rem' }}>
+                  <button 
+                    className="btn btn-outline" 
+                    style={{ justifyContent: 'center' }}
+                    onClick={() => handleTestConnection('Jira')}
+                  >
+                    <Globe size={16} />
+                    Test
+                  </button>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ justifyContent: 'center' }}
+                    onClick={handleSaveJira}
+                    disabled={isSaving}
+                  >
+                    <Save size={16} />
+                    Lưu Jira
+                  </button>
+                </div>
+
+                <div style={{ marginTop: '1rem' }}>
+                  <button 
+                    className="btn btn-outline" 
+                    style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--primary)', color: 'var(--primary)' }}
+                    onClick={() => handleSync('jira')}
+                    disabled={syncing.jira}
+                  >
+                    {syncing.jira ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                    Sync Jira Data
+                  </button>
                 </div>
               </div>
 
@@ -158,25 +347,60 @@ const AdminConfig = () => {
                     onChange={e => setGithubData({ ...githubData, token: e.target.value })}
                   />
                 </div>
+                
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '1.5rem' }}>
+                  <button 
+                    className="btn btn-outline" 
+                    style={{ justifyContent: 'center' }}
+                    onClick={() => handleTestConnection('GitHub')}
+                  >
+                    <Globe size={16} />
+                    Test
+                  </button>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ justifyContent: 'center', background: 'linear-gradient(135deg, #24292f, #444d56)' }}
+                    onClick={handleSaveGithub}
+                    disabled={isSaving}
+                  >
+                    <Save size={16} />
+                    Lưu GitHub
+                  </button>
+                </div>
+
+                <div style={{ marginTop: '1rem' }}>
+                  <button 
+                    className="btn btn-outline" 
+                    style={{ width: '100%', justifyContent: 'center', borderColor: '#f0f6fc', color: '#f0f6fc' }}
+                    onClick={() => handleSync('github')}
+                    disabled={syncing.github}
+                  >
+                    {syncing.github ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                    Sync GitHub Data
+                  </button>
+                </div>
+
+                <button 
+                  className="btn btn-outline" 
+                  style={{ width: '100%', justifyContent: 'center', marginTop: '1rem', background: 'rgba(255,255,255,0.05)' }}
+                  onClick={() => handleSync('mapping')}
+                  disabled={syncing.mapping}
+                >
+                  <RefreshCw size={16} className={syncing.mapping ? "animate-spin" : ""} />
+                  Mapping Task-Commit
+                </button>
               </div>
             </div>
 
             <div style={{
               marginTop: '2rem',
-              paddingTop: '2rem',
+              paddingTop: '1rem',
               borderTop: '1px solid var(--surface-border)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                 <Info size={16} />
-                <span>Các cấu hình sẽ được lưu vào cơ sở dữ liệu sau khi nhấn Lưu.</span>
+                <span>Các cấu hình đã lưu sẽ được áp dụng ngay khi nhấn Đồng bộ (Sync).</span>
               </div>
-              <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? <RefreshCw size={18} className="animate-spin" /> : <Save size={18} />}
-                {isSaving ? 'Đang lưu...' : 'Lưu cấu hình'}
-              </button>
             </div>
           </div>
         ) : (
