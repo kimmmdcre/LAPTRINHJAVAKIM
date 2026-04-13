@@ -11,5 +11,4 @@ import java.util.UUID;
 public interface NhiemVuRepository extends JpaRepository<NhiemVu, String> {
     List<NhiemVu> findBySinhVien_Id(UUID idSinhVien);
     List<NhiemVu> findByYeuCau_IdYeuCau(String idYeuCau);
-    List<NhiemVu> findByYeuCau_Nhom_IdNhom(UUID idNhom);
 }

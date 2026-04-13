@@ -2,7 +2,6 @@ package JAVAGROUP.prjApp.controller;
 
 import JAVAGROUP.prjApp.service.SyncService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -24,7 +23,6 @@ public class SyncController {
      * Kích hoạt đồng bộ dữ liệu từ Jira về DB
      */
     @PostMapping("/{idNhom}/jira")
-    @PreAuthorize("hasAnyRole('ADMIN','TRUONG_NHOM')")
     public ResponseEntity<Map<String, String>> dongBoJira(@PathVariable UUID idNhom) {
         syncService.dongBoJira(idNhom);
         return ResponseEntity.ok(Map.of("message", "Đồng bộ Jira thành công"));
@@ -35,7 +33,6 @@ public class SyncController {
      * Kích hoạt đồng bộ commits từ GitHub về DB
      */
     @PostMapping("/{idNhom}/github")
-    @PreAuthorize("hasAnyRole('ADMIN','TRUONG_NHOM')")
     public ResponseEntity<Map<String, String>> dongBoGithub(@PathVariable UUID idNhom) {
         syncService.dongBoGithub(idNhom);
         return ResponseEntity.ok(Map.of("message", "Đồng bộ GitHub thành công"));
@@ -46,7 +43,6 @@ public class SyncController {
      * Mapping các commit với nhiệm vụ dựa trên commit message
      */
     @PostMapping("/mapping")
-    @PreAuthorize("hasAnyRole('ADMIN','TRUONG_NHOM')")
     public ResponseEntity<Map<String, String>> mappingTaskCommit() {
         syncService.mappingTaskCommit();
         return ResponseEntity.ok(Map.of("message", "Mapping commit–task thành công"));

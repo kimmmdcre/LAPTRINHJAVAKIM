@@ -36,4 +36,13 @@ public class CauHinhTichHop {
 
     @Column(name = "api_token")
     private String apiToken;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "project_key")
+    private String projectKey;
+
+    @Column(name = "done_status_name")
+    private String doneStatusName;
 }

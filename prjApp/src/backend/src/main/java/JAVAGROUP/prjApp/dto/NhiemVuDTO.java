@@ -16,4 +16,5 @@ public class NhiemVuDTO {
     private String tenSinhVien;
     private String tieuDe;
     private String trangThai;
+    private int commitCount;
 }

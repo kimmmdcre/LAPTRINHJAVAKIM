@@ -17,4 +17,5 @@ public class UserDTO {
     private String email;
     private TrangThaiUser trangThai;
     private String maVaiTro;
+    private String password;
 }

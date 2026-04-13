@@ -28,7 +28,7 @@ public abstract class NguoiDung {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "ho_ten", nullable = false)
+    @Column(name = "ho_ten", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String hoTen;
 
     @Column(name = "email", nullable = false, unique = true)

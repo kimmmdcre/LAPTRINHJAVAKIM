@@ -22,10 +22,10 @@ public class Nhom {
     @Column(name = "id_nhom", updatable = false, nullable = false)
     private UUID idNhom;
 
-    @Column(name = "ten_nhom", nullable = false)
+    @Column(name = "ten_nhom", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String tenNhom;
 
-    @Column(name = "de_tai")
+    @Column(name = "de_tai", columnDefinition = "NVARCHAR(MAX)")
     private String deTai;
 
     @ManyToOne(fetch = FetchType.LAZY)

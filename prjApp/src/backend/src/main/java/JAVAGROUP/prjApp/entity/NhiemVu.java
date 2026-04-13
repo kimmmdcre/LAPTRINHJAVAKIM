@@ -34,6 +34,9 @@ public class NhiemVu {
     @Column(name = "trang_thai")
     private String trangThai;
 
+    @Column(name = "thoi_gian_cap_nhat")
+    private java.time.LocalDateTime thoiGianCapNhat;
+
     @OneToMany(mappedBy = "nhiemVu")
     private List<CommitVCS> commitVCSs;
 }

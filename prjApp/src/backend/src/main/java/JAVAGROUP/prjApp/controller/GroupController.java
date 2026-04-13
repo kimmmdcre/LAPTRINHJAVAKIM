@@ -3,10 +3,8 @@ package JAVAGROUP.prjApp.controller;
 import JAVAGROUP.prjApp.dto.NhomDTO;
 import JAVAGROUP.prjApp.dto.ThanhVienNhomDTO;
 import JAVAGROUP.prjApp.entity.Nhom;
-import JAVAGROUP.prjApp.entity.VaiTroNhom;
 import JAVAGROUP.prjApp.service.GroupService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,22 +22,31 @@ public class GroupController {
         this.groupService = groupService;
     }
 
+    /**
+     * POST /api/groups
+     * Body: NhomDTO (tạo nhóm mới)
+     */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','TRUONG_NHOM')")
     public ResponseEntity<NhomDTO> taoNhom(@RequestBody NhomDTO dto) {
         Nhom nhom = groupService.taoNhom(dto);
         return ResponseEntity.ok(groupService.xemThongTinNhom(nhom.getIdNhom()));
     }
 
+    /**
+     * DELETE /api/groups/{id}
+     */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','TRUONG_NHOM')")
     public ResponseEntity<Map<String, String>> xoaNhom(@PathVariable UUID id) {
         groupService.xoaNhom(id);
         return ResponseEntity.ok(Map.of("message", "Xoá nhóm thành công"));
     }
 
+    /**
+     * PATCH /api/groups/{id}/assign
+     * Body: { "idGiangVien": "..." }
+     * Phân công giảng viên phụ trách nhóm
+     */
     @PatchMapping("/{id}/assign")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> phanCongGiangVien(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body) {
@@ -47,49 +54,54 @@ public class GroupController {
         return ResponseEntity.ok(Map.of("message", "Phân công giảng viên thành công"));
     }
 
+    /**
+     * GET /api/groups
+     * GET /api/groups?idGiangVien={uuid}
+     * Lấy danh sách nhóm (tất cả hoặc theo giảng viên)
+     */
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<NhomDTO>> layDanhSachNhom(@RequestParam UUID idGiangVien) {
+    public ResponseEntity<java.util.List<NhomDTO>> layDanhSachNhom(
+            @RequestParam(required = false) UUID idGiangVien) {
         return ResponseEntity.ok(groupService.layDanhSachNhom(idGiangVien));
     }
 
+    /**
+     * GET /api/groups/{id}
+     * Xem thông tin chi tiết một nhóm
+     */
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<NhomDTO> xemThongTinNhom(@PathVariable UUID id) {
         return ResponseEntity.ok(groupService.xemThongTinNhom(id));
     }
 
+    /**
+     * GET /api/groups/{id}/members
+     * Lấy danh sách thành viên của nhóm
+     */
     @GetMapping("/{id}/members")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ThanhVienNhomDTO>> layDanhSachThanhVien(@PathVariable UUID id) {
         return ResponseEntity.ok(groupService.layDanhSachThanhVien(id));
     }
 
     /**
-     * Thêm sinh viên vào nhóm. Body: { "idSinhVien": "uuid", "vaiTro": "LEADER" | "MEMBER" }
+     * POST /api/groups/{idNhom}/members/{idSinhVien}
+     * Thêm sinh viên vào nhóm
      */
-    @PostMapping("/{id}/members")
-    @PreAuthorize("hasAnyRole('ADMIN','TRUONG_NHOM')")
+    @PostMapping("/{idNhom}/members/{idSinhVien}")
     public ResponseEntity<Map<String, String>> themThanhVien(
-            @PathVariable UUID id,
-            @RequestBody Map<String, String> body) {
-        UUID sid = UUID.fromString(body.get("idSinhVien"));
-        VaiTroNhom vt;
-        try {
-            vt = VaiTroNhom.valueOf(body.getOrDefault("vaiTro", "MEMBER").toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("vaiTro phải là LEADER hoặc MEMBER.");
-        }
-        groupService.themThanhVien(id, sid, vt);
-        return ResponseEntity.ok(Map.of("message", "Đã thêm thành viên"));
+            @PathVariable UUID idNhom,
+            @PathVariable UUID idSinhVien) {
+        groupService.themThanhVien(idNhom, idSinhVien);
+        return ResponseEntity.ok(Map.of("message", "Thêm thành viên thành công"));
     }
 
-    @DeleteMapping("/{id}/members/{studentId}")
-    @PreAuthorize("hasAnyRole('ADMIN','TRUONG_NHOM')")
-    public ResponseEntity<Map<String, String>> xoaThanhVien(
-            @PathVariable UUID id,
-            @PathVariable UUID studentId) {
-        groupService.xoaThanhVien(id, studentId);
-        return ResponseEntity.ok(Map.of("message", "Đã xóa thành viên"));
+    /**
+     * DELETE /api/groups/members/{idSinhVien}
+     * Loại bỏ sinh viên khỏi nhóm hiện tại
+     */
+    @DeleteMapping("/members/{idSinhVien}")
+    public ResponseEntity<Map<String, String>> boThanhVien(@PathVariable UUID idSinhVien) {
+        groupService.boThanhVien(idSinhVien);
+        return ResponseEntity.ok(Map.of("message", "Đã loại bỏ sinh viên khỏi nhóm"));
     }
 }

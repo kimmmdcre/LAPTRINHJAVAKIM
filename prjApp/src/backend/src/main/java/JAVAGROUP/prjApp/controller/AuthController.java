@@ -1,17 +1,11 @@
 package JAVAGROUP.prjApp.controller;
 
-import JAVAGROUP.prjApp.dto.CreateUserRequest;
-import JAVAGROUP.prjApp.dto.UserDTO;
 import JAVAGROUP.prjApp.entity.NguoiDung;
-import JAVAGROUP.prjApp.repository.NguoiDungRepository;
 import JAVAGROUP.prjApp.service.AuthService;
-import JAVAGROUP.prjApp.service.UserService;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -20,48 +14,42 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final NguoiDungRepository nguoiDungRepository;
-    private final UserService userService;
 
-    public AuthController(
-            AuthService authService,
-            NguoiDungRepository nguoiDungRepository,
-            UserService userService
-    ) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.nguoiDungRepository = nguoiDungRepository;
-        this.userService = userService;
     }
 
+    /**
+     * POST /api/auth/login
+     * Body: { "username": "...", "password": "..." }
+     */
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> dangNhap(@RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(authService.dangNhap(body.get("username"), body.get("password")));
-    }
-
-    /**
-     * Đăng ký công khai cho sinh viên.
-     */
-    @PostMapping("/register")
-    public ResponseEntity<UserDTO> dangKy(@Valid @RequestBody CreateUserRequest dto) {
-        // Luôn gán là SINH_VIEN khi đăng ký công khai
-        dto.setMaVaiTro("SINH_VIEN");
-        return ResponseEntity.ok(userService.taoTaiKhoan(dto));
-    }
-
-    /**
-     * Thông tin user hiện tại (từ JWT).
-     */
-    @GetMapping("/me")
-    public ResponseEntity<UserDTO> me() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new RuntimeException("Chưa đăng nhập");
+    public ResponseEntity<Map<String, Object>> dangNhap(@RequestBody Map<String, String> body) {
+        try {
+            NguoiDung nguoiDung = authService.dangNhap(body.get("username"), body.get("password"));
+            String token = "token-placeholder-for:" + nguoiDung.getUsername();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("message", "Đăng nhập thành công");
+            response.put("id", nguoiDung.getId() != null ? nguoiDung.getId().toString() : "");
+            response.put("username", nguoiDung.getUsername());
+            response.put("hoTen", nguoiDung.getHoTen());
+            response.put("email", nguoiDung.getEmail());
+            response.put("role", nguoiDung.getMaVaiTro() != null ? nguoiDung.getMaVaiTro() : "SINH_VIEN");
+            
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> errorRes = new HashMap<>();
+            errorRes.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorRes);
         }
-        NguoiDung nd = nguoiDungRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-        return ResponseEntity.ok(userService.toDTO(nd));
     }
 
+    /**
+     * POST /api/auth/logout
+     * Header: Authorization: Bearer <token>
+     */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> dangXuat(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");

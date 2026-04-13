@@ -2,9 +2,9 @@ package JAVAGROUP.prjApp.controller;
 
 import JAVAGROUP.prjApp.dto.NhiemVuDTO;
 import JAVAGROUP.prjApp.dto.YeuCauDTO;
+import JAVAGROUP.prjApp.service.SyncService;
 import JAVAGROUP.prjApp.service.TaskService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,31 +17,57 @@ import java.util.UUID;
 public class TaskController {
 
     private final TaskService taskService;
+    private final SyncService syncService;
 
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService, SyncService syncService) {
         this.taskService = taskService;
+        this.syncService = syncService;
     }
 
+    /**
+     * GET /api/tasks/{idNhom}
+     * Lấy danh sách nhiệm vụ của cả nhóm (dành cho Trưởng nhóm/Giảng viên)
+     */
+    @GetMapping("/{idNhom}")
+    public ResponseEntity<java.util.List<JAVAGROUP.prjApp.dto.NhiemVuDTO>> layNhiemVuNhom(
+            @PathVariable UUID idNhom) {
+        return ResponseEntity.ok(taskService.layNhiemVuNhom(idNhom));
+    }
+
+    /**
+     * GET /api/tasks/jira/sync/{idNhom}
+     * Kích hoạt đồng bộ hóa từ Jira cho nhóm
+     */
+    @GetMapping("/jira/sync/{idNhom}")
+    public ResponseEntity<Map<String, String>> syncJira(@PathVariable UUID idNhom) {
+        syncService.dongBoJira(idNhom);
+        return ResponseEntity.ok(Map.of("message", "Đồng bộ Jira thành công"));
+    }
+
+    /**
+     * GET /api/tasks/yeu-cau?idNhom={uuid}
+     * Lấy danh sách yêu cầu (Jira Issues) của một nhóm
+     */
     @GetMapping("/yeu-cau")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<YeuCauDTO>> layYeuCauNhom(@RequestParam UUID idNhom) {
         return ResponseEntity.ok(taskService.layYeuCauNhom(idNhom));
     }
 
+    /**
+     * GET /api/tasks/nhiem-vu?idSinhVien={uuid}
+     * Lấy danh sách nhiệm vụ cá nhân của một sinh viên
+     */
     @GetMapping("/nhiem-vu")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<NhiemVuDTO>> layNhiemVuCaNhan(@RequestParam UUID idSinhVien) {
         return ResponseEntity.ok(taskService.layNhiemVuCaNhan(idSinhVien));
     }
 
-    @GetMapping("/nhiem-vu/nhom")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<NhiemVuDTO>> layNhiemVuNhom(@RequestParam UUID idNhom) {
-        return ResponseEntity.ok(taskService.layNhiemVuNhom(idNhom));
-    }
-
+    /**
+     * PATCH /api/tasks/nhiem-vu/{id}/status
+     * Body: { "status": "IN_PROGRESS" }
+     * Cập nhật trạng thái nhiệm vụ
+     */
     @PatchMapping("/nhiem-vu/{id}/status")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> capNhatTrangThai(
             @PathVariable String id,
             @RequestBody Map<String, String> body) {
@@ -50,14 +76,15 @@ public class TaskController {
     }
 
     /**
-     * Phân công nhiệm vụ cho sinh viên. Body: { "idSinhVien": "uuid" }
+     * PATCH /api/tasks/nhiem-vu/{id}/assign
+     * Body: { "idSinhVien": "uuid" }
+     * Giao nhiệm vụ cho thành viên
      */
     @PatchMapping("/nhiem-vu/{id}/assign")
-    @PreAuthorize("hasAnyRole('ADMIN','TRUONG_NHOM')")
-    public ResponseEntity<Map<String, String>> ganNhiemVu(
+    public ResponseEntity<Map<String, String>> phanCongNhiemVu(
             @PathVariable String id,
             @RequestBody Map<String, String> body) {
-        taskService.ganNhiemVuChoSinhVien(id, UUID.fromString(body.get("idSinhVien")));
-        return ResponseEntity.ok(Map.of("message", "Đã phân công nhiệm vụ"));
+        taskService.phanCongNhiemVu(id, UUID.fromString(body.get("idSinhVien")));
+        return ResponseEntity.ok(Map.of("message", "Phân công nhiệm vụ thành công"));
     }
 }

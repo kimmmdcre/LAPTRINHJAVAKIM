@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -15,4 +16,5 @@ public class NhomDTO {
     private String deTai;
     private String idGiangVien;
     private String tenGiangVien;
+    private List<ThanhVienNhomDTO> thanhViens;
 }
