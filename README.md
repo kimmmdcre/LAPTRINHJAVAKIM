@@ -1,4 +1,4 @@
-# 🎓 Out-Trình Student Project Management System 🚀
+# 🎓 Student Project Management System 🚀
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.11-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
@@ -68,7 +68,12 @@
    spring.datasource.password=YOUR_PASSWORD
    ```
 
-4. Chạy lệnh: `mvn spring-boot:run`
+4. Khởi chạy ứng dụng:
+
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
 
 ### 2. Frontend Setup
 
@@ -83,6 +88,7 @@
 3. Khởi chạy:
 
    ```bash
+   cd frontend
    npm run dev
    ```
 
