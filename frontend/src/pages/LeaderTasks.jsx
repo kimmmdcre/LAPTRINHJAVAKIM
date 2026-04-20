@@ -17,7 +17,8 @@ const LeaderTasks = () => {
 
   useEffect(() => {
     fetchTasks();
-    fetchMembers(groupId); 
+    fetchMembers(groupId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchTasks = async () => {

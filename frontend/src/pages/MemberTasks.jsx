@@ -28,6 +28,7 @@ const MemberTasks = () => {
       await taskService.updateStatus(taskId, newStatus);
       fetchTasks();
     } catch (err) {
+      console.error(err);
       alert('Không thể cập nhật trạng thái.');
     }
   };

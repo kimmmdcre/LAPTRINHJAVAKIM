@@ -15,6 +15,7 @@ const ReportGenerator = () => {
     if (groupId) {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
   const fetchData = async () => {
@@ -49,6 +50,7 @@ const ReportGenerator = () => {
       link.remove();
       showToast('Tải xuống thành công!', 'success');
     } catch (err) {
+      console.error(err);
       showToast('Lỗi khi xuất file. Vui lòng thử lại.', 'danger');
     }
   };

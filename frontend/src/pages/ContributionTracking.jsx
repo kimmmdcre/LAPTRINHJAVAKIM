@@ -13,6 +13,7 @@ const ContributionTracking = () => {
     if (groupId) {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
   const fetchData = async () => {

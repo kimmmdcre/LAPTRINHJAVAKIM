@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { groupService, reportService } from '../services/api';
+import { groupService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Users, Clock, ArrowRight, FolderKanban, TrendingUp, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,7 @@ const TeacherClasses = () => {
     if (user?.id) {
       fetchClasses();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchClasses = async () => {

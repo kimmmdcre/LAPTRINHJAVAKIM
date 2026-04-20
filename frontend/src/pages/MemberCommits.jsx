@@ -10,12 +10,13 @@ const MemberCommits = () => {
   const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ total: 42, prs: 12, branches: 3, freq: 4.5 });
+  const [stats] = useState({ total: 42, prs: 12, branches: 3, freq: 4.5 });
 
   useEffect(() => {
     if (user?.id) {
       fetchCommitHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchCommitHistory = async () => {

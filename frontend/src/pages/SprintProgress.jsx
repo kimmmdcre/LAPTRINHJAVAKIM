@@ -11,7 +11,6 @@ const SprintProgress = () => {
   
   const groupId = urlGroupId || localStorage.getItem('groupId');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [progressSummary, setProgressSummary] = useState(null);
   const [historyData, setHistoryData] = useState([]);
 
@@ -21,6 +20,7 @@ const SprintProgress = () => {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
   const fetchData = async () => {

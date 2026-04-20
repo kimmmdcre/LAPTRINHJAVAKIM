@@ -18,6 +18,7 @@ const TeacherReports = () => {
     if (nhomId) {
       fetchReportData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nhomId]);
 
   const fetchReportData = async () => {
