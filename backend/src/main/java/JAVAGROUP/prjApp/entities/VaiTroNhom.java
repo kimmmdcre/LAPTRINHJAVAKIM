@@ -1,4 +1,4 @@
-package JAVAGROUP.prjApp.entites;
+package JAVAGROUP.prjApp.entities;
 
 public enum VaiTroNhom {
     LEADER,

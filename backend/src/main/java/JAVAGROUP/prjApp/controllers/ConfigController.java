@@ -2,7 +2,7 @@ package JAVAGROUP.prjApp.controllers;
 
 import JAVAGROUP.prjApp.adapter.IGitHubClient;
 import JAVAGROUP.prjApp.adapter.IJiraClient;
-import JAVAGROUP.prjApp.entites.CauHinhTichHop;
+import JAVAGROUP.prjApp.entities.CauHinhTichHop;
 import JAVAGROUP.prjApp.services.ConfigService;
 
 import org.springframework.http.ResponseEntity;
@@ -67,18 +67,30 @@ public class ConfigController {
 
     @PostMapping("/test/github")
     public ResponseEntity<Map<String, String>> testGithub(@RequestBody Map<String, String> body) {
-        gitHubClient.testConnection(body.get("repo"), body.get("token"));
+        String repo = body.get("repo");
+        if (repo == null) repo = body.get("repoUrl"); // fallback
+        
+        String token = body.get("token");
+        if (token == null) token = body.get("maTruyCap"); // fallback
+        
+        gitHubClient.kiemTraKetNoi(repo, token);
         return ResponseEntity.ok(Map.of("message", "Kết nối GitHub thành công!"));
     }
 
     @PostMapping("/test/jira")
     public ResponseEntity<Map<String, String>> testJira(@RequestBody Map<String, String> body) {
-        jiraClient.testConnection(
-            body.get("url"), 
-            body.get("email"), 
-            body.get("token"), 
-            body.get("projectKey")
-        );
+        String url = body.get("url");
+        if (url == null) url = body.get("duongDan");
+        
+        String email = body.get("email");
+        
+        String token = body.get("token");
+        if (token == null) token = body.get("maTruyCap");
+        
+        String projectKey = body.get("projectKey");
+        if (projectKey == null) projectKey = body.get("maDuAn");
+
+        jiraClient.kiemTraKetNoi(url, email, token, projectKey);
         return ResponseEntity.ok(Map.of("message", "Kết nối Jira thành công!"));
     }
 }

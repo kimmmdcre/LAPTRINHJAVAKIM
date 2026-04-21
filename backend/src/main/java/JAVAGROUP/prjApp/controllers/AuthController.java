@@ -1,9 +1,9 @@
 package JAVAGROUP.prjApp.controllers;
 
-import JAVAGROUP.prjApp.entites.NguoiDung;
 import JAVAGROUP.prjApp.services.AuthService;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -27,23 +27,24 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> dangNhap(@RequestBody Map<String, String> body) {
         try {
-            NguoiDung nguoiDung = authService.dangNhap(body.get("username"), body.get("password"));
-            String token = "token-placeholder-for:" + nguoiDung.getUsername();
+            String tenDangNhap = body.get("tenDangNhap");
+            if (tenDangNhap == null) tenDangNhap = body.get("username"); // Fallback
+            
+            String matKhau = body.get("matKhau");
+            if (matKhau == null) matKhau = body.get("password"); // Fallback
+            
+            String token = authService.dangNhap(tenDangNhap, matKhau);
             
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
+            response.put("type", "Bearer");
             response.put("message", "Đăng nhập thành công");
-            response.put("id", nguoiDung.getId() != null ? nguoiDung.getId().toString() : "");
-            response.put("username", nguoiDung.getUsername());
-            response.put("hoTen", nguoiDung.getHoTen());
-            response.put("email", nguoiDung.getEmail());
-            response.put("role", nguoiDung.getMaVaiTro() != null ? nguoiDung.getMaVaiTro() : "SINH_VIEN");
             
             return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             Map<String, Object> errorRes = new HashMap<>();
-            errorRes.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(errorRes);
+            errorRes.put("message", "Đăng nhập thất bại: " + e.getMessage());
+            return ResponseEntity.status(401).body(errorRes);
         }
     }
 
@@ -52,6 +53,7 @@ public class AuthController {
      * Header: Authorization: Bearer <token>
      */
     @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> dangXuat(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         authService.dangXuat(token);

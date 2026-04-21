@@ -1,4 +1,4 @@
-package JAVAGROUP.prjApp.entites;
+package JAVAGROUP.prjApp.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,10 +23,10 @@ public abstract class NguoiDung {
     private UUID id;
 
     @Column(name = "username", nullable = false, unique = true)
-    private String username;
+    private String tenDangNhap;
 
     @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    private String matKhauHash;
 
     @Column(name = "ho_ten", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String hoTen;

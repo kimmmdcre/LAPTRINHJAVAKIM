@@ -3,7 +3,7 @@ package JAVAGROUP.prjApp.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import JAVAGROUP.prjApp.entites.CommitVCS;
+import JAVAGROUP.prjApp.entities.CommitVCS;
 
 import java.util.List;
 

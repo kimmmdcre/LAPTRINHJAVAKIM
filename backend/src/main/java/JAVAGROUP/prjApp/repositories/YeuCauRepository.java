@@ -3,7 +3,7 @@ package JAVAGROUP.prjApp.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import JAVAGROUP.prjApp.entites.YeuCau;
+import JAVAGROUP.prjApp.entities.YeuCau;
 
 import java.util.List;
 import java.util.UUID;

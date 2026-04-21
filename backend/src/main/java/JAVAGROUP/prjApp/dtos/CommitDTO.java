@@ -14,5 +14,5 @@ public class CommitDTO {
     private String sha;
     private String thongDiep;
     private LocalDateTime thoiGian;
-    private UUID authorId;
+    private UUID idTacGia;
 }

@@ -1,6 +1,7 @@
 package JAVAGROUP.prjApp.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import JAVAGROUP.prjApp.services.SyncService;
@@ -11,6 +12,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/sync")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasRole('GIANG_VIEN') or hasRole('ADMIN')")
 public class SyncController {
 
     private final SyncService syncService;

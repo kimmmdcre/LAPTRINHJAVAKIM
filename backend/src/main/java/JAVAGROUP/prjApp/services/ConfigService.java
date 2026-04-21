@@ -1,7 +1,7 @@
 package JAVAGROUP.prjApp.services;
 
-import JAVAGROUP.prjApp.entites.CauHinhTichHop;
-import JAVAGROUP.prjApp.entites.Nhom;
+import JAVAGROUP.prjApp.entities.CauHinhTichHop;
+import JAVAGROUP.prjApp.entities.Nhom;
 import JAVAGROUP.prjApp.repositories.CauHinhTichHopRepository;
 import JAVAGROUP.prjApp.repositories.NhomRepository;
 

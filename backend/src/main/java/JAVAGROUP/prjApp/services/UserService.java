@@ -1,15 +1,14 @@
 package JAVAGROUP.prjApp.services;
 
 import JAVAGROUP.prjApp.dtos.UserDTO;
-import JAVAGROUP.prjApp.entites.GiangVien;
-import JAVAGROUP.prjApp.entites.NguoiDung;
-import JAVAGROUP.prjApp.entites.QuanTriVien;
-import JAVAGROUP.prjApp.entites.SinhVien;
-import JAVAGROUP.prjApp.repositories.GiangVienRepository;
+import JAVAGROUP.prjApp.entities.GiangVien;
+import JAVAGROUP.prjApp.entities.NguoiDung;
+import JAVAGROUP.prjApp.entities.QuanTriVien;
+import JAVAGROUP.prjApp.entities.SinhVien;
 import JAVAGROUP.prjApp.repositories.NguoiDungRepository;
-import JAVAGROUP.prjApp.repositories.QuanTriVienRepository;
 import JAVAGROUP.prjApp.repositories.SinhVienRepository;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,18 +21,15 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final NguoiDungRepository nguoiDungRepository;
-    private final QuanTriVienRepository quanTriVienRepository;
-    private final GiangVienRepository giangVienRepository;
     private final SinhVienRepository sinhVienRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(NguoiDungRepository nguoiDungRepository,
-                       QuanTriVienRepository quanTriVienRepository,
-                       GiangVienRepository giangVienRepository,
-                       SinhVienRepository sinhVienRepository) {
+                       SinhVienRepository sinhVienRepository,
+                       PasswordEncoder passwordEncoder) {
         this.nguoiDungRepository = nguoiDungRepository;
-        this.quanTriVienRepository = quanTriVienRepository;
-        this.giangVienRepository = giangVienRepository;
         this.sinhVienRepository = sinhVienRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -46,28 +42,28 @@ public class UserService {
         
         if ("ADMIN".equals(role)) {
             QuanTriVien qtv = new QuanTriVien();
-            qtv.setMaGv("ADM_" + dto.getUsername());
+            qtv.setMaGv("ADM_" + dto.getTenDangNhap());
             qtv.setCapDoQuyen(1);
             nd = qtv;
         } else if ("GIANG_VIEN".equals(role)) {
             GiangVien gv = new GiangVien();
-            gv.setMaGiangVien("GV_" + dto.getUsername());
+            gv.setMaGiangVien("GV_" + dto.getTenDangNhap());
             gv.setKhoa("Công nghệ thông tin");
             nd = gv;
         } else {
             SinhVien sv = new SinhVien();
-            sv.setMaSv("SV_" + dto.getUsername());
+            sv.setMaSv("SV_" + dto.getTenDangNhap());
             sv.setLop("K70-IT");
             nd = sv;
         }
 
-        nd.setUsername(dto.getUsername());
-        String pass = (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) ? dto.getPassword() : "123456";
-        nd.setPasswordHash(pass); // Default fallback string if empty
+        nd.setTenDangNhap(dto.getTenDangNhap());
+        String matKhau = (dto.getMatKhau() != null && !dto.getMatKhau().trim().isEmpty()) ? dto.getMatKhau() : "123456";
+        nd.setMatKhauHash(passwordEncoder.encode(matKhau)); 
         nd.setHoTen(dto.getHoTen());
         nd.setEmail(dto.getEmail());
         nd.setMaVaiTro(role);
-        nd.setTrangThai(JAVAGROUP.prjApp.entites.TrangThaiUser.ACTIVE);
+        nd.setTrangThai(JAVAGROUP.prjApp.entities.TrangThaiUser.ACTIVE);
         
         nguoiDungRepository.save(nd);
     }
@@ -100,12 +96,12 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại: " + id));
         nd.setHoTen(dto.getHoTen());
         nd.setEmail(dto.getEmail());
-        nd.setUsername(dto.getUsername());
+        nd.setTenDangNhap(dto.getTenDangNhap());
         if (dto.getMaVaiTro() != null) {
             nd.setMaVaiTro(dto.getMaVaiTro());
         }
-        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
-            nd.setPasswordHash(dto.getPassword());
+        if (dto.getMatKhau() != null && !dto.getMatKhau().trim().isEmpty()) {
+            nd.setMatKhauHash(passwordEncoder.encode(dto.getMatKhau()));
         }
         nguoiDungRepository.save(nd);
     }
@@ -149,7 +145,7 @@ public class UserService {
     public UserDTO toDTO(NguoiDung nd) {
         return new UserDTO(
                 nd.getId(),
-                nd.getUsername(),
+                nd.getTenDangNhap(),
                 nd.getHoTen(),
                 nd.getEmail(),
                 nd.getTrangThai(),

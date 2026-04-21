@@ -1,10 +1,9 @@
 package JAVAGROUP.prjApp.repositories;
 
+import JAVAGROUP.prjApp.entities.ThanhVienNhom;
+import JAVAGROUP.prjApp.entities.ThanhVienNhomId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import JAVAGROUP.prjApp.entites.ThanhVienNhom;
-import JAVAGROUP.prjApp.entites.ThanhVienNhomId;
 
 import java.util.List;
 import java.util.UUID;

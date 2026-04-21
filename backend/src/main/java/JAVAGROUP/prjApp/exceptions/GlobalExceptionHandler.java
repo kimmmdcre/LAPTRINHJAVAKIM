@@ -1,4 +1,4 @@
-package JAVAGROUP.prjApp.controllers;
+package JAVAGROUP.prjApp.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

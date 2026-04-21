@@ -4,7 +4,7 @@ import JAVAGROUP.prjApp.adapter.IGitHubClient;
 import JAVAGROUP.prjApp.adapter.IJiraClient;
 import JAVAGROUP.prjApp.dtos.CommitDTO;
 import JAVAGROUP.prjApp.dtos.YeuCauDTO;
-import JAVAGROUP.prjApp.entites.*;
+import JAVAGROUP.prjApp.entities.*;
 import JAVAGROUP.prjApp.repositories.*;
 
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ public class SyncService {
                 .filter(c -> "JIRA".equals(c.getLoaiNenTang())).findFirst()
                 .orElseThrow(() -> new RuntimeException("Chưa cấu hình Jira cho nhóm: " + idNhom));
 
-        List<YeuCauDTO> issues = jiraClient.fetchIssues(jiraConf.getUrl(), jiraConf.getEmail(), jiraConf.getApiToken(), jiraConf.getProjectKey());
+        List<YeuCauDTO> issues = jiraClient.layDanhSachYeuCau(jiraConf.getUrl(), jiraConf.getEmail(), jiraConf.getApiToken(), jiraConf.getProjectKey());
         for (YeuCauDTO dto : issues) {
             if (!yeuCauRepository.existsById(dto.getIdYeuCau())) {
                 YeuCau yc = new YeuCau();
@@ -71,7 +71,7 @@ public class SyncService {
                 .orElseThrow(() -> new RuntimeException("Chưa cấu hình GitHub cho nhóm: " + idNhom));
 
         try {
-            List<CommitDTO> commits = gitHubClient.fetchCommits(ghConf.getRepoUrl(), ghConf.getApiToken(), null);
+            List<CommitDTO> commits = gitHubClient.layDanhSachCommit(ghConf.getRepoUrl(), ghConf.getApiToken(), null);
             for (CommitDTO dto : commits) {
                 if (!commitVCSRepository.existsById(dto.getSha())) {
                     CommitVCS commit = new CommitVCS();

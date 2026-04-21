@@ -1,117 +1,90 @@
-# 🎓 Student Project Management System 🚀
+# 🎓 Student Project Management System (JiraGit Integration) 🚀
 
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.11-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
-[![Status](https://img.shields.io/badge/Status-Stable-success.svg)](https://github.com/kimmmdcre/LAPTRINHJAVAKIM)
+[![Security](https://img.shields.io/badge/Security-JWT%20%2B%20RBAC-red.svg)](https://spring.io/projects/spring-security)
+[![Swagger](https://img.shields.io/badge/API-Swagger--UI-blue.svg)](https://swagger.io/)
 
-**JiraGit System** là nền tảng quản lý dự án học thuật thế hệ mới, được thiết kế để kết nối quy trình giảng dạy với các công cụ phát triển chuyên nghiệp như **Jira** và **GitHub**. Hệ thống không chỉ quản lý nhiệm vụ mà còn phân tích dữ liệu thực (Real-world Data) để đưa ra các báo cáo khách quan về năng lực sinh viên.
+**JiraGit System** là một giải pháp quản trị dự án phần mềm chuyên nghiệp, được thiết kế đặc biệt cho môi trường đào tạo CNTT. Hệ thống giúp thu hẹp khoảng cách giữa yêu cầu (Jira) và thực thi (GitHub), cho phép Giảng viên và Sinh viên theo dõi tiến độ một cách minh bạch và tự động hóa các báo cáo học thuật.
 
 ---
 
-## 🌟 Tính Năng Nổi Bật
+## 🌟 Chức Năng Cốt Lõi
 
-### 🏛️ Quản Trị Viên (Admin)
+### 📂 Quản Lý Đặc Tả & Yêu Cầu (Jira Sync)
+- **Tự động đồng bộ**: Lấy danh sách Issues trực tiếp từ Jira Cloud về hệ thống.
+- **Tạo tài liệu SRS**: Tự động xuất file **Software Requirements Specification (SRS)** dưới dạng Word (.docx) chuyên nghiệp từ các yêu cầu đã quản lý trên Jira.
 
-- **Quản lý thực thể tập trung**: Phân quyền Giảng viên, Sinh viên và quản lý danh sách phòng ban/nhóm.
-- **Trung tâm Tích hợp (Real-time Config)**: Cấu hình API Jira và GitHub Token với bộ kiểm tra kết nối trực tiếp (**Live Connection Test**) đảm bảo tính sẵn sàng của hệ thống.
-- **Validation Chặt chẽ**: Hệ thống tự động kiểm tra định dạng Repo và Token trước khi lưu trữ.
+### 💻 Theo Dõi Phát Triển (GitHub Sync)
+- **Contribution Tracking**: Đồng bộ Commits, thống kê tần suất và chất lượng code của từng thành viên.
+- **Smart Mapping**: Tự động liên kết Commit với Nhiệm vụ dựa trên ID Jira (ví dụ: `[PROJ-123]`) và tự động chuyển trạng thái hoàn thành (`DONE`) nếu message có từ khóa như `fix`, `done`.
 
-### 👨‍🏫 Giảng Viên (Teacher)
+### 📊 Hệ Thống Báo Cáo Đa Dạng
+- **Dashboard trực quan**: Biểu đồ nhiệt (Heatmap) commit, biểu đồ tiến độ dự án (Area Chart).
+- **Xuất báo cáo 1-Click**: Hỗ trợ xuất báo cáo tổng hợp đóng góp cá nhân và tiến độ nhóm dưới các định dạng **PDF, Word, CSV**.
 
-- **Dashboard Lớp học**: Quản lý và theo dõi danh sách các nhóm dự án được phân công.
-- **Analytics Chuyên sâu**: Theo dõi tiến độ qua biểu đồ nhiệt (**Heatmap**) và biểu đồ biến động code cá nhân.
-- **Báo cáo Đa định dạng**: Xuất báo cáo kết quả (PDF/Word) chuyên nghiệp phục vụ công tác chấm điểm.
-
-### 👑 Trưởng Nhóm (Leader)
-
-- **Auto-Sync 1-Click**: Đồng bộ hóa toàn bộ Issues từ Jira và Commits từ GitHub chỉ trong vài giây.
-- **Smart Mapping**: Tự động liên kết Commit với Nhiệm vụ dựa trên mã Jira (e.g. `PROJ-123`) trong message commit.
-- **Ghost Task Detection**: Hệ thống tự động cảnh báo các nhiệm vụ "DONE" nhưng không có commit tương ứng (vấn đề sinh viên làm giả tiến độ).
-
-### 💻 Sinh Viên (Member)
-
-- **Task Management**: Giao diện Kanban hiện đại để cập nhật trạng thái công việc.
-- **Contribution Tracking**: Theo dõi lịch sử đóng góp và điểm đóng góp cá nhân để tự điều chỉnh hiệu suất.
+### 🔐 Bảo Mật & Phân Quyền (RBAC)
+- **Cơ chế**: Spring Security 6 + JSON Web Token (JWT).
+- **Vai trò**: Phân quyền chi tiết cho `ADMIN`, `GIANG_VIEN`, và `SINH_VIEN`.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend
-
-- **Core**: Spring Boot 3.5.11 (Java 21)
+### 🚀 Backend
+- **Core Framework**: Spring Boot 3.2.5 (Java 21)
+- **Architecture**: Adapter Pattern (Dễ dàng mở rộng cho các nền tảng khác)
+- **Security**: Spring Security 6.x + JWT Authentication
+- **Reporting**: Apache POI (Word), OpenPDF (PDF)
+- **API Docs**: SpringDoc OpenAPI (Swagger UI)
 - **Database**: SQL Server (MSSQL)
-- **Client**: Spring WebClient (Tích hợp API GitHub/Jira không đồng bộ)
-- **Security**: Type-safe integration với `ParameterizedTypeReference`.
 
-### Frontend
-
+### 🎨 Frontend
 - **Framework**: React 19 (Vite)
-- **Styling**: Vanilla CSS with Glassmorphism Design System.
-- **Data Viz**: Recharts (Hiển thị biểu đồ phức tạp).
-- **Icons**: Lucide React.
+- **Styling**: Vanilla CSS (Modern Design System)
+- **Visualization**: Recharts
 
 ---
 
-## 🚀 Hướng Dẫn Cài Đặt
+## 🚦 Hướng Dẫn Cài Đặt
 
-### 1. Backend Setup
+### 1. Chuẩn Bị
+- **JDK 21**
+- **Maven 3.x**
+- **SQL Server** (Đã tạo DB tên `prjAppDB`)
 
-1. Đảm bảo đã cài đặt **JDK 21** và **Maven**.
-2. Tạo cơ sở dữ liệu `prjAppDB` trong SQL Server.
-3. Cấu hình thông tin kết nối trong `backend/src/main/resources/application.properties`:
+### 2. Cấu hình Backend
+Sửa file `backend/src/main/resources/application.properties`:
+```properties
+spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=prjAppDB;encrypt=true;trustServerCertificate=true;
+spring.datasource.username=YOUR_USER
+spring.datasource.password=YOUR_PASSWORD
 
-   ```properties
-   spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=prjAppDB;encrypt=true;trustServerCertificate=true;
-   spring.datasource.username=YOUR_USER
-   spring.datasource.password=YOUR_PASSWORD
-   ```
+# JWT Config (Optional)
+app.jwtSecret=your_secret_key_very_long_string_1234567890
+app.jwtExpirationMs=86400000
+```
 
-4. Khởi chạy ứng dụng:
+### 3. Khởi Chạy
+**Backend:**
+```bash
+cd backend
+mvn spring-boot:run
+```
+ Truy cập Swagger UI tại: `http://localhost:8080/swagger-ui/index.html`
 
-   ```bash
-   cd backend
-   mvn spring-boot:run
-   ```
-
-### 2. Frontend Setup
-
-1. Đảm bảo đã cài đặt **Node.js 18+**.
-2. Cài đặt dependencies:
-
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-3. Khởi chạy:
-
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-
----
-
-## 🔑 Quy Tắc Cấu Hình Tích Hợp
-
-> [!IMPORTANT]
-> **GitHub**: Yêu cầu Personal Access Token (PAT) với quyền `repo`.
-> **Jira**: Sử dụng API Token kết hợp với Email đăng ký Jira.
-
-**Mẫu Commit Message chuẩn:**
-`[PROJ-123] Mô tả chi tiết các thay đổi của bạn`
-*(Hệ thống sẽ dựa vào mã `PROJ-123` để tự động tích hợp dữ liệu)*
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ---
 
 ## 👥 Nhóm Phát Triển - Kimmmdcre
 
-Dự án được xây dựng với tâm huyết mang lại một công cụ làm việc thực tế nhất cho môi trường đại học. Mọi đóng góp ý kiến vui lòng liên hệ đội ngũ phát triển.
+Dự án được xây dựng nhằm cung cấp một hệ thống quản lý chuẩn chỉnh cho sinh viên Java. Mọi thắc mắc vui lòng liên hệ đội ngũ phát triển.
 
----
-
-### 📝 Bản quyền
-
-© 2026 - Phát triển bởi Kimmmdcre Team
+© 2026 - Phát triển bởi **Kimmmdcre Team**

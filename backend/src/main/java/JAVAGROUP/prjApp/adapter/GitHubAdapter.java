@@ -26,20 +26,20 @@ public class GitHubAdapter implements IGitHubClient {
     }
 
     @Override
-    public List<CommitDTO> fetchCommits(String repoInput, String token, String since) {
-        String repoPath = parseRepoPath(repoInput);
-        log.info("Starting fetchCommits for repo: {}", repoPath);
+    public List<CommitDTO> layDanhSachCommit(String repoDauVao, String maTruyCap, String tuNgay) {
+        String repoPath = parseRepoPath(repoDauVao);
+        log.info("Bắt đầu layDanhSachCommit cho repo: {}", repoPath);
 
         try {
             String uri = "/repos/" + repoPath + "/commits";
-            if (since != null && !since.isEmpty()) {
-                uri += "?since=" + since;
+            if (tuNgay != null && !tuNgay.isEmpty()) {
+                uri += "?since=" + tuNgay;
             }
-            log.info("Calling GitHub API: https://api.github.com{}", uri);
+            log.info("Gọi GitHub API: https://api.github.com{}", uri);
             
             List<Map<String, Object>> rawCommits = webClient.get()
                     .uri(uri)
-                    .header("Authorization", "token " + token)
+                    .header("Authorization", "token " + maTruyCap)
                     .header("Accept", "application/vnd.github+json")
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
@@ -53,52 +53,52 @@ public class GitHubAdapter implements IGitHubClient {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> commitInfo = (Map<String, Object>) raw.get("commit");
                 if (commitInfo == null) continue;
-                String message = (String) commitInfo.get("message");
+                String thongDiep = (String) commitInfo.get("message");
                 
                 // Parse date if available
-                LocalDateTime time = LocalDateTime.now();
+                LocalDateTime thoiGian = LocalDateTime.now();
                 try {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> author = (Map<String, Object>) commitInfo.get("author");
                     if (author != null && author.get("date") != null) {
-                        time = ZonedDateTime.parse((String) author.get("date")).toLocalDateTime();
+                        thoiGian = ZonedDateTime.parse((String) author.get("date")).toLocalDateTime();
                     }
                 } catch (Exception e) {
-                    log.warn("Failed to parse commit date for {}: {}", sha, e.getMessage());
+                    log.warn("Lỗi phân tích ngày commit cho {}: {}", sha, e.getMessage());
                 }
 
-                CommitDTO dto = new CommitDTO(sha, message != null ? message : "", time, null);
+                CommitDTO dto = new CommitDTO(sha, thongDiep != null ? thongDiep : "", thoiGian, null);
                 result.add(dto);
             }
-            log.info("Successfully fetched {} commits from GitHub", result.size());
+            log.info("Đã lấy thành công {} commits từ GitHub", result.size());
             return result;
 
         } catch (WebClientResponseException e) {
-            log.error("GitHub API error: {} {} - {}", e.getStatusCode(), e.getStatusText(), e.getResponseBodyAsString());
+            log.error("Lỗi GitHub API: {} {} - {}", e.getStatusCode(), e.getStatusText(), e.getResponseBodyAsString());
             throw new RuntimeException("Lỗi từ GitHub API: " + e.getStatusCode().value() + " - " + e.getStatusText());
         } catch (Exception e) {
-            log.error("Unexpected error fetching GitHub commits: ", e);
+            log.error("Lỗi bất ngờ khi lấy commit GitHub: ", e);
             throw new RuntimeException("Lỗi hệ thống khi đồng bộ GitHub: " + e.getMessage());
         }
     }
 
     @Override
-    public void testConnection(String repoInput, String token) {
-        String repoPath = parseRepoPath(repoInput);
-        log.info("Testing GitHub connection for: {}", repoPath);
+    public void kiemTraKetNoi(String repoDauVao, String maTruyCap) {
+        String repoPath = parseRepoPath(repoDauVao);
+        log.info("Đang kiểm tra kết nối GitHub cho: {}", repoPath);
         try {
             String uri = "/repos/" + repoPath;
-            log.info("Testing GitHub connection at: https://api.github.com{}", uri);
+            log.info("Đang test kết nối GitHub tại: https://api.github.com{}", uri);
             webClient.get()
                     .uri(uri)
-                    .header("Authorization", "token " + token)
+                    .header("Authorization", "token " + maTruyCap)
                     .header("Accept", "application/vnd.github+json")
                     .retrieve()
                     .toBodilessEntity()
                     .block();
-            log.info("GitHub connection test successful for {}", repoPath);
+            log.info("Kiểm tra kết nối GitHub thành công cho {}", repoPath);
         } catch (WebClientResponseException e) {
-            log.error("GitHub Test failed: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Lỗi test GitHub: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
             if (e.getStatusCode().value() == 404) {
                 throw new RuntimeException("Không tìm thấy repository. Vui lòng kiểm tra lại tên repo (owner/repo).");
             } else if (e.getStatusCode().value() == 401) {
@@ -106,7 +106,7 @@ public class GitHubAdapter implements IGitHubClient {
             }
             throw new RuntimeException("Lỗi kết nối GitHub: " + e.getStatusCode().value() + " - " + e.getStatusText());
         } catch (Exception e) {
-            log.error("Unexpected GitHub Test error", e);
+            log.error("Lỗi test GitHub bất ngờ", e);
             throw new RuntimeException("Lỗi không xác định khi test GitHub: " + e.getMessage());
         }
     }

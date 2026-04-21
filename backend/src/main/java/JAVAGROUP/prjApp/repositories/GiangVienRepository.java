@@ -3,7 +3,7 @@ package JAVAGROUP.prjApp.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import JAVAGROUP.prjApp.entites.GiangVien;
+import JAVAGROUP.prjApp.entities.GiangVien;
 
 import java.util.Optional;
 import java.util.UUID;

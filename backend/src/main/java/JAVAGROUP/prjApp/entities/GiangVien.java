@@ -1,4 +1,4 @@
-package JAVAGROUP.prjApp.entites;
+package JAVAGROUP.prjApp.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

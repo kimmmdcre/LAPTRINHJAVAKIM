@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-import JAVAGROUP.prjApp.entites.VaiTroNhom;
+import JAVAGROUP.prjApp.entities.VaiTroNhom;
 
 @Data
 @NoArgsConstructor

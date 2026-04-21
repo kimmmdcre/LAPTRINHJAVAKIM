@@ -5,6 +5,9 @@ import JAVAGROUP.prjApp.dtos.YeuCauDTO;
 import JAVAGROUP.prjApp.services.SyncService;
 import JAVAGROUP.prjApp.services.TaskService;
 
+import JAVAGROUP.prjApp.security.UserPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -79,13 +82,15 @@ public class TaskController {
     /**
      * PATCH /api/tasks/nhiem-vu/{id}/assign
      * Body: { "idSinhVien": "uuid" }
-     * Giao nhiệm vụ cho thành viên
+     * Giao nhiệm vụ cho thành viên (Chỉ Trưởng nhóm có quyền)
      */
     @PatchMapping("/nhiem-vu/{id}/assign")
+    @PreAuthorize("hasRole('SINH_VIEN') or hasRole('GIANG_VIEN')")
     public ResponseEntity<Map<String, String>> phanCongNhiemVu(
             @PathVariable String id,
             @RequestBody Map<String, String> body) {
-        taskService.phanCongNhiemVu(id, UUID.fromString(body.get("idSinhVien")));
+        UserPrincipal principal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        taskService.phanCongNhiemVu(id, UUID.fromString(body.get("idSinhVien")), principal.getId());
         return ResponseEntity.ok(Map.of("message", "Phân công nhiệm vụ thành công"));
     }
 }

@@ -2,7 +2,7 @@ package JAVAGROUP.prjApp.controllers;
 
 import JAVAGROUP.prjApp.dtos.NhomDTO;
 import JAVAGROUP.prjApp.dtos.ThanhVienNhomDTO;
-import JAVAGROUP.prjApp.entites.Nhom;
+import JAVAGROUP.prjApp.entities.Nhom;
 import JAVAGROUP.prjApp.services.GroupService;
 
 import org.springframework.http.ResponseEntity;

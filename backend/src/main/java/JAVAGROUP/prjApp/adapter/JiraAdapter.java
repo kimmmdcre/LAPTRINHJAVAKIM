@@ -25,14 +25,14 @@ public class JiraAdapter implements IJiraClient {
     }
 
     @Override
-    public List<YeuCauDTO> fetchIssues(String url, String email, String token, String projectKey) {
-        log.info("Fetching Jira issues from: {} for project: {}", url, projectKey);
+    public List<YeuCauDTO> layDanhSachYeuCau(String duongDan, String email, String maTruyCap, String maDuAn) {
+        log.info("Đang lấy danh sách yêu cầu từ Jira: {} cho dự án: {}", duongDan, maDuAn);
         try {
-            String auth = email + ":" + token;
+            String auth = email + ":" + maTruyCap;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
 
             Map<String, Object> response = webClient.get()
-                    .uri(url + "/rest/api/3/search?jql=project={key}", projectKey)
+                    .uri(duongDan + "/rest/api/3/search?jql=project={key}", maDuAn)
                     .header("Authorization", "Basic " + encodedAuth)
                     .header("Accept", "application/json")
                     .retrieve()
@@ -50,56 +50,56 @@ public class JiraAdapter implements IJiraClient {
                 String id = (String) issue.get("id");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> fields = (Map<String, Object>) issue.get("fields");
-                String summary = fields != null ? (String) fields.get("summary") : "";
-                String description = fields != null ? (String) fields.get("description") : "";
+                String tieuDe = fields != null ? (String) fields.get("summary") : "";
+                String moTa = fields != null ? (String) fields.get("description") : "";
                 
-                String statusName = "TODO";
+                String trangThai = "TODO";
                 if (fields != null && fields.get("status") != null) {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> statusMap = (Map<String, Object>) fields.get("status");
-                    statusName = statusMap.get("name").toString();
+                    trangThai = statusMap.get("name").toString();
                 }
                 
-                result.add(new YeuCauDTO(id, null, summary, description, statusName));
+                result.add(new YeuCauDTO(id, null, tieuDe, moTa, trangThai));
             }
-            log.info("Successfully fetched {} issues from Jira", result.size());
+            log.info("Đã lấy thành công {} yêu cầu từ Jira", result.size());
             return result;
         } catch (WebClientResponseException e) {
-            log.error("Jira API error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Lỗi Jira API: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("Lỗi kết nối Jira: " + e.getStatusCode().value());
         } catch (Exception e) {
-            log.error("Unexpected error fetching Jira issues", e);
+            log.error("Lỗi bất ngờ khi lấy yêu cầu Jira", e);
             throw new RuntimeException("Lỗi đồng bộ Jira: " + e.getMessage());
         }
     }
 
     @Override
-    public void testConnection(String url, String email, String token, String projectKey) {
-        log.info("Testing Jira connection for: {} (Project: {})", url, projectKey);
+    public void kiemTraKetNoi(String duongDan, String email, String maTruyCap, String maDuAn) {
+        log.info("Đang kiểm tra kết nối Jira cho: {} (Dự án: {})", duongDan, maDuAn);
         try {
-            String auth = email + ":" + token;
+            String auth = email + ":" + maTruyCap;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
 
             webClient.get()
-                    .uri(url + "/rest/api/3/project/{key}", projectKey)
+                    .uri(duongDan + "/rest/api/3/project/{key}", maDuAn)
                     .header("Authorization", "Basic " + encodedAuth)
                     .header("Accept", "application/json")
                     .retrieve()
                     .toBodilessEntity()
                     .block();
-            log.info("Jira connection test successful for {}", projectKey);
+            log.info("Kiểm tra kết nối Jira thành công cho {}", maDuAn);
         } catch (WebClientResponseException e) {
-            log.error("Jira Test failed: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Lỗi test Jira: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
             if (e.getStatusCode().value() == 401) {
                 throw new RuntimeException("Email hoặc API Token của Jira không chính xác.");
             } else if (e.getStatusCode().value() == 404) {
-                throw new RuntimeException("Không tìm thấy Project Key '" + projectKey + "' trên Jira của bạn.");
+                throw new RuntimeException("Không tìm thấy Project Key '" + maDuAn + "' trên Jira của bạn.");
             } else if (e.getStatusCode().value() == 403) {
                 throw new RuntimeException("Token không có quyền truy cập vào dự án này (Hãy kiểm tra lại quyền trong Jira).");
             }
             throw new RuntimeException("Lỗi kết nối Jira: " + e.getStatusCode().value());
         } catch (Exception e) {
-            log.error("Unexpected Jira Test error", e);
+            log.error("Lỗi test Jira bất ngờ", e);
             throw new RuntimeException("Lỗi hệ thống khi test Jira: " + e.getMessage());
         }
     }

@@ -6,17 +6,17 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-import JAVAGROUP.prjApp.entites.TrangThaiUser;
+import JAVAGROUP.prjApp.entities.TrangThaiUser;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDTO {
     private UUID id;
-    private String username;
+    private String tenDangNhap;
     private String hoTen;
     private String email;
     private TrangThaiUser trangThai;
     private String maVaiTro;
-    private String password;
+    private String matKhau;
 }

@@ -13,5 +13,9 @@ import java.util.UUID;
 public class ThongKeGitDTO {
     private UUID idNhom;
     private int tongSoCommit;
-    private Map<String, Integer> commitPerSinhVien;
+    private Map<String, Integer> soCommitTheoSinhVien;
+    
+    // Thống kê nâng cao theo yêu cầu
+    private Map<String, Double> chiSoTanSuat; // Độ đều đặn (0.0 - 1.0)
+    private Map<String, Double> chiSoChatLuong; // Chất lượng thông điệp và mapping (0.0 - 1.0)
 }

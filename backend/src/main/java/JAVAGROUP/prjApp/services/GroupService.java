@@ -2,7 +2,7 @@ package JAVAGROUP.prjApp.services;
 
 import JAVAGROUP.prjApp.dtos.NhomDTO;
 import JAVAGROUP.prjApp.dtos.ThanhVienNhomDTO;
-import JAVAGROUP.prjApp.entites.*;
+import JAVAGROUP.prjApp.entities.*;
 import JAVAGROUP.prjApp.repositories.*;
 
 import org.springframework.stereotype.Service;

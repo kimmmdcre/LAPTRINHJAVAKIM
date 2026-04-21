@@ -3,26 +3,32 @@ package JAVAGROUP.prjApp.services;
 import JAVAGROUP.prjApp.dtos.DongGopDTO;
 import JAVAGROUP.prjApp.dtos.ThongKeGitDTO;
 import JAVAGROUP.prjApp.dtos.TienDoDTO;
-import JAVAGROUP.prjApp.entites.CommitVCS;
-import JAVAGROUP.prjApp.entites.NhiemVu;
-import JAVAGROUP.prjApp.entites.SinhVien;
+import JAVAGROUP.prjApp.entities.CommitVCS;
+import JAVAGROUP.prjApp.entities.NhiemVu;
+import JAVAGROUP.prjApp.entities.SinhVien;
+import JAVAGROUP.prjApp.entities.YeuCau;
 import JAVAGROUP.prjApp.repositories.CommitVCSRepository;
 import JAVAGROUP.prjApp.repositories.NhiemVuRepository;
 import JAVAGROUP.prjApp.repositories.ThanhVienNhomRepository;
+import JAVAGROUP.prjApp.repositories.YeuCauRepository;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.apache.poi.xwpf.usermodel.*;
-import com.lowagie.text.*;
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Paragraph;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.PdfPTable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,17 +37,20 @@ public class ReportService {
     private final NhiemVuRepository nhiemVuRepository;
     private final CommitVCSRepository commitVCSRepository;
     private final ThanhVienNhomRepository thanhVienNhomRepository;
+    private final YeuCauRepository yeuCauRepository;
 
     public ReportService(NhiemVuRepository nhiemVuRepository,
                          CommitVCSRepository commitVCSRepository,
-                         ThanhVienNhomRepository thanhVienNhomRepository) {
+                         ThanhVienNhomRepository thanhVienNhomRepository,
+                         YeuCauRepository yeuCauRepository) {
         this.nhiemVuRepository = nhiemVuRepository;
         this.commitVCSRepository = commitVCSRepository;
         this.thanhVienNhomRepository = thanhVienNhomRepository;
+        this.yeuCauRepository = yeuCauRepository;
     }
 
     public TienDoDTO xemTienDoDuAn(UUID idNhom) {
-        List<NhiemVu> tasks = nhiemVuRepository.findAll().stream()
+        java.util.List<NhiemVu> tasks = nhiemVuRepository.findAll().stream()
                 .filter(nv -> nv.getYeuCau() != null
                         && nv.getYeuCau().getNhom() != null
                         && idNhom.equals(nv.getYeuCau().getNhom().getIdNhom()))
@@ -54,25 +63,54 @@ public class ReportService {
     }
 
     public ThongKeGitDTO thongKeGithub(UUID idNhom) {
-        List<CommitVCS> commits = commitVCSRepository.findAll().stream()
+        java.util.List<CommitVCS> commits = commitVCSRepository.findAll().stream()
                 .filter(c -> c.getNhiemVu() != null
                         && c.getNhiemVu().getYeuCau() != null
                         && c.getNhiemVu().getYeuCau().getNhom() != null
                         && idNhom.equals(c.getNhiemVu().getYeuCau().getNhom().getIdNhom()))
                 .collect(Collectors.toList());
 
-        Map<String, Integer> commitPerSV = new HashMap<>();
+        java.util.Map<String, Integer> soCommitTheoSinhVien = new HashMap<>();
+        java.util.Map<String, Set<LocalDate>> ngayCommitTheoSinhVien = new HashMap<>();
+        java.util.Map<String, Double> tongDiemChatLuong = new HashMap<>();
+
         for (CommitVCS c : commits) {
             if (c.getSinhVien() != null) {
                 String name = c.getSinhVien().getHoTen();
-                commitPerSV.merge(name, 1, Integer::sum);
+                soCommitTheoSinhVien.merge(name, 1, Integer::sum);
+                
+                if (c.getThoiGian() != null) {
+                    LocalDate date = c.getThoiGian().toLocalDate();
+                    ngayCommitTheoSinhVien.computeIfAbsent(name, k -> new HashSet<>())
+                            .add(date);
+                }
+
+                double diem = 0.0;
+                if (c.getThongDiep() != null) {
+                    if (c.getThongDiep().length() > 20) diem += 0.4;
+                    if (c.getThongDiep().matches(".*[A-Z]+-\\d+.*")) diem += 0.6;
+                }
+                tongDiemChatLuong.merge(name, diem, Double::sum);
             }
         }
-        return new ThongKeGitDTO(idNhom, commits.size(), commitPerSV);
+
+        java.util.Map<String, Double> chiSoTanSuat = new HashMap<>();
+        java.util.Map<String, Double> chiSoChatLuong = new HashMap<>();
+
+        soCommitTheoSinhVien.forEach((name, count) -> {
+            Set<LocalDate> days = ngayCommitTheoSinhVien.getOrDefault(name, new HashSet<>());
+            int uniqueDays = days.size();
+            chiSoTanSuat.put(name, Math.min(1.0, (double) uniqueDays / 7.0));
+
+            Double totalDiem = tongDiemChatLuong.getOrDefault(name, 0.0);
+            chiSoChatLuong.put(name, Math.min(1.0, totalDiem / count.doubleValue()));
+        });
+
+        return new ThongKeGitDTO(idNhom, commits.size(), soCommitTheoSinhVien, chiSoTanSuat, chiSoChatLuong);
     }
 
-    public List<Map<String, Object>> xemLichSuTienDo(UUID idNhom) {
-        List<NhiemVu> tasks = nhiemVuRepository.findAll().stream()
+    public java.util.List<java.util.Map<String, Object>> xemLichSuTienDo(UUID idNhom) {
+        java.util.List<NhiemVu> tasks = nhiemVuRepository.findAll().stream()
                 .filter(nv -> nv.getYeuCau() != null
                         && nv.getYeuCau().getNhom() != null
                         && idNhom.equals(nv.getYeuCau().getNhom().getIdNhom())
@@ -81,7 +119,7 @@ public class ReportService {
                 .sorted(Comparator.comparing(NhiemVu::getThoiGianCapNhat))
                 .collect(Collectors.toList());
 
-        Map<String, Integer> hoanThanhTheoNgay = new LinkedHashMap<>();
+        java.util.Map<String, Integer> hoanThanhTheoNgay = new LinkedHashMap<>();
         int currentTotal = 0;
         
         for (NhiemVu nv : tasks) {
@@ -90,9 +128,9 @@ public class ReportService {
             hoanThanhTheoNgay.put(date, currentTotal); 
         }
 
-        List<Map<String, Object>> data = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : hoanThanhTheoNgay.entrySet()) {
-            Map<String, Object> point = new HashMap<>();
+        java.util.List<java.util.Map<String, Object>> data = new ArrayList<>();
+        for (java.util.Map.Entry<String, Integer> entry : hoanThanhTheoNgay.entrySet()) {
+            java.util.Map<String, Object> point = new HashMap<>();
             point.put("ngay", entry.getKey());
             point.put("hoanThanh", entry.getValue());
             data.add(point);
@@ -100,8 +138,8 @@ public class ReportService {
         return data;
     }
 
-    public List<Map<String, Object>> xemLichSuCommitCaNhan(UUID idSinhVien) {
-        List<CommitVCS> commits = commitVCSRepository.findAll().stream()
+    public java.util.List<java.util.Map<String, Object>> xemLichSuCommitCaNhan(UUID idSinhVien) {
+        java.util.List<CommitVCS> commits = commitVCSRepository.findAll().stream()
                 .filter(c -> c.getSinhVien() != null && idSinhVien.equals(c.getSinhVien().getId()) && c.getThoiGian() != null)
                 .sorted(Comparator.comparing(CommitVCS::getThoiGian))
                 .collect(Collectors.toList());
@@ -109,8 +147,8 @@ public class ReportService {
         return toHistoryData(commits);
     }
 
-    public List<Map<String, Object>> xemLichSuCommitNhom(UUID idNhom) {
-        List<CommitVCS> commits = commitVCSRepository.findAll().stream()
+    public java.util.List<java.util.Map<String, Object>> xemLichSuCommitNhom(UUID idNhom) {
+        java.util.List<CommitVCS> commits = commitVCSRepository.findAll().stream()
                 .filter(c -> c.getNhiemVu() != null
                         && c.getNhiemVu().getYeuCau() != null
                         && c.getNhiemVu().getYeuCau().getNhom() != null
@@ -122,16 +160,16 @@ public class ReportService {
         return toHistoryData(commits);
     }
 
-    private List<Map<String, Object>> toHistoryData(List<CommitVCS> commits) {
-        Map<String, Integer> countPerDay = new LinkedHashMap<>();
+    private java.util.List<java.util.Map<String, Object>> toHistoryData(java.util.List<CommitVCS> commits) {
+        java.util.Map<String, Integer> countPerDay = new LinkedHashMap<>();
         for (CommitVCS c : commits) {
             String date = c.getThoiGian().toLocalDate().toString();
-            countPerDay.merge(date, 1, Integer::sum);
+            countPerDay.merge(date, 1, (oldValue, newValue) -> oldValue + newValue);
         }
 
-        List<Map<String, Object>> data = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : countPerDay.entrySet()) {
-            Map<String, Object> point = new HashMap<>();
+        java.util.List<java.util.Map<String, Object>> data = new ArrayList<>();
+        for (java.util.Map.Entry<String, Integer> entry : countPerDay.entrySet()) {
+            java.util.Map<String, Object> point = new HashMap<>();
             point.put("date", entry.getKey());
             point.put("count", entry.getValue());
             data.add(point);
@@ -139,11 +177,11 @@ public class ReportService {
         return data;
     }
 
-    public List<DongGopDTO> xemDongGopCaNhan(UUID idNhom) {
+    public java.util.List<DongGopDTO> xemDongGopCaNhan(UUID idNhom) {
         return thanhVienNhomRepository.findById_IdNhom(idNhom).stream()
                 .map(tv -> {
                     SinhVien sv = tv.getSinhVien();
-                    List<NhiemVu> tasks = nhiemVuRepository.findBySinhVien_Id(sv.getId());
+                    java.util.List<NhiemVu> tasks = nhiemVuRepository.findBySinhVien_Id(sv.getId());
                     long doneTasks = tasks.stream()
                             .filter(nv -> "DONE".equalsIgnoreCase(nv.getTrangThai())).count();
                     long commitCount = commitVCSRepository.findAll().stream()
@@ -156,7 +194,7 @@ public class ReportService {
 
     public Resource xuatBaoCaoTongHop(UUID idNhom) {
         TienDoDTO tienDo = xemTienDoDuAn(idNhom);
-        List<DongGopDTO> dongGops = xemDongGopCaNhan(idNhom);
+        java.util.List<DongGopDTO> dongGops = xemDongGopCaNhan(idNhom);
 
         StringBuilder sb = new StringBuilder();
         sb.append("BAO CAO NHOM: ").append(idNhom).append("\n\n");
@@ -176,7 +214,7 @@ public class ReportService {
 
     public Resource xuatBaoCaoDocx(UUID idNhom) throws IOException {
         TienDoDTO tienDo = xemTienDoDuAn(idNhom);
-        List<DongGopDTO> dongGops = xemDongGopCaNhan(idNhom);
+        java.util.List<DongGopDTO> dongGops = xemDongGopCaNhan(idNhom);
 
         try (XWPFDocument doc = new XWPFDocument();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -211,14 +249,14 @@ public class ReportService {
 
     public Resource xuatBaoCaoPdf(UUID idNhom) {
         TienDoDTO tienDo = xemTienDoDuAn(idNhom);
-        List<DongGopDTO> dongGops = xemDongGopCaNhan(idNhom);
+        java.util.List<DongGopDTO> dongGops = xemDongGopCaNhan(idNhom);
 
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            com.lowagie.text.Document document = new com.lowagie.text.Document();
+            Document document = new Document();
             PdfWriter.getInstance(document, out);
             document.open();
 
-            com.lowagie.text.Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
             Paragraph title = new Paragraph("BAO CAO TONG HOP NHOM", fontTitle);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
@@ -242,6 +280,61 @@ public class ReportService {
             return new ByteArrayResource(out.toByteArray());
         } catch (Exception e) {
             throw new RuntimeException("Lỗi tạo PDF", e);
+        }
+    }
+
+    public Resource xuatBaoCaoSRS(UUID idNhom) throws IOException {
+        java.util.List<YeuCau> requirements = yeuCauRepository.findByNhom_IdNhom(idNhom);
+
+        try (XWPFDocument doc = new XWPFDocument();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            
+            XWPFParagraph title = doc.createParagraph();
+            title.setAlignment(ParagraphAlignment.CENTER);
+            XWPFRun titleRun = title.createRun();
+            titleRun.setText("SOFTWARE REQUIREMENTS SPECIFICATION (SRS)");
+            titleRun.setBold(true);
+            titleRun.setFontSize(22);
+            titleRun.addBreak();
+            
+            XWPFParagraph info = doc.createParagraph();
+            info.createRun().setText("Mã nhóm: " + idNhom);
+            info.createRun().addBreak();
+            info.createRun().setText("Ngày xuất: " + LocalDate.now());
+            
+            XWPFParagraph section1 = doc.createParagraph();
+            XWPFRun r1 = section1.createRun();
+            r1.setText("1. GIỚI THIỆU");
+            r1.setBold(true);
+            r1.setFontSize(14);
+            
+            XWPFParagraph p1 = doc.createParagraph();
+            p1.createRun().setText("Tài liệu này đặc tả các yêu cầu chức năng cho dự án môn học Java, được đồng bộ trực tiếp từ hệ thống quản lý Jira.");
+
+            XWPFParagraph section2 = doc.createParagraph();
+            XWPFRun r2 = section2.createRun();
+            r2.setText("2. YÊU CẦU CHỨC NĂNG");
+            r2.setBold(true);
+            r2.setFontSize(14);
+
+            for (int i = 0; i < requirements.size(); i++) {
+                YeuCau yc = requirements.get(i);
+                XWPFParagraph p = doc.createParagraph();
+                XWPFRun run = p.createRun();
+                run.setText((i + 1) + ". " + yc.getTieuDe());
+                run.setBold(true);
+                
+                XWPFParagraph desc = doc.createParagraph();
+                desc.setIndentationLeft(720); 
+                desc.createRun().setText("Mô tả: " + (yc.getMoTa() != null ? yc.getMoTa() : "Không có mô tả."));
+                
+                XWPFParagraph status = doc.createParagraph();
+                status.setIndentationLeft(720);
+                status.createRun().setText("Trạng thái hiện tại: " + yc.getTrangThai());
+            }
+
+            doc.write(out);
+            return new ByteArrayResource(out.toByteArray());
         }
     }
 }

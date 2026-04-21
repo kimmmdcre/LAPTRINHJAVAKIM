@@ -9,6 +9,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -84,6 +85,7 @@ public class ReportController {
      * Xuất báo cáo tổng hợp dưới dạng file CSV
      */
     @GetMapping("/{idNhom}/export")
+    @PreAuthorize("hasRole('GIANG_VIEN') or hasRole('ADMIN')")
     public ResponseEntity<Resource> xuatBaoCao(@PathVariable UUID idNhom) {
         Resource file = reportService.xuatBaoCaoTongHop(idNhom);
         return ResponseEntity.ok()
@@ -94,6 +96,7 @@ public class ReportController {
     }
 
     @GetMapping("/{idNhom}/export/docx")
+    @PreAuthorize("hasRole('GIANG_VIEN') or hasRole('ADMIN')")
     public ResponseEntity<Resource> xuatBaoCaoDocx(@PathVariable UUID idNhom) throws java.io.IOException {
         Resource file = reportService.xuatBaoCaoDocx(idNhom);
         return ResponseEntity.ok()
@@ -103,11 +106,26 @@ public class ReportController {
     }
 
     @GetMapping("/{idNhom}/export/pdf")
+    @PreAuthorize("hasRole('GIANG_VIEN') or hasRole('ADMIN')")
     public ResponseEntity<Resource> xuatBaoCaoPdf(@PathVariable UUID idNhom) {
         Resource file = reportService.xuatBaoCaoPdf(idNhom);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/pdf"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bao-cao-" + idNhom + ".pdf\"")
+                .body(file);
+    }
+
+    /**
+     * GET /api/reports/{idNhom}/export/srs
+     * Xuất tài liệu Đặc tả yêu cầu phần mềm (SRS) dưới dạng file Docx
+     */
+    @GetMapping("/{idNhom}/export/srs")
+    @PreAuthorize("hasRole('SINH_VIEN') or hasRole('GIANG_VIEN') or hasRole('ADMIN')")
+    public ResponseEntity<Resource> xuatBaoCaoSRS(@PathVariable UUID idNhom) throws java.io.IOException {
+        Resource file = reportService.xuatBaoCaoSRS(idNhom);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"SRS-" + idNhom + ".docx\"")
                 .body(file);
     }
 }

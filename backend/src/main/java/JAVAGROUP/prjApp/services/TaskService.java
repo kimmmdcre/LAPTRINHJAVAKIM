@@ -2,11 +2,15 @@ package JAVAGROUP.prjApp.services;
 
 import JAVAGROUP.prjApp.dtos.NhiemVuDTO;
 import JAVAGROUP.prjApp.dtos.YeuCauDTO;
-import JAVAGROUP.prjApp.entites.NhiemVu;
-import JAVAGROUP.prjApp.entites.SinhVien;
+import JAVAGROUP.prjApp.entities.NhiemVu;
+import JAVAGROUP.prjApp.entities.SinhVien;
 import JAVAGROUP.prjApp.repositories.NhiemVuRepository;
 import JAVAGROUP.prjApp.repositories.SinhVienRepository;
 import JAVAGROUP.prjApp.repositories.YeuCauRepository;
+import JAVAGROUP.prjApp.repositories.ThanhVienNhomRepository;
+import JAVAGROUP.prjApp.entities.ThanhVienNhom;
+import JAVAGROUP.prjApp.entities.VaiTroNhom;
+import JAVAGROUP.prjApp.entities.ThanhVienNhomId;
 
 import org.springframework.stereotype.Service;
 
@@ -21,15 +25,18 @@ public class TaskService {
     private final NhiemVuRepository nhiemVuRepository;
     private final SinhVienRepository sinhVienRepository;
     private final JAVAGROUP.prjApp.repositories.NhomRepository nhomRepository;
+    private final ThanhVienNhomRepository thanhVienNhomRepository;
 
     public TaskService(YeuCauRepository yeuCauRepository, 
                        NhiemVuRepository nhiemVuRepository,
                        SinhVienRepository sinhVienRepository,
-                       JAVAGROUP.prjApp.repositories.NhomRepository nhomRepository) {
+                       JAVAGROUP.prjApp.repositories.NhomRepository nhomRepository,
+                       ThanhVienNhomRepository thanhVienNhomRepository) {
         this.yeuCauRepository = yeuCauRepository;
         this.nhiemVuRepository = nhiemVuRepository;
         this.sinhVienRepository = sinhVienRepository;
         this.nhomRepository = nhomRepository;
+        this.thanhVienNhomRepository = thanhVienNhomRepository;
     }
 
     public java.util.List<YeuCauDTO> layYeuCauNhom(UUID idNhom) {
@@ -53,11 +60,23 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    public void phanCongNhiemVu(String idNhiemVu, UUID idSinhVien) {
+    public void phanCongNhiemVu(String idNhiemVu, UUID idSinhVien, UUID idNguoiYeuCau) {
         NhiemVu nv = nhiemVuRepository.findById(idNhiemVu)
                 .orElseThrow(() -> new RuntimeException("Nhiệm vụ không tồn tại: " + idNhiemVu));
+        
+        UUID idNhom = nv.getYeuCau().getNhom().getIdNhom();
+        
+        // Kiểm tra xem người yêu cầu có phải là LEADER của nhóm này không
+        ThanhVienNhomId requesterId = new ThanhVienNhomId(idNhom, idNguoiYeuCau);
+        ThanhVienNhom thanhVien = thanhVienNhomRepository.findById(requesterId)
+                .orElseThrow(() -> new RuntimeException("Bạn không thuộc nhóm này"));
+        
+        if (thanhVien.getVaiTro() != VaiTroNhom.LEADER) {
+            throw new RuntimeException("Chỉ Trưởng nhóm (Leader) mới có quyền phân công nhiệm vụ");
+        }
+
         SinhVien sv = sinhVienRepository.findById(idSinhVien)
-                .orElseThrow(() -> new RuntimeException("Sinh viên không tồn tại: " + idSinhVien));
+                .orElseThrow(() -> new RuntimeException("Sinh viên được phân công không tồn tại: " + idSinhVien));
         
         nv.setSinhVien(sv);
         nhiemVuRepository.save(nv);

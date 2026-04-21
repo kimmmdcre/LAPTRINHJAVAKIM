@@ -1,43 +1,58 @@
 package JAVAGROUP.prjApp.services;
 
-import JAVAGROUP.prjApp.entites.NguoiDung;
-import JAVAGROUP.prjApp.repositories.NguoiDungRepository;
+import JAVAGROUP.prjApp.entities.BlacklistedToken;
+import JAVAGROUP.prjApp.repositories.BlacklistedTokenRepository;
+import JAVAGROUP.prjApp.security.JwtTokenProvider;
 
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class AuthService {
 
-    private final NguoiDungRepository nguoiDungRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider tokenProvider;
+    private final BlacklistedTokenRepository blacklistedTokenRepository;
 
-    public AuthService(NguoiDungRepository nguoiDungRepository) {
-        this.nguoiDungRepository = nguoiDungRepository;
+    public AuthService(AuthenticationManager authenticationManager,
+                       JwtTokenProvider tokenProvider,
+                       BlacklistedTokenRepository blacklistedTokenRepository) {
+        this.authenticationManager = authenticationManager;
+        this.tokenProvider = tokenProvider;
+        this.blacklistedTokenRepository = blacklistedTokenRepository;
     }
 
     /**
-     * Xác thực đăng nhập bằng username + password.
-     * Trả về token (tạm thời trả về username, sau sẽ tích hợp JWT).
+     * Xác thực đăng nhập bằng tên đăng nhập + mật khẩu.
+     * Trả về token JWT thực tế.
      */
-    public NguoiDung dangNhap(String user, String pass) {
-        Optional<NguoiDung> found = nguoiDungRepository.findByUsername(user);
-        if (found.isEmpty()) {
-            throw new RuntimeException("Tên đăng nhập không tồn tại!");
-        }
-        NguoiDung nguoiDung = found.get();
-        // TODO: So sánh password hash (BCrypt) thay vì plain text
-        if (!nguoiDung.getPasswordHash().equals(pass)) {
-            throw new RuntimeException("Sai mật khẩu!");
-        }
-        return nguoiDung;
+    public String dangNhap(String tenDangNhap, String matKhau) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(tenDangNhap, matKhau)
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return tokenProvider.generateToken(authentication);
     }
 
-    /**
-     * Vô hiệu hoá token (logout).
-     * Hiện tại là placeholder - sẽ triển khai blacklist JWT sau.
-     */
     public void dangXuat(String token) {
-        // TODO: Thêm token vào blacklist Redis hoặc DB
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        
+        if (tokenProvider.validateToken(token)) {
+            java.util.Date expiryDate = tokenProvider.getExpirationDateFromJWT(token);
+            java.time.LocalDateTime expiryLDT = expiryDate.toInstant()
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDateTime();
+            
+            BlacklistedToken blacklisted = new BlacklistedToken();
+            blacklisted.setToken(token);
+            blacklisted.setExpiryDate(expiryLDT);
+            blacklistedTokenRepository.save(blacklisted);
+        }
     }
 }
