@@ -42,7 +42,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         // 1. Seed Admin
-        if (nguoiDungRepository.findByTenDangNhap("admin").isEmpty()) {
+        if (nguoiDungRepository.findByTenDangNhap("admin").isEmpty() && quanTriVienRepository.findByMaGv("AD001").isEmpty()) {
             QuanTriVien admin = new QuanTriVien();
             admin.setTenDangNhap("admin");
             admin.setMatKhauHash(passwordEncoder.encode("admin"));
@@ -57,7 +57,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // 2. Seed Giang Vien
         GiangVien gv = null;
-        if (nguoiDungRepository.findByTenDangNhap("teacher").isEmpty()) {
+        if (nguoiDungRepository.findByTenDangNhap("teacher").isEmpty() && giangVienRepository.findByMaGiangVien("GV001").isEmpty()) {
             gv = new GiangVien();
             gv.setTenDangNhap("teacher");
             gv.setMatKhauHash(passwordEncoder.encode("teacher"));
@@ -69,12 +69,13 @@ public class DataInitializer implements CommandLineRunner {
             gv.setKhoa("Công nghệ thông tin");
             gv = giangVienRepository.save(gv);
         } else {
-            gv = (GiangVien) nguoiDungRepository.findByTenDangNhap("teacher").get();
+            gv = giangVienRepository.findByMaGiangVien("GV001")
+                    .orElseGet(() -> (GiangVien) nguoiDungRepository.findByTenDangNhap("teacher").get());
         }
 
         // 3. Seed Students (Leader & Member)
         SinhVien leader = null;
-        if (nguoiDungRepository.findByTenDangNhap("leader").isEmpty()) {
+        if (nguoiDungRepository.findByTenDangNhap("leader").isEmpty() && sinhVienRepository.findByMaSv("SV001").isEmpty()) {
             leader = new SinhVien();
             leader.setTenDangNhap("leader");
             leader.setMatKhauHash(passwordEncoder.encode("leader"));
@@ -86,11 +87,12 @@ public class DataInitializer implements CommandLineRunner {
             leader.setLop("K65-CNTT");
             leader = sinhVienRepository.save(leader);
         } else {
-            leader = (SinhVien) nguoiDungRepository.findByTenDangNhap("leader").get();
+            leader = sinhVienRepository.findByMaSv("SV001")
+                    .orElseGet(() -> (SinhVien) nguoiDungRepository.findByTenDangNhap("leader").get());
         }
 
         SinhVien member = null;
-        if (nguoiDungRepository.findByTenDangNhap("member").isEmpty()) {
+        if (nguoiDungRepository.findByTenDangNhap("member").isEmpty() && sinhVienRepository.findByMaSv("SV002").isEmpty()) {
             member = new SinhVien();
             member.setTenDangNhap("member");
             member.setMatKhauHash(passwordEncoder.encode("member"));
@@ -102,7 +104,8 @@ public class DataInitializer implements CommandLineRunner {
             member.setLop("K65-CNTT");
             member = sinhVienRepository.save(member);
         } else {
-            member = (SinhVien) nguoiDungRepository.findByTenDangNhap("member").get();
+            member = sinhVienRepository.findByMaSv("SV002")
+                    .orElseGet(() -> (SinhVien) nguoiDungRepository.findByTenDangNhap("member").get());
         }
 
         // 4. Seed Nhom (Group)
