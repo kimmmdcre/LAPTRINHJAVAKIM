@@ -15,4 +15,6 @@ public class CommitDTO {
     private String thongDiep;
     private LocalDateTime thoiGian;
     private UUID idTacGia;
+    private String idYeuCau;
+    private String tieuDeYeuCau;
 }

@@ -93,4 +93,12 @@ public class TaskController {
         taskService.phanCongNhiemVu(id, UUID.fromString(body.get("idSinhVien")), principal.getId());
         return ResponseEntity.ok(Map.of("message", "Phân công nhiệm vụ thành công"));
     }
+    /**
+     * GET /api/tasks/commits?idNhom={uuid}
+     * Lấy danh sách commit đã được mapping cho một nhóm
+     */
+    @GetMapping("/commits")
+    public ResponseEntity<List<JAVAGROUP.prjApp.dtos.CommitDTO>> layCommitNhom(@RequestParam UUID idNhom) {
+        return ResponseEntity.ok(taskService.layCommitNhom(idNhom));
+    }
 }

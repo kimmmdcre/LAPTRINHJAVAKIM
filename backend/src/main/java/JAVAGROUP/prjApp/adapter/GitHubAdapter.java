@@ -31,12 +31,22 @@ public class GitHubAdapter implements IGitHubClient {
         log.info("Bắt đầu layDanhSachCommit cho repo: {}", repoPath);
 
         try {
+            if (maTruyCap != null) {
+                maTruyCap = maTruyCap.trim();
+            }
             String uri = "/repos/" + repoPath + "/commits";
             if (tuNgay != null && !tuNgay.isEmpty()) {
                 uri += "?since=" + tuNgay;
             }
-            log.info("Gọi GitHub API: https://api.github.com{}", uri);
-            
+            log.info("--------------------------------------------------");
+            log.info("ĐANG GỌI GITHUB API: https://api.github.com{}", uri);
+            if (maTruyCap != null && maTruyCap.length() > 6) {
+                log.info("Sử dụng Token (6 ký tự đầu): {}...", maTruyCap.substring(0, 6));
+            } else {
+                log.warn("CẢNH BÁO: Token trống hoặc quá ngắn!");
+            }
+            log.info("--------------------------------------------------");
+ 
             List<Map<String, Object>> rawCommits = webClient.get()
                     .uri(uri)
                     .header("Authorization", "token " + maTruyCap)
@@ -44,6 +54,8 @@ public class GitHubAdapter implements IGitHubClient {
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
                     .block();
+
+            log.info("Phản hồi từ GitHub: đã tìm thấy {} commits", rawCommits != null ? rawCommits.size() : 0);
 
             List<CommitDTO> result = new ArrayList<>();
             if (rawCommits == null) return result;
@@ -67,7 +79,7 @@ public class GitHubAdapter implements IGitHubClient {
                     log.warn("Lỗi phân tích ngày commit cho {}: {}", sha, e.getMessage());
                 }
 
-                CommitDTO dto = new CommitDTO(sha, thongDiep != null ? thongDiep : "", thoiGian, null);
+                CommitDTO dto = new CommitDTO(sha, thongDiep != null ? thongDiep : "", thoiGian, null, null, null);
                 result.add(dto);
             }
             log.info("Đã lấy thành công {} commits từ GitHub", result.size());

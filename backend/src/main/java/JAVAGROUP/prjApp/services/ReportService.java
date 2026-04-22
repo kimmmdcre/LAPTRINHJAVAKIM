@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@org.springframework.transaction.annotation.Transactional(readOnly = true)
 public class ReportService {
 
     private final NhiemVuRepository nhiemVuRepository;

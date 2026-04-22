@@ -23,6 +23,7 @@ public class CauHinhTichHop {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_nhom")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Nhom nhom;
 
     @Column(name = "repo_url")

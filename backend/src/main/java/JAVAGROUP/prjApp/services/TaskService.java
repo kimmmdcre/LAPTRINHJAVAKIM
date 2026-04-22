@@ -26,17 +26,20 @@ public class TaskService {
     private final SinhVienRepository sinhVienRepository;
     private final JAVAGROUP.prjApp.repositories.NhomRepository nhomRepository;
     private final ThanhVienNhomRepository thanhVienNhomRepository;
+    private final JAVAGROUP.prjApp.repositories.CommitVCSRepository commitVCSRepository;
 
     public TaskService(YeuCauRepository yeuCauRepository, 
                        NhiemVuRepository nhiemVuRepository,
                        SinhVienRepository sinhVienRepository,
                        JAVAGROUP.prjApp.repositories.NhomRepository nhomRepository,
-                       ThanhVienNhomRepository thanhVienNhomRepository) {
+                       ThanhVienNhomRepository thanhVienNhomRepository,
+                       JAVAGROUP.prjApp.repositories.CommitVCSRepository commitVCSRepository) {
         this.yeuCauRepository = yeuCauRepository;
         this.nhiemVuRepository = nhiemVuRepository;
         this.sinhVienRepository = sinhVienRepository;
         this.nhomRepository = nhomRepository;
         this.thanhVienNhomRepository = thanhVienNhomRepository;
+        this.commitVCSRepository = commitVCSRepository;
     }
 
     public java.util.List<YeuCauDTO> layYeuCauNhom(UUID idNhom) {
@@ -95,6 +98,24 @@ public class TaskService {
         nv.setTrangThai(status);
         nv.setThoiGianCapNhat(java.time.LocalDateTime.now());
         nhiemVuRepository.save(nv);
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<JAVAGROUP.prjApp.dtos.CommitDTO> layCommitNhom(UUID idNhom) {
+        return commitVCSRepository.findByYeuCau_Nhom_IdNhom(idNhom)
+                .stream()
+                .map(c -> {
+                    JAVAGROUP.prjApp.dtos.CommitDTO dto = new JAVAGROUP.prjApp.dtos.CommitDTO();
+                    dto.setSha(c.getSha());
+                    dto.setThongDiep(c.getThongDiep());
+                    dto.setThoiGian(c.getThoiGian());
+                    if (c.getYeuCau() != null) {
+                        dto.setIdYeuCau(c.getYeuCau().getIdYeuCau());
+                        dto.setTieuDeYeuCau(c.getYeuCau().getTieuDe());
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     private NhiemVuDTO toNhiemVuDTO(NhiemVu nv) {

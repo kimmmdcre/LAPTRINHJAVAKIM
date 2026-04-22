@@ -11,6 +11,7 @@ import JAVAGROUP.prjApp.dtos.YeuCauDTO;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,45 +31,72 @@ public class JiraAdapter implements IJiraClient {
         try {
             String auth = email + ":" + maTruyCap;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
-
-            Map<String, Object> response = webClient.get()
-                    .uri(duongDan + "/rest/api/3/search?jql=project={key}", maDuAn)
+ 
+            Map<String, Object> body = new HashMap<>();
+            body.put("jql", "project='" + maDuAn + "'");
+            body.put("fields", List.of("summary", "status", "description"));
+ 
+            Map<String, Object> response = webClient.post()
+                    .uri(duongDan + "/rest/api/3/search/jql")
                     .header("Authorization", "Basic " + encodedAuth)
                     .header("Accept", "application/json")
+                    .bodyValue(body)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block();
 
+            log.info("Phản hồi thô từ Jira: {}", response);
             List<YeuCauDTO> result = new ArrayList<>();
-            if (response == null) return result;
+            if (response == null) {
+                log.warn("Jira trả về response NULL");
+                return result;
+            }
 
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> issues = (List<Map<String, Object>>) response.get("issues");
-            if (issues == null) return result;
+            if (issues == null || issues.isEmpty()) {
+                log.warn("Không tìm thấy issue nào trong phản hồi từ Jira.");
+                return result;
+            }
 
             for (Map<String, Object> issue : issues) {
-                String id = (String) issue.get("id");
-                @SuppressWarnings("unchecked")
-                Map<String, Object> fields = (Map<String, Object>) issue.get("fields");
-                String tieuDe = fields != null ? (String) fields.get("summary") : "";
-                String moTa = fields != null ? (String) fields.get("description") : "";
-                
-                String trangThai = "TODO";
-                if (fields != null && fields.get("status") != null) {
+                try {
+                    String id = (String) issue.get("id");
+                    String key = (String) issue.get("key"); // Lấy key kiểu JT-1
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> statusMap = (Map<String, Object>) fields.get("status");
-                    trangThai = statusMap.get("name").toString();
+                    Map<String, Object> fields = (Map<String, Object>) issue.get("fields");
+                    
+                    String tieuDe = fields != null ? (String) fields.get("summary") : "No Title";
+                    
+                    // Jira API v3 Description là một Object (ADF), chúng ta sẽ lấy text đơn giản nếu có
+                    String moTa = "";
+                    Object rawDesc = fields != null ? fields.get("description") : null;
+                    if (rawDesc instanceof String) {
+                        moTa = (String) rawDesc;
+                    } else if (rawDesc != null) {
+                        moTa = "[Định dạng phức tạp]";
+                    }
+
+                    String trangThai = "TODO";
+                    if (fields != null && fields.get("status") != null) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> statusMap = (Map<String, Object>) fields.get("status");
+                        trangThai = statusMap.get("name").toString();
+                    }
+                    
+                    log.info("Tìm thấy Task: {} - {}", key, tieuDe);
+                    result.add(new YeuCauDTO(key, null, tieuDe, moTa, trangThai));
+                } catch (Exception e) {
+                    log.warn("Bỏ qua 1 task do lỗi định dạng: {}", e.getMessage());
                 }
-                
-                result.add(new YeuCauDTO(id, null, tieuDe, moTa, trangThai));
             }
             log.info("Đã lấy thành công {} yêu cầu từ Jira", result.size());
             return result;
         } catch (WebClientResponseException e) {
-            log.error("Lỗi Jira API: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("Lỗi kết nối Jira: " + e.getStatusCode().value());
+            log.error("Lỗi Jira API: {} - Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("Lỗi kết nối Jira: " + e.getStatusCode().value() + " - " + e.getResponseBodyAsString());
         } catch (Exception e) {
-            log.error("Lỗi bất ngờ khi lấy yêu cầu Jira", e);
+            log.error("Lỗi bất ngờ khi lấy yêu cầu Jira: {}", e.getMessage(), e);
             throw new RuntimeException("Lỗi đồng bộ Jira: " + e.getMessage());
         }
     }

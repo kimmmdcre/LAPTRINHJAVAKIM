@@ -21,6 +21,10 @@ public class CommitVCS {
     private String sha;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_yeu_cau")
+    private YeuCau yeuCau;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_nhiem_vu")
     private NhiemVu nhiemVu;
 

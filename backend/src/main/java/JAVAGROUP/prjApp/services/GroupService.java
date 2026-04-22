@@ -32,12 +32,16 @@ public class GroupService {
     }
 
     public Nhom taoNhom(NhomDTO dto) {
-        GiangVien gv = giangVienRepository.findById(UUID.fromString(dto.getIdGiangVien()))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên: " + dto.getIdGiangVien()));
         Nhom nhom = new Nhom();
         nhom.setTenNhom(dto.getTenNhom());
         nhom.setDeTai(dto.getDeTai());
-        nhom.setGiangVien(gv);
+
+        if (dto.getIdGiangVien() != null && !dto.getIdGiangVien().trim().isEmpty()) {
+            GiangVien gv = giangVienRepository.findById(UUID.fromString(dto.getIdGiangVien()))
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên: " + dto.getIdGiangVien()));
+            nhom.setGiangVien(gv);
+        }
+        
         return nhomRepository.save(nhom);
     }
 

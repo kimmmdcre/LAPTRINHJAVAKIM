@@ -26,19 +26,17 @@ public class SyncService {
     private final CauHinhTichHopRepository cauHinhTichHopRepository;
     private final NhomRepository nhomRepository;
     private final YeuCauRepository yeuCauRepository;
-    private final NhiemVuRepository nhiemVuRepository;
     private final CommitVCSRepository commitVCSRepository;
 
     public SyncService(IJiraClient jiraClient, IGitHubClient gitHubClient,
                        CauHinhTichHopRepository cauHinhTichHopRepository,
                        NhomRepository nhomRepository, YeuCauRepository yeuCauRepository,
-                       NhiemVuRepository nhiemVuRepository, CommitVCSRepository commitVCSRepository) {
+                       CommitVCSRepository commitVCSRepository) {
         this.jiraClient = jiraClient;
         this.gitHubClient = gitHubClient;
         this.cauHinhTichHopRepository = cauHinhTichHopRepository;
         this.nhomRepository = nhomRepository;
         this.yeuCauRepository = yeuCauRepository;
-        this.nhiemVuRepository = nhiemVuRepository;
         this.commitVCSRepository = commitVCSRepository;
     }
 
@@ -89,31 +87,31 @@ public class SyncService {
 
     public void mappingTaskCommit() {
         List<CommitVCS> commits = commitVCSRepository.findAll();
-        // Regex to find patterns like [PROJ-123], PROJ-123, or keywords done PROJ-123
+        // Regex to find patterns like [PROJ-123], PROJ-123
         Pattern taskPattern = Pattern.compile("([A-Z]+-\\d+)");
-        Pattern donePattern = Pattern.compile("(?i)(done|close|fix|fixed)\\s+([A-Z]+-\\d+)");
+        Pattern donePattern = Pattern.compile("(?i)(done|base|fix|fixed|close|closed)\\s+([A-Z]+-\\d+)");
 
         for (CommitVCS commit : commits) {
             if (commit.getThongDiep() == null) continue;
 
-            // Check if this commit maps to a task
+            // Check if this commit maps to a task (Requirement/YeuCau)
             Matcher matcher = taskPattern.matcher(commit.getThongDiep());
             if (matcher.find()) {
                 String taskId = matcher.group(1);
-                nhiemVuRepository.findById(taskId).ifPresent(nv -> {
-                    commit.setNhiemVu(nv);
-                    if (nv.getSinhVien() != null && commit.getSinhVien() == null) {
-                        commit.setSinhVien(nv.getSinhVien());
-                    }
+                // Tìm kiếm trong bảng Yêu Cầu (nơi Jira issues được lưu)
+                yeuCauRepository.findById(taskId).ifPresent(yc -> {
+                    commit.setYeuCau(yc);
                     commitVCSRepository.save(commit);
-
-                    // Check for auto-update keywords
+                    
+                    // Check for auto-update keywords (e.g. "fix JT-1")
                     Matcher doneMatcher = donePattern.matcher(commit.getThongDiep());
                     if (doneMatcher.find()) {
-                        nv.setTrangThai("DONE");
-                        nv.setThoiGianCapNhat(java.time.LocalDateTime.now());
-                        nhiemVuRepository.save(nv);
+                        yc.setTrangThai("DONE");
+                        yeuCauRepository.save(yc);
+                        log.info("Đã tự động chuyển trạng thái Yêu cầu {} sang DONE dựa trên commit message", taskId);
                     }
+                    
+                    log.info("Đã link commit {} với yêu cầu {}", commit.getSha(), taskId);
                 });
             }
         }
