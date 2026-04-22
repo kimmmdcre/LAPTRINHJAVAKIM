@@ -45,6 +45,7 @@ const Sidebar = () => {
       links.push({ icon: <GitCommit size={20} />, label: 'Lịch sử Commits', path: '/member/commits' });
       
       if (user?.groupRole === 'LEADER') {
+        links.push({ icon: <Layers size={20} />, label: 'Quản lý Nhóm (Leader)', path: '/leader/tasks' });
         links.push({ icon: <Settings size={20} />, label: 'Cấu hình Dự án', path: '/admin/config' });
       }
     }

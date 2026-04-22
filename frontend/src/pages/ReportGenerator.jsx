@@ -58,14 +58,32 @@ const ReportGenerator = () => {
     try {
       setExporting(true);
       showToast(`Đang chuẩn bị file ${type.toUpperCase()}...`, 'info');
-      const res = type === 'docx' 
-        ? await reportService.exportDocx(groupInfo.idNhom)
-        : await reportService.exportPdf(groupInfo.idNhom);
+      
+      let res;
+      let filename = `${template}-nhom-${groupInfo.tenNhom}.${type}`;
+
+      switch(type) {
+        case 'csv':
+          res = await reportService.exportCsv(groupInfo.idNhom);
+          filename = `bao-cao-nhom-${groupInfo.tenNhom}.csv`;
+          break;
+        case 'srs':
+          res = await reportService.exportSRS(groupInfo.idNhom);
+          filename = `SRS-nhom-${groupInfo.tenNhom}.docx`;
+          break;
+        case 'docx':
+          res = await reportService.exportDocx(groupInfo.idNhom);
+          break;
+        case 'pdf':
+        default:
+          res = await reportService.exportPdf(groupInfo.idNhom);
+          break;
+      }
       
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${template}-nhom-${groupInfo.tenNhom}.${type}`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -123,8 +141,13 @@ const ReportGenerator = () => {
            <button className="btn btn-outline" onClick={() => window.print()}>
              <Printer size={18} /> In ngay
            </button>
-           <button className="btn btn-primary" onClick={() => handleDownload('pdf')} disabled={exporting}>
-             <Download size={18} /> {exporting ? 'Đang xuất...' : 'Xuất PDF'}
+           <div style={{ position: 'relative', display: 'inline-block' }}>
+              <button className="btn btn-outline" onClick={() => handleDownload('csv')} disabled={exporting}>
+                <FileDown size={18} /> CSV
+              </button>
+           </div>
+           <button className="btn btn-primary" onClick={() => handleDownload(template === 'srs' ? 'srs' : 'pdf')} disabled={exporting}>
+             <Download size={18} /> {exporting ? 'Đang xuất...' : `Xuất ${template.toUpperCase()}`}
            </button>
         </div>
       </div>
@@ -248,10 +271,10 @@ const ReportGenerator = () => {
                       <tbody>
                          {tasks.map((task, i) => (
                            <tr key={i}>
-                              <td style={{ fontWeight: 'bold' }}>{task.keyJira}</td>
+                              <td style={{ fontWeight: 'bold' }}>{task.idYeuCau}</td>
                               <td>
-                                 <p style={{ fontWeight: '600' }}>{task.tenNhiemVu}</p>
-                                 <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px' }}>Giao cho: {task.tenNguoiNhan || 'Chưa phân công'}</p>
+                                 <p style={{ fontWeight: '600' }}>{task.tieuDe}</p>
+                                 <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px' }}>Giao cho: {task.tenSinhVien || 'Chưa phân công'}</p>
                               </td>
                               <td style={{ textAlign: 'center' }}>
                                  <span style={{ fontSize: '0.7rem', fontWeight: '800', padding: '4px 8px', borderRadius: '4px', background: task.trangThai === 'DONE' ? '#dcfce7' : '#f3f4f6' }}>

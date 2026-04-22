@@ -69,8 +69,8 @@ const MemberTasks = () => {
 
   const filteredTasks = tasks.filter(t => {
     const matchesFilter = filter === 'ALL' || t.trangThai === filter;
-    const matchesSearch = t.tenNhiemVu?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          t.keyJira?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = t.tieuDe?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          t.idYeuCau?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -144,23 +144,24 @@ const MemberTasks = () => {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: '900', color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', padding: '4px 8px', borderRadius: '6px' }}>
-                      {task.keyJira}
+                      {task.idYeuCau}
                     </span>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>{task.tenNhiemVu}</h3>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>{task.tieuDe}</h3>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Calendar size={14} />
-                      {task.ngayHetHan || 'Chưa thiết lập hạn'}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: task.soCommit > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: (task.commitCount || 0) > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
                       <GitBranch size={14} />
-                      <strong>{task.soCommit || 0}</strong> Commits được ghi nhận
+                      <strong>{task.commitCount || 0}</strong> Commits được ghi nhận
                     </div>
-                    {task.trangThai === 'DONE' && (task.soCommit || 0) === 0 && (
+                    {task.trangThai === 'DONE' && (task.commitCount || 0) === 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--danger)', fontWeight: '900', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
                         <AlertCircle size={12} />
                         GHOST TASK
+                      </div>
+                    )}
+                    {task.tenSinhVien && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+                        Giao cho: <strong>{task.tenSinhVien}</strong>
                       </div>
                     )}
                   </div>
@@ -192,7 +193,7 @@ const MemberTasks = () => {
                         <CheckCircle2 size={20} />
                       </button>
                     )}
-                    <button className="btn btn-outline" style={{ padding: '0.6rem', borderRadius: '10px' }} title="Xem trên Jira Cloud">
+                    <button className="btn btn-outline" style={{ padding: '0.6rem', borderRadius: '10px' }} title="Xem ID Jira">
                       <ExternalLink size={20} />
                     </button>
                   </div>

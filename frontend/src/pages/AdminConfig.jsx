@@ -342,7 +342,7 @@ const AdminConfig = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div className="input-group">
-                    <label className="input-label">Repository Repository (user/repo)</label>
+                    <label className="input-label">GitHub Repository (user/repo)</label>
                     <input type="text" className="input-field" placeholder="toann-java/prj-backend" value={githubData.repo} onChange={e => setGithubData({ ...githubData, repo: e.target.value })} />
                   </div>
                   <div className="input-group">

@@ -55,8 +55,10 @@ export const reportService = {
   getCommitHistory: (idNhom) => api.get(`/reports/${idNhom}/commits/history`),
   getContributions: (idNhom) => api.get(`/reports/${idNhom}/contributions`),
   getPersonalHistory: (idSinhVien) => api.get(`/reports/personal/${idSinhVien}/history`),
+  exportCsv: (idNhom) => api.get(`/reports/${idNhom}/export`, { responseType: 'blob' }),
   exportDocx: (idNhom) => api.get(`/reports/${idNhom}/export/docx`, { responseType: 'blob' }),
   exportPdf: (idNhom) => api.get(`/reports/${idNhom}/export/pdf`, { responseType: 'blob' }),
+  exportSRS: (idNhom) => api.get(`/reports/${idNhom}/export/srs`, { responseType: 'blob' }),
 };
 
 export const configService = {

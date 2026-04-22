@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { reportService, groupService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
@@ -25,37 +25,49 @@ const ContributionTracking = () => {
   const [loading, setLoading] = useState(true);
   const [groupInfo, setGroupInfo] = useState(null);
 
+  const fetchAnalyticsData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Dùng idNhom từ login nếu có
+      const nhomId = user.idNhom;
+      if (nhomId) {
+        const groupRes = await groupService.getDetails(nhomId);
+        setGroupInfo(groupRes.data);
+        const [contribRes, historyRes] = await Promise.all([
+          reportService.getContributions(nhomId),
+          reportService.getCommitHistory(nhomId)
+        ]);
+        setContributions(contribRes.data || []);
+        setHistory(historyRes.data || []);
+      } else {
+        // fallback
+        const groupsRes = await groupService.getAll();
+        const myGroup = groupsRes.data.find(g => 
+          g.thanhViens?.some(m => m.idSinhVien === user.id)
+        );
+        if (myGroup) {
+          setGroupInfo(myGroup);
+          const [contribRes, historyRes] = await Promise.all([
+            reportService.getContributions(myGroup.idNhom),
+            reportService.getCommitHistory(myGroup.idNhom)
+          ]);
+          setContributions(contribRes.data || []);
+          setHistory(historyRes.data || []);
+        }
+      }
+    } catch (err) {
+      console.error('Lỗi phân tích đóng góp:', err);
+      showToast('Không thể kết nối tới dữ liệu đóng góp.', 'danger');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, showToast]);
+
   useEffect(() => {
     if (user?.id) {
       fetchAnalyticsData();
     }
-  }, [user]);
-
-  const fetchAnalyticsData = async () => {
-    try {
-      setLoading(true);
-      // Find current user's group
-      const groupsRes = await groupService.getAll();
-      const myGroup = groupsRes.data.find(g => 
-        g.thanhViens?.some(m => m.idSinhVien === user.id)
-      );
-
-      if (myGroup) {
-        setGroupInfo(myGroup);
-        const [contribRes, historyRes] = await Promise.all([
-          reportService.getContributions(myGroup.idNhom),
-          reportService.getCommitHistory(myGroup.idNhom)
-        ]);
-        setContributions(contribRes.data || []);
-        setHistory(historyRes.data || []);
-      }
-    } catch (err) {
-      console.error('Lỗi tải dữ liệu phân tích:', err);
-      showToast('Không thể kết nối máy chủ phân tích.', 'danger');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, fetchAnalyticsData]);
 
   const getHeatmapColor = (count) => {
     if (count === 0) return 'rgba(255,255,255,0.03)';
@@ -97,7 +109,7 @@ const ContributionTracking = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={contributions}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.05} vertical={false} />
-                <XAxis dataKey="hoTen" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
+                <XAxis dataKey="tenSinhVien" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <YAxis fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{fill: 'rgba(255,255,255,0.03)'}}
@@ -125,13 +137,13 @@ const ContributionTracking = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={contributions}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.05} vertical={false} />
-                <XAxis dataKey="hoTen" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
+                <XAxis dataKey="tenSinhVien" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <YAxis fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{fill: 'rgba(255,255,255,0.03)'}}
                   contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
                 />
-                <Bar dataKey="nhiemVuHoanThanh" fill="var(--success)" radius={[6, 6, 0, 0]} barSize={40}>
+                <Bar dataKey="soNhiemVuHoanThanh" fill="var(--success)" radius={[6, 6, 0, 0]} barSize={40}>
                    {contributions.map((entry, index) => (
                     <Cell key={`cell-${index}`} fillOpacity={entry.idSinhVien === user.id ? 1 : 0.4} />
                   ))}
@@ -208,17 +220,17 @@ const ContributionTracking = () => {
                  Insight & Phần thưởng
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                 {contributions.slice(0, 1).map((top, i) => (
-                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{ width: '40px', height: '40px', background: 'var(--warning)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
-                         <Zap size={20} fill="black" />
-                      </div>
-                      <div>
-                         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOP CONTRIBUTOR</p>
-                         <p style={{ fontWeight: '800' }}>{top.hoTen}</p>
-                      </div>
-                   </div>
-                 ))}
+                  {contributions.slice(0, 1).map((top, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: '40px', height: '40px', background: 'var(--warning)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
+                          <Zap size={20} fill="black" />
+                       </div>
+                       <div>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOP CONTRIBUTOR</p>
+                          <p style={{ fontWeight: '800' }}>{top.tenSinhVien}</p>
+                       </div>
+                    </div>
+                  ))}
                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--warning)' }}>
                     Mức độ đồng đều của nhóm đang đạt <strong>tốt</strong>. 80% nhiệm vụ đã được mapping với commit tương ứng.
                  </div>

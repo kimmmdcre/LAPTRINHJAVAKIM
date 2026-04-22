@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { groupService, configService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
@@ -14,7 +14,6 @@ import {
   GitBranch,
   ChevronDown,
   ChevronUp,
-  LayoutGrid,
   FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -33,9 +32,9 @@ const TeacherClasses = () => {
     if (user?.id) {
       fetchClasses();
     }
-  }, [user]);
+  }, [user, fetchClasses]);
 
-  const fetchClasses = async () => {
+  const fetchClasses = useCallback(async () => {
     try {
       setLoading(true);
       const res = await groupService.getByTeacher(user.id);
@@ -53,7 +52,7 @@ const TeacherClasses = () => {
               hasJira: configs.some(c => c.loaiNenTang === 'JIRA' && c.url),
               hasGithub: configs.some(c => c.loaiNenTang === 'GITHUB' && c.repoUrl)
             };
-          } catch (e) {
+          } catch {
             statuses[g.idNhom] = { hasJira: false, hasGithub: false };
           }
         }
@@ -65,7 +64,7 @@ const TeacherClasses = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, showToast]);
 
   const toggleMembers = async (groupId) => {
     if (expandingGroupId === groupId) {
@@ -188,7 +187,7 @@ const TeacherClasses = () => {
                               </div>
                            </div>
                            <button 
-                             onClick={() => navigate(`/teacher/contributions?nhomId=${cls.idNhom}&sinhVienId=${m.idSinhVien}`)}
+                             onClick={() => navigate(`/teacher/reports?nhomId=${cls.idNhom}`)}
                              style={{ background: 'none', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800', cursor: 'pointer', transition: '0.2s' }}
                              className="btn-hover"
                            >

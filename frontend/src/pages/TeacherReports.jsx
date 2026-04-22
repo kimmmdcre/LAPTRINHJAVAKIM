@@ -57,7 +57,7 @@ const TeacherReports = () => {
       setHistoryData(historyRes.data);
       setContributions(contribRes.data);
       
-      const commitMap = gitRes.data?.commitPerSinhVien || {};
+      const commitMap = gitRes.data?.soCommitTheoSinhVien || {};
       const formattedGitData = Object.keys(commitMap).map(key => ({
         username: key,
         commits: commitMap[key]
@@ -135,7 +135,7 @@ const TeacherReports = () => {
       {/* Summary Widgets */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
         {[
-          { label: 'Tiến độ hoàn thành', value: `${progressSummary?.phanTram || 0}%`, sub: `${progressSummary?.hoanThanh}/${progressSummary?.tongNhiemVu} Nhiệm vụ`, icon: TrendingUp, color: 'var(--success)' },
+          { label: 'Tiến độ hoàn thành', value: `${progressSummary?.phanTramTienDo || 0}%`, sub: `${progressSummary?.nhiemVuHoanThanh}/${progressSummary?.tongSoNhiemVu} Nhiệm vụ`, icon: TrendingUp, color: 'var(--success)' },
           { label: 'Tổng số Commits', value: gitStats.reduce((acc, curr) => acc + curr.commits, 0), sub: 'Dữ liệu từ GitHub', icon: GitCommit, color: 'var(--accent)' },
           { label: 'Thành viên nhóm', value: groupInfo?.soLuongThanhVien || '5', sub: 'Đang hoạt động', icon: Users, color: 'var(--primary)' },
           { label: 'Điểm nỗ lực trung bình', value: '8.5', sub: 'Dựa trên Task/Commit', icon: Award, color: 'var(--warning)' },
@@ -238,28 +238,28 @@ const TeacherReports = () => {
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '0.8rem' }}>
-                         {m.hoTen?.[0]}
+                         {m.tenSinhVien?.[0]}
                        </div>
                        <div>
-                         <p style={{ fontWeight: '700' }}>{m.hoTen}</p>
-                         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.maSv}</p>
+                         <p style={{ fontWeight: '700' }}>{m.tenSinhVien}</p>
+                         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.idSinhVien?.toString().substring(0, 8)}</p>
                        </div>
                     </div>
                   </td>
-                  <td style={{ textAlign: 'center', fontWeight: '700' }}>{m.nhiemVuHoanThanh}/{m.tongNhiemVu}</td>
+                  <td style={{ textAlign: 'center', fontWeight: '700' }}>{m.soNhiemVuHoanThanh}</td>
                   <td style={{ textAlign: 'center', fontWeight: '700', color: 'var(--accent)' }}>{m.soCommit}</td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'center' }}>
                       <div style={{ width: '100px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ width: `${(m.nhiemVuHoanThanh / (m.tongNhiemVu || 1)) * 100}%`, height: '100%', background: 'var(--primary)' }}></div>
+                        <div style={{ width: `${Math.min((m.soNhiemVuHoanThanh || 0) * 20, 100)}%`, height: '100%', background: 'var(--primary)' }}></div>
                       </div>
-                      <span style={{ fontSize: '0.8rem', fontWeight: '800' }}>{Math.round((m.nhiemVuHoanThanh / (m.tongNhiemVu || 1)) * 100)}%</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '800' }}>{m.soNhiemVuHoanThanh || 0} tasks</span>
                     </div>
                   </td>
                   <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '20px', background: m.nhiemVuHoanThanh > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: m.nhiemVuHoanThanh > 0 ? 'var(--success)' : 'var(--danger)', fontSize: '0.7rem', fontWeight: '900' }}>
-                       {m.nhiemVuHoanThanh > 0 ? <CheckCircle2 size={12} /> : <Zap size={12} />}
-                       {m.nhiemVuHoanThanh > 0 ? 'ACTIVE' : 'INACTIVE'}
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '20px', background: m.soNhiemVuHoanThanh > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: m.soNhiemVuHoanThanh > 0 ? 'var(--success)' : 'var(--danger)', fontSize: '0.7rem', fontWeight: '900' }}>
+                       {m.soNhiemVuHoanThanh > 0 ? <CheckCircle2 size={12} /> : <Zap size={12} />}
+                       {m.soNhiemVuHoanThanh > 0 ? 'ACTIVE' : 'INACTIVE'}
                     </div>
                   </td>
                 </tr>

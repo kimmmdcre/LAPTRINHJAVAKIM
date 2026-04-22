@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import { reportService, groupService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
@@ -10,36 +10,29 @@ import {
   TrendingUp, 
   PieChart as PieIcon, 
   AlertCircle, 
-  ArrowLeft,
   Activity,
-  Layers,
   CheckCircle2,
   Calendar
 } from 'lucide-react';
 
 const SprintProgress = () => {
+  const { id: urlGroupId } = useParams();
   const { user } = useAuth();
   const { showToast } = useUI();
   const location = useLocation();
-  const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
-  const urlGroupId = queryParams.get('nhomId');
+  const paramNhomId = queryParams.get('nhomId');
+  const activeGroupId = urlGroupId || paramNhomId;
   
-  const [groupId, setGroupId] = useState(urlGroupId);
+  const [groupId, setGroupId] = useState(activeGroupId);
   const [loading, setLoading] = useState(true);
   const [progressSummary, setProgressSummary] = useState(null);
   const [historyData, setHistoryData] = useState([]);
 
-  useEffect(() => {
-    if (user?.id) {
-      initProgressData();
-    }
-  }, [user, urlGroupId]);
-
-  const initProgressData = async () => {
+  const initProgressData = useCallback(async () => {
     try {
       setLoading(true);
-      let targetGroupId = urlGroupId;
+      let targetGroupId = activeGroupId;
 
       if (!targetGroupId) {
         // Find current user's group if not provided via URL
@@ -65,11 +58,17 @@ const SprintProgress = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, activeGroupId, showToast]);
+
+  useEffect(() => {
+    if (user?.id) {
+      initProgressData();
+    }
+  }, [user, initProgressData]);
 
   const pieData = progressSummary ? [
-    { name: 'Hoàn thành', value: progressSummary.hoanThanh || progressSummary.nhiemVuHoanThanh, color: 'var(--success)' },
-    { name: 'Chưa xong', value: (progressSummary.tongNhiemVu || progressSummary.tongSoNhiemVu) - (progressSummary.hoanThanh || progressSummary.nhiemVuHoanThanh), color: 'rgba(255,255,255,0.05)' },
+    { name: 'Hoàn thành', value: progressSummary.nhiemVuHoanThanh, color: 'var(--success)' },
+    { name: 'Chưa xong', value: progressSummary.tongSoNhiemVu - progressSummary.nhiemVuHoanThanh, color: 'rgba(255,255,255,0.05)' },
   ] : [];
 
   if (loading) return (
@@ -86,7 +85,7 @@ const SprintProgress = () => {
           <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Tiến độ Dự án (Sprint Status)</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Trực quan hóa khối lượng công việc và vận tốc (Velocity) của nhóm</p>
         </div>
-        {!urlGroupId && (
+        {!activeGroupId && (
           <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', padding: '0.6rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
              <Activity size={18} />
              Active Sprint
@@ -142,7 +141,7 @@ const SprintProgress = () => {
                </div>
                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <CheckCircle2 size={14} color="var(--success)" />
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Hiện tại: {progressSummary?.hoanThanh || progressSummary?.nhiemVuHoanThanh} Nhiệm vụ</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Hiện tại: {progressSummary?.nhiemVuHoanThanh} Nhiệm vụ</span>
                </div>
             </div>
           </div>
@@ -175,7 +174,7 @@ const SprintProgress = () => {
                   </PieChart>
                 </ResponsiveContainer>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '2rem', fontWeight: '900', color: 'white' }}>{(progressSummary?.phanTram || progressSummary?.phanTramTienDo || 0).toFixed(0)}%</div>
+                  <div style={{ fontSize: '2rem', fontWeight: '900', color: 'white' }}>{(progressSummary?.phanTramTienDo || 0).toFixed(0)}%</div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Done</div>
                 </div>
               </div>
@@ -183,23 +182,13 @@ const SprintProgress = () => {
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Tổng số nhiệm vụ</span>
-                  <span style={{ fontWeight: '800', color: 'white' }}>{progressSummary?.tongNhiemVu || progressSummary?.tongSoNhiemVu}</span>
+                  <span style={{ fontWeight: '800', color: 'white' }}>{progressSummary?.tongSoNhiemVu}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.1)' }}>
                   <span style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: '600' }}>Đã hoàn thành</span>
-                  <span style={{ fontWeight: '800', color: 'var(--success)' }}>{progressSummary?.hoanThanh || progressSummary?.nhiemVuHoanThanh}</span>
+                  <span style={{ fontWeight: '800', color: 'var(--success)' }}>{progressSummary?.nhiemVuHoanThanh}</span>
                 </div>
               </div>
-            </div>
-
-            <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))' }}>
-               <h4 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Layers size={16} />
-                  Phân tích Sprint
-               </h4>
-               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                 Nhóm của bạn đang duy trì vận tốc ổn định. Để đạt mục tiêu 100%, hãy tập trung giải quyết các bài toán tồn đọng trước ngày <strong>{historyData[historyData.length - 1]?.ngay || 'cuối kỳ'}</strong>.
-               </p>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { userService, groupService, reportService } from '../services/api';
 import { useUI } from '../context/UIContext';
@@ -40,44 +40,39 @@ const PersonalProfile = () => {
     username: '',
     hoTen: '',
     email: '',
-    password: '',
-    confirmPassword: ''
+    currentPassword: '',
+    newPassword: ''
   });
 
-  useEffect(() => {
-    if (user?.id) {
-      initProfileData();
-    }
-  }, [user]);
-
-  const initProfileData = async () => {
+  const initProfileData = useCallback(async () => {
     try {
       setLoading(true);
       
       // 1. Fetch group info if student
-      if (user.role === 'ROLE_SINH_VIEN') {
-        const groupsRes = await groupService.getAll();
-        const myGroup = groupsRes.data.find(g => 
-          g.thanhViens?.some(m => m.idSinhVien === user.id)
-        );
-        if (myGroup) {
-          setGroupName(myGroup.tenNhom);
-          
-          // 2. Fetch real stats if group exists
+      if (user?.role === 'SINH_VIEN') {
+        // Dùng idNhom từ login nếu có
+        const targetNhomId = user.idNhom;
+        if (targetNhomId) {
           try {
-            const contribRes = await reportService.getContributions(myGroup.idNhom);
+            const groupRes = await groupService.getDetails(targetNhomId);
+            setGroupName(groupRes.data.tenNhom || 'Nhóm chưa có tên');
+            
+            // 2. Fetch real stats
+            const contribRes = await reportService.getContributions(targetNhomId);
             const myContrib = contribRes.data?.find(c => c.idSinhVien === user.id);
             if (myContrib) {
               setStats({
-                tasksDone: myContrib.nhiemVuHoanThanh || 0,
-                onTimeRate: 100, // Placeholder
+                tasksDone: myContrib.soNhiemVuHoanThanh || 0,
+                onTimeRate: 100,
                 totalCommits: myContrib.soCommit || 0,
-                points: (myContrib.soCommit * 10) + (myContrib.nhiemVuHoanThanh * 50)
+                points: (myContrib.soCommit * 10) + (myContrib.soNhiemVuHoanThanh * 50)
               });
             }
-          } catch (e) {
+          } catch {
             console.warn('Could not fetch detailed stats');
           }
+        } else {
+          setGroupName('Chưa gia nhập nhóm');
         }
       } else {
         setGroupName('Hệ thống Quản trị / Giảng viên');
@@ -87,17 +82,24 @@ const PersonalProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.id) {
+      initProfileData();
+    }
+  }, [user, initProfileData]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      showToast('Xác nhận mật khẩu không khớp!', 'danger');
-      return;
-    }
     try {
-      const { confirmPassword, ...submitData } = formData;
-      await userService.update(user.id, submitData);
+      const { currentPassword, newPassword, ...submitData } = formData;
+      const updatePayload = { ...submitData };
+      if (newPassword) {
+        updatePayload.currentPassword = currentPassword;
+        updatePayload.newPassword = newPassword;
+      }
+      await userService.update(user.id, updatePayload);
       showToast('Cập nhật hồ sơ thành công!', 'success');
       setShowEditModal(false);
       setTimeout(() => window.location.reload(), 1000);

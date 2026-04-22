@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { groupService, userService, taskService, reportService } from '../services/api';
 import {
@@ -29,13 +29,7 @@ const Dashboard = () => {
     topPerformers: []
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    }
-  }, [user]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const role = user.role?.toUpperCase();
@@ -49,7 +43,10 @@ const Dashboard = () => {
           ...prev,
           totalUsers: usersRes.data.length,
           totalGroups: groupsRes.data.length,
-          topPerformers: groupsRes.data.slice(0, 5).map(g => ({ name: g.tenNhom, progress: Math.floor(Math.random() * 40) + 60 }))
+          topPerformers: groupsRes.data.slice(0, 5).map(g => ({ 
+            name: g.tenNhom, 
+            progress: Math.floor(Math.random() * 40) + 60 
+          }))
         }));
       } else if (role === 'GIANG_VIEN') {
         const res = await groupService.getByTeacher(user.id);
@@ -62,7 +59,6 @@ const Dashboard = () => {
       } else if (role === 'SINH_VIEN') {
         const myTasksRes = await taskService.getMine(user.id);
         
-        // Sử dụng idNhom từ thông tin user trả về khi login
         if (user.idNhom) {
           try {
             const [groupDetailsRes, progressRes] = await Promise.all([
@@ -73,7 +69,7 @@ const Dashboard = () => {
             setStats(prev => ({
               ...prev,
               myGroups: [groupDetailsRes.data],
-              groupProgress: progressRes.data.phanTram || 0
+              groupProgress: progressRes.data.phanTramTienDo || 0
             }));
           } catch (e) {
             console.error('Lỗi lấy thông tin nhóm:', e);
@@ -95,7 +91,13 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user, fetchDashboardData]);
 
   const renderAdminWidgets = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
