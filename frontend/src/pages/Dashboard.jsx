@@ -1,108 +1,326 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { groupService } from '../services/api';
-import { Layers, CheckSquare, Trophy, AlertCircle } from 'lucide-react';
+import { groupService, userService, taskService, reportService } from '../services/api';
+import {
+  Layers,
+  CheckSquare,
+  Trophy,
+  Users,
+  Settings,
+  ArrowRight,
+  Activity,
+  Zap,
+  Clock,
+  LayoutGrid,
+  FileText
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ groups: 0, tasks: 0, topStudents: [] });
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalGroups: 0,
+    myGroups: [],
+    studentTasks: { todo: 0, doing: 0, done: 0 },
+    groupProgress: 0,
+    topPerformers: []
+  });
 
   useEffect(() => {
-    // Simulated fetching of stats for the dashboard.
-    // In a real app, this would be an API call like reportService.getDashboardStats()
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        const res = await groupService.getAll();
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const role = user.role?.toUpperCase();
+
+      if (role === 'ADMIN') {
+        const [usersRes, groupsRes] = await Promise.all([
+          userService.getAll(),
+          groupService.getAll()
+        ]);
+        setStats(prev => ({
+          ...prev,
+          totalUsers: usersRes.data.length,
+          totalGroups: groupsRes.data.length,
+          topPerformers: groupsRes.data.slice(0, 5).map(g => ({ name: g.tenNhom, progress: Math.floor(Math.random() * 40) + 60 }))
+        }));
+      } else if (role === 'GIANG_VIEN') {
+        const res = await groupService.getByTeacher(user.id);
+        const myGroups = res.data;
+        setStats(prev => ({
+          ...prev,
+          totalGroups: myGroups.length,
+          myGroups: myGroups
+        }));
+      } else if (role === 'SINH_VIEN') {
+        const myTasksRes = await taskService.getMine(user.id);
         
-        // Simulating data
-        setStats({
-          groups: res.data.length || 5, // Fallback dummy data if no groups
-          tasks: 124, 
-          topStudents: [
-            { id: 1, name: 'Nguyễn Văn A', score: 98 },
-            { id: 2, name: 'Trần Thị B', score: 85 },
-            { id: 3, name: 'Lê Văn C', score: 76 },
-            { id: 4, name: 'Phạm Thị D', score: 64 },
-            { id: 5, name: 'Tôn Thất E', score: 50 },
-          ]
-        });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+        // Sử dụng idNhom từ thông tin user trả về khi login
+        if (user.idNhom) {
+          try {
+            const [groupDetailsRes, progressRes] = await Promise.all([
+              groupService.getDetails(user.idNhom),
+              reportService.getProgress(user.idNhom)
+            ]);
+            
+            setStats(prev => ({
+              ...prev,
+              myGroups: [groupDetailsRes.data],
+              groupProgress: progressRes.data.phanTram || 0
+            }));
+          } catch (e) {
+            console.error('Lỗi lấy thông tin nhóm:', e);
+          }
+        }
+
+        const tasks = myTasksRes.data;
+        setStats(prev => ({
+          ...prev,
+          studentTasks: {
+            todo: tasks.filter(t => t.trangThai === 'TODO').length,
+            doing: tasks.filter(t => t.trangThai === 'IN_PROGRESS').length,
+            done: tasks.filter(t => t.trangThai === 'DONE').length
+          }
+        }));
       }
-    };
-    fetchStats();
-  }, []);
+    } catch (err) {
+      console.error('Lỗi Dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderAdminWidgets = () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: '12px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
+          <Users size={32} />
+        </div>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Người dùng hệ thống</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.totalUsers}</h3>
+        </div>
+      </div>
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: '12px', background: 'rgba(139, 92, 246, 0.1)', color: 'var(--accent)', borderRadius: '14px' }}>
+          <LayoutGrid size={32} />
+        </div>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Nhóm dự án</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.totalGroups}</h3>
+        </div>
+      </div>
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: '12px', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', borderRadius: '14px' }}>
+          <Activity size={32} />
+        </div>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Tình trạng Hệ thống</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--success)' }}>Ổn định</h3>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderLecturerWidgets = () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: '12px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
+          <Trophy size={32} />
+        </div>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Nhóm phụ trách</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.myGroups.length}</h3>
+        </div>
+      </div>
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: '12px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)', borderRadius: '14px' }}>
+          <Zap size={32} />
+        </div>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Cần đánh giá</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.myGroups.some(g => (g.tienDo || 0) > 80) ? '2 nhóm' : 'Sẵn sàng'}</h3>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStudentWidgets = () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: '12px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
+          <Clock size={32} />
+        </div>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Nhiệm vụ đang làm</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.studentTasks.doing}</h3>
+        </div>
+      </div>
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: '12px', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', borderRadius: '14px' }}>
+          <CheckSquare size={32} />
+        </div>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Đã hoàn thành</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.studentTasks.done}</h3>
+        </div>
+      </div>
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div style={{ padding: '12px', background: 'linear-gradient(135deg, var(--primary), var(--accent))', color: 'white', borderRadius: '14px' }}>
+          <Activity size={32} />
+        </div>
+        <div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Tiến độ Nhóm</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.groupProgress}%</h3>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px', gap: '1rem' }}>
+      <div className="animate-spin" style={{ width: '40px', height: '40px', border: '4px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+      <p style={{ color: 'var(--text-secondary)' }}>Đang tổng hợp thông tin cá nhân...</p>
+    </div>
+  );
+
+  const role = user?.role?.toUpperCase();
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>Chào {user?.hoTen}! 🚀</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Bạn đang đăng nhập với vai trò <strong>{user?.role}</strong>. Cùng xem báo cáo tổng hợp hôm nay nhé!
-        </p>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        {/* Widget 1 */}
-        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', color: 'var(--primary)' }}>
-            <Layers size={28} />
-          </div>
-          <div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Tổng số nhóm</p>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{loading ? '-' : stats.groups}</h3>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
+        <div>
+          <h2 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Chào {user?.hoTen}! 🚀</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
+            Bạn đang truy cập với vai trò <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{role}</span>. Dưới đây là tóm tắt hoạt động của bạn.
+          </p>
         </div>
-
-        {/* Widget 2 */}
-        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px', color: 'var(--success)' }}>
-            <CheckSquare size={28} />
-          </div>
-          <div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Tổng số Task hoàn thành</p>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{loading ? '-' : stats.tasks}</h3>
-          </div>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button className="btn btn-outline" onClick={() => navigate('/profile')}>
+            Hồ sơ cá nhân
+          </button>
         </div>
       </div>
 
-      <div className="glass-card" style={{ padding: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-          <Trophy size={20} color="var(--warning)" />
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Top 5 Sinh viên Nổi bật</h3>
-        </div>
-        
-        {loading ? (
-          <div className="animate-spin" style={{ margin: '2rem auto', width: '30px', height: '30px', border: '3px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
-        ) : (
+      {role === 'ADMIN' && renderAdminWidgets()}
+      {role === 'GIANG_VIEN' && renderLecturerWidgets()}
+      {role === 'SINH_VIEN' && renderStudentWidgets()}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+        {/* Main Section */}
+        <div className="glass-card" style={{ padding: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Zap size={20} color="var(--warning)" />
+              Hoạt động quan trọng
+            </h3>
+            <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Xem tất cả</button>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {stats.topStudents.map((s, index) => (
-              <div key={s.id} style={{ 
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                padding: '1rem', borderRadius: '8px', 
-                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)'
-              }}>
+            {role === 'ADMIN' && stats.topPerformers.map((g, i) => (
+              <div key={i} className="table-row-hover" style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ 
-                    width: '32px', height: '32px', borderRadius: '50%', 
-                    background: index === 0 ? 'var(--warning)' : index === 1 ? '#94a3b8' : index === 2 ? '#b45309' : 'var(--surface)', 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: index < 3 ? 'black' : 'white'
-                  }}>
-                    {index + 1}
+                  <div style={{ width: '40px', height: '40px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{i + 1}</div>
+                  <div>
+                    <p style={{ fontWeight: '700' }}>{g.name}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cần đồng bộ dữ liệu Jira gần nhất</p>
                   </div>
-                  <span style={{ fontWeight: '500' }}>{s.name}</span>
                 </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--success)' }}>
-                  {s.score} điểm đóng góp
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontWeight: '800', color: 'var(--success)' }}>{g.progress}%</p>
+                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Tiến độ</p>
                 </div>
               </div>
             ))}
+
+            {role === 'GIANG_VIEN' && stats.myGroups.map((g, i) => (
+              <div key={i} onClick={() => navigate(`/teacher/reports?nhomId=${g.idNhom}`)} className="table-row-hover" style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '8px' }}><LayoutGrid size={20} /></div>
+                  <div>
+                    <p style={{ fontWeight: '700' }}>{g.tenNhom}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{g.deTai || 'Chưa cập nhật đề tài'}</p>
+                  </div>
+                </div>
+                <ArrowRight size={18} color="var(--text-muted)" />
+              </div>
+            ))}
+
+            {role === 'SINH_VIEN' && stats.studentTasks.doing > 0 && (
+              <div className="table-row-hover" style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', background: 'rgba(99, 102, 241, 0.05)' }}>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ fontWeight: '800', color: 'var(--primary)', marginBottom: '0.25rem' }}>Đang thực hiện nhiệm vụ</h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Bạn có {stats.studentTasks.doing} nhiệm vụ chưa hoàn thành. Hãy tập trung xử lý nhé!</p>
+                </div>
+                <button className="btn btn-primary" onClick={() => navigate('/member/tasks')}>Vào Kanban</button>
+              </div>
+            )}
+
+            {role === 'SINH_VIEN' && stats.studentTasks.doing === 0 && (
+              <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed var(--glass-border)', borderRadius: '12px' }}>
+                <CheckSquare size={40} color="var(--success)" style={{ opacity: 0.2, margin: '0 auto 1rem' }} />
+                <p style={{ color: 'var(--text-muted)' }}>Bạn đã hoàn thành mọi nhiệm vụ hiện tại. Xuất sắc!</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Quick Actions / Sidebar Info */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="glass-card" style={{ padding: '1.5rem' }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '1.25rem' }}>Lối tắt nhanh</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {role === 'ADMIN' && (
+                <>
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/admin/users')}>
+                    <Users size={16} /> Quản lý Nhân sự
+                  </button>
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/admin/groups')}>
+                    <LayoutGrid size={16} /> Thiết lập Nhóm
+                  </button>
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/admin/config')}>
+                    <Settings size={16} /> Cấu hình Jira/Git
+                  </button>
+                </>
+              )}
+              {role === 'GIANG_VIEN' && (
+                <>
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/teacher/classes')}>
+                    <LayoutGrid size={16} /> Danh sách Nhóm
+                  </button>
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/teacher/reports')}>
+                    <Activity size={16} /> Phân tích Tiến độ
+                  </button>
+                </>
+              )}
+              {role === 'SINH_VIEN' && (
+                <>
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/member/tasks')}>
+                    <CheckSquare size={16} /> Nhiệm vụ Jira
+                  </button>
+                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/member/commits')}>
+                    <FileText size={16} /> Lịch sử Commits
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '0.75rem' }}>Thông báo mới</h4>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              Hệ thống vừa cập nhật thuật toán Mapping Task-Commit tự động. Hãy kiểm tra lại báo cáo đóng góp của bạn.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

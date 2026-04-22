@@ -21,7 +21,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         NguoiDung user = nguoiDungRepository.findByTenDangNhap(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với tên đăng nhập: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "Không tìm thấy người dùng với tên đăng nhập: " + username));
 
         return UserPrincipal.create(user);
     }

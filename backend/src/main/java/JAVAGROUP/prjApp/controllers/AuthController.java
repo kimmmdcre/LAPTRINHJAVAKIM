@@ -35,10 +35,24 @@ public class AuthController {
             
             String token = authService.dangNhap(tenDangNhap, matKhau);
             
+            // Lấy thông tin user từ SecurityContext sau khi authenticate thành công
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            JAVAGROUP.prjApp.security.UserPrincipal principal = (JAVAGROUP.prjApp.security.UserPrincipal) auth.getPrincipal();
+            
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
             response.put("type", "Bearer");
             response.put("message", "Đăng nhập thành công");
+            
+            // Trả về kèm thông tin User để Frontend phân quyền
+            response.put("id", principal.getId());
+            response.put("tenDangNhap", principal.getUsername());
+            response.put("hoTen", principal.getHoTen());
+            response.put("email", principal.getEmail());
+            response.put("maVaiTro", principal.getMaVaiTro());
+            response.put("role", principal.getMaVaiTro()); // Alias để Dashboard.jsx dùng
+            response.put("groupRole", principal.getGroupRole());
+            response.put("idNhom", principal.getIdNhom());
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {

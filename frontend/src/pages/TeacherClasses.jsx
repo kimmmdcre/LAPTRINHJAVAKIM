@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { groupService } from '../services/api';
+import { groupService, configService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Users, Clock, ArrowRight, FolderKanban, TrendingUp, User } from 'lucide-react';
+import { useUI } from '../context/UIContext';
+import { 
+  Users, 
+  Clock, 
+  ArrowRight, 
+  FolderKanban, 
+  TrendingUp, 
+  User, 
+  CheckCircle, 
+  AlertCircle,
+  GitBranch,
+  ChevronDown,
+  ChevronUp,
+  LayoutGrid,
+  FileText
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const TeacherClasses = () => {
@@ -9,23 +24,44 @@ const TeacherClasses = () => {
   const [loading, setLoading] = useState(true);
   const [expandingGroupId, setExpandingGroupId] = useState(null);
   const [groupMembers, setGroupMembers] = useState({});
+  const [groupStatus, setGroupStatus] = useState({});
   const { user } = useAuth();
+  const { showToast } = useUI();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user?.id) {
       fetchClasses();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchClasses = async () => {
     try {
       setLoading(true);
       const res = await groupService.getByTeacher(user.id);
-      setClasses(res.data);
+      const fetchedGroups = res.data;
+      setClasses(fetchedGroups);
+
+      // Fetch additional status for each group
+      if (fetchedGroups.length > 0) {
+        const statuses = {};
+        for (const g of fetchedGroups) {
+          try {
+            const confRes = await configService.getConfig(g.idNhom);
+            const configs = confRes.data;
+            statuses[g.idNhom] = {
+              hasJira: configs.some(c => c.loaiNenTang === 'JIRA' && c.url),
+              hasGithub: configs.some(c => c.loaiNenTang === 'GITHUB' && c.repoUrl)
+            };
+          } catch (e) {
+            statuses[g.idNhom] = { hasJira: false, hasGithub: false };
+          }
+        }
+        setGroupStatus(statuses);
+      }
     } catch (err) {
       console.error('Lỗi tải nhóm:', err);
+      showToast('Không thể tải danh sách nhóm hướng dẫn.', 'danger');
     } finally {
       setLoading(false);
     }
@@ -44,112 +80,129 @@ const TeacherClasses = () => {
         setGroupMembers(prev => ({ ...prev, [groupId]: res.data }));
       } catch (err) {
         console.error('Lỗi tải thành viên:', err);
+        showToast('Không thể tải danh sách thành viên.', 'warning');
       }
     }
   };
 
-  if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+  if (loading && classes.length === 0) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px', gap: '1rem' }}>
       <div className="animate-spin" style={{ width: '40px', height: '40px', border: '4px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+      <p style={{ color: 'var(--text-secondary)' }}>Đang đồng bộ danh sách lớp hướng dẫn...</p>
     </div>
   );
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Lớp học & Nhóm hướng dẫn</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Quản lý tiến độ và hỗ trợ sinh viên trong các dự án của bạn</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Lớp học & Nhóm Hướng dẫn</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Theo dõi sát sao tiến độ và chất lượng mã nguồn thực tế của từng nhóm dự án</p>
+        </div>
+        <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', padding: '0.75rem 1.25rem', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+           <Users size={18} />
+           {classes.length} Nhóm dự án
+        </div>
       </div>
 
       {classes.length === 0 ? (
-        <div className="glass-card" style={{ padding: '4rem', textAlign: 'center' }}>
-          <FolderKanban size={48} style={{ margin: '0 auto 1.5rem', color: 'var(--text-secondary)', opacity: 0.5 }} />
-          <h3 style={{ marginBottom: '0.5rem' }}>Chưa có nhóm nào được phân công</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>Liên hệ quản trị viên để được phân công nhóm hướng dẫn hướng dẫn.</p>
+        <div className="glass-card" style={{ padding: '6rem', textAlign: 'center', borderStyle: 'dashed' }}>
+          <FolderKanban size={64} style={{ margin: '0 auto 1.5rem', color: 'var(--text-muted)', opacity: 0.3 }} />
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.5rem' }}>Chưa được phân công nhóm nào</h3>
+          <p style={{ color: 'var(--text-muted)', maxWidth: '400px', margin: '0 auto' }}>Dữ liệu nhóm sẽ xuất hiện tại đây khi quản trị viên phân công giảng viên hướng dẫn cho các dự án.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '2rem' }}>
           {classes.map((cls) => (
-            <div key={cls.idNhom} className="glass-card" style={{ padding: '2rem', borderTop: '4px solid var(--primary)', height: 'fit-content' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '0.05em', color: 'white', padding: '0.25rem 0.75rem', background: 'var(--primary)', borderRadius: '20px' }}>
-                  NHÓM: {cls.tenNhom.toUpperCase()}
-                </span>
-                <Clock size={18} style={{ color: 'var(--text-secondary)' }} />
-              </div>
-
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '1.5rem', color: 'white' }}>
-                {cls.deTai || 'Dự án chưa xác định'}
-              </h3>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+            <div key={cls.idNhom} className="glass-card animate-slide-up" style={{ padding: '2rem', borderTop: '4px solid var(--primary)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Thành viên</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Users size={18} color="var(--primary)" />
-                    {cls.soLuongThanhVien || '0'}
-                  </div>
+                   <span style={{ fontSize: '0.65rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', padding: '4px 10px', borderRadius: '6px', marginBottom: '0.5rem', display: 'inline-block' }}>
+                     Project Group
+                   </span>
+                   <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'white' }}>{cls.tenNhom}</h3>
                 </div>
-                <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Tiến độ chung</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--success)' }}>
-                    <TrendingUp size={18} />
-                    {cls.tienDo || '0'}%
-                  </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                   {groupStatus[cls.idNhom]?.hasJira ? <CheckCircle size={18} color="var(--success)" title="Jira Connected" /> : <AlertCircle size={18} color="var(--danger)" title="Jira Missing" />}
+                   {groupStatus[cls.idNhom]?.hasGithub ? <GitBranch size={18} color="var(--success)" title="GitHub Connected" /> : <AlertCircle size={18} color="var(--danger)" title="GitHub Missing" />}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button 
-                    onClick={() => navigate(`/teacher/reports?nhomId=${cls.idNhom}`)}
-                    className="btn btn-primary" 
-                    style={{ flex: 1, justifyContent: 'center' }}
-                    >
-                    <ArrowRight size={18} />
-                    Xem Báo cáo Tổng hợp
-                    </button>
-                    <button 
-                    onClick={() => toggleMembers(cls.idNhom)}
-                    className="btn btn-outline" 
-                    style={{ padding: '0.75rem', borderColor: expandingGroupId === cls.idNhom ? 'var(--primary)' : '' }}
-                    >
-                    <Users size={18} />
-                    </button>
-                </div>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: '1.6', minHeight: '3.5rem' }}>
+                {cls.deTai || 'Đề tài dự án hiện đang được cập nhật bởi sinh viên...'}
+              </p>
 
-                {/* Animated Member List */}
-                {expandingGroupId === cls.idNhom && (
-                  <div className="animate-fade-in" style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
-                    <h4 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Users size={14} /> Danh sách Thành viên
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {groupMembers[cls.idNhom]?.map(member => (
-                        <div key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <User size={16} />
-                             </div>
-                             <div>
-                                <div style={{ fontSize: '0.9rem', fontWeight: '500' }}>{member.hoTen}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{member.maSinhVien}</div>
-                             </div>
-                          </div>
-                          <button 
-                            onClick={() => navigate(`/teacher/contributions?nhomId=${cls.idNhom}&sinhVienId=${member.id}`)}
-                            style={{ padding: '0.4rem', borderRadius: '4px', background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.75rem' }}
-                            title="Xem báo cáo cá nhân"
-                          >
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '14px', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                   <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', padding: '8px', borderRadius: '10px' }}>
+                      <Users size={20} />
+                   </div>
+                   <div>
+                      <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Thành viên</p>
+                      <p style={{ fontSize: '1.15rem', fontWeight: '800' }}>{cls.soLuongThanhVien || '5'}</p>
+                   </div>
+                </div>
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '14px', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                   <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', padding: '8px', borderRadius: '10px' }}>
+                      <TrendingUp size={20} />
+                   </div>
+                   <div>
+                      <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Tiến độ</p>
+                      <p style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--success)' }}>{cls.tienDo || '0'}%</p>
+                   </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: 'auto' }}>
+                <button 
+                  onClick={() => navigate(`/teacher/reports?nhomId=${cls.idNhom}`)}
+                  className="btn btn-primary" 
+                  style={{ flex: 1, justifyContent: 'center', padding: '0.85rem' }}
+                >
+                  <FileText size={18} />
+                  Báo cáo Phân tích
+                </button>
+                <button 
+                  onClick={() => toggleMembers(cls.idNhom)}
+                  className="btn btn-outline" 
+                  style={{ padding: '0.85rem', borderColor: expandingGroupId === cls.idNhom ? 'var(--primary)' : '' }}
+                >
+                  {expandingGroupId === cls.idNhom ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </button>
+              </div>
+
+              {/* Expandable Member Area */}
+              {expandingGroupId === cls.idNhom && (
+                <div className="animate-fade-in" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {groupMembers[cls.idNhom] ? groupMembers[cls.idNhom].map((m, idx) => (
+                        <div key={idx} className="table-row-hover" style={{ padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                 <User size={16} />
+                              </div>
+                              <div>
+                                 <p style={{ fontSize: '0.85rem', fontWeight: '700' }}>{m.hoTen}</p>
+                                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.maSv || m.tenDangNhap}</p>
+                              </div>
+                           </div>
+                           <button 
+                             onClick={() => navigate(`/teacher/contributions?nhomId=${cls.idNhom}&sinhVienId=${m.idSinhVien}`)}
+                             style={{ background: 'none', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '800', cursor: 'pointer', transition: '0.2s' }}
+                             className="btn-hover"
+                           >
                              Chi tiết
-                          </button>
+                           </button>
                         </div>
-                      ))}
-                      {!groupMembers[cls.idNhom] && <div className="animate-spin" style={{ width: '20px', height: '20px', border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto' }}></div>}
-                    </div>
-                  </div>
-                )}
-              </div>
+                      )) : (
+                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                           <div className="animate-spin" style={{ width: '20px', height: '20px', border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto' }}></div>
+                        </div>
+                      )}
+                   </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

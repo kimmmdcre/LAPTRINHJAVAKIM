@@ -40,9 +40,10 @@ export const groupService = {
 
 export const taskService = {
   getGroupTasks: (idNhom) => api.get(`/tasks/${idNhom}`),
+  getMine: (idSinhVien) => api.get(`/tasks/nhiem-vu?idSinhVien=${idSinhVien}`),
   updateStatus: (id, status) => api.patch(`/tasks/nhiem-vu/${id}/status`, { status }),
   assignMember: (id, memberId) => api.patch(`/tasks/nhiem-vu/${id}/assign`, { idSinhVien: memberId }),
-  syncJira: (idNhom) => api.post(`/sync/${idNhom}/jira`),
+  syncJira: (idNhom) => api.get(`/tasks/jira/sync/${idNhom}`), // Updated to match @GetMapping in TaskController
   syncGithub: (idNhom) => api.post(`/sync/${idNhom}/github`),
   mapping: () => api.post('/sync/mapping'),
 };

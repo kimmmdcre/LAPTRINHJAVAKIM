@@ -1,126 +1,171 @@
 import React, { useState, useEffect } from 'react';
-import { reportService } from '../services/api';
+import { reportService, groupService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
-import { GitBranch, GitPullRequest, GitCommit, Activity, RefreshCw } from 'lucide-react';
+import { useUI } from '../context/UIContext';
+import {
+  GitCommit,
+  Clock,
+  ExternalLink,
+  Code,
+  Search,
+  Filter,
+  Calendar,
+  GitBranch,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 
 const MemberCommits = () => {
   const { user } = useAuth();
-  const [history, setHistory] = useState([]);
+  const { showToast } = useUI();
+  const [commits, setCommits] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats] = useState({ total: 42, prs: 12, branches: 3, freq: 4.5 });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [groupInfo, setGroupInfo] = useState(null);
 
   useEffect(() => {
     if (user?.id) {
-      fetchCommitHistory();
+      fetchMyCommits();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const fetchCommitHistory = async () => {
+  const fetchMyCommits = async () => {
     try {
       setLoading(true);
-      const res = await reportService.getPersonalHistory(user.id);
-      setHistory(res.data);
+      // First find my group
+      const groupsRes = await groupService.getAll();
+      const myGroup = groupsRes.data.find(g =>
+        g.thanhViens?.some(m => m.idSinhVien === user.id)
+      );
+
+      if (myGroup) {
+        setGroupInfo(myGroup);
+        const res = await reportService.getCommitHistory(myGroup.idNhom);
+        // Filter only my commits or show all for the group? 
+        // Showing all for the group is better for transparency, but highlight mine.
+        setCommits(res.data || []);
+      }
     } catch (err) {
-      console.error('Lỗi tải lịch sử commit:', err);
+      console.error('Lỗi tải commit:', err);
+      showToast('Không thể tải lịch sử đóng góp GitHub.', 'danger');
     } finally {
       setLoading(false);
     }
   };
 
-  const recentCommits = [
-    { sha: 'a1b2c3d', message: 'TASK-102: Tích hợp API VNPay', time: '2 giờ trước', branch: 'feat/vnpay' },
-    { sha: 'e5f6g7h', message: 'TASK-101: Thiết kế Database', time: '1 ngày trước', branch: 'main' },
-    { sha: 'i9j0k1l', message: 'TASK-101: Fix bug login', time: '2 ngày trước', branch: 'fix/auth' },
-  ];
+  const filteredCommits = commits.filter(c =>
+    c.message?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.taskKey?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+  if (loading && commits.length === 0) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px', gap: '1rem' }}>
       <div className="animate-spin" style={{ width: '40px', height: '40px', border: '4px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+      <p style={{ color: 'var(--text-secondary)' }}>Đang truy xuất lịch sử GitHub...</p>
     </div>
   );
 
   return (
     <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Thống kê Đóng góp</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Phân tích hiệu suất và lịch sử cam kết mã nguồn trên GitHub</p>
-        </div>
-        <button className="btn btn-outline" onClick={fetchCommitHistory}>
-          <RefreshCw size={18} />
-          Làm mới
-        </button>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
-        {[
-          { label: 'Tổng Commit', value: stats.total, icon: <GitCommit />, color: 'var(--primary)' },
-          { label: 'PR Hoàn thành', value: stats.prs, icon: <GitPullRequest />, color: 'var(--secondary)' },
-          { label: 'Branch hoạt động', value: stats.branches, icon: <GitBranch />, color: 'var(--accent)' },
-          { label: 'Tần suất/ngày', value: stats.freq, icon: <Activity />, color: 'var(--success)' },
-        ].map((stat, i) => (
-          <div key={i} className="glass-card" style={{ padding: '1.5rem' }}>
-            <div style={{ color: stat.color, marginBottom: '1rem' }}>{stat.icon}</div>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{stat.label}</p>
-            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stat.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) 1fr', gap: '2rem' }}>
-        {/* Chart */}
-        <div className="glass-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '1.5rem' }}>Lịch sử Commit (7 ngày qua)</h3>
-          <div style={{ width: '100%', height: '300px' }}>
-            <ResponsiveContainer>
-              <AreaChart data={history}>
-                <defs>
-                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--surface-border)', borderRadius: '8px' }}
-                />
-                <Area type="monotone" dataKey="count" stroke="var(--primary)" fillOpacity={1} fill="url(#colorCount)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Lịch sử Đóng góp Code</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            Dòng thời gian các bản cập nhật mã nguồn từ <strong>Repository</strong> của nhóm
+          </p>
         </div>
 
-        {/* List */}
-        <div className="glass-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '1.5rem' }}>Cam kết gần đây</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {recentCommits.map((c, i) => (
-              <div key={i} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)', marginTop: '6px' }}></div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '0.95rem', fontWeight: '500', marginBottom: '0.25rem' }}>{c.message}</p>
-                  <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    <a href={`https://github.com/example/repo/commit/${c.sha}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
-                      {c.sha}
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ position: 'relative' }}>
+            <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} size={16} />
+            <input
+              type="text"
+              placeholder="Tìm lời nhắn hoặc mã Task..."
+              className="input-field"
+              style={{ paddingLeft: '36px', minWidth: '300px', margin: 0 }}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {!groupInfo ? (
+        <div className="glass-card" style={{ padding: '6rem', textAlign: 'center' }}>
+          <AlertCircle size={48} style={{ margin: '0 auto 1.5rem', color: 'var(--warning)', opacity: 0.5 }} />
+          <h3>Bạn chưa thuộc nhóm nào</h3>
+          <p style={{ color: 'var(--text-muted)' }}>Vui lòng liên hệ quản trị viên hoặc trưởng nhóm để tham gia dự án.</p>
+        </div>
+      ) : filteredCommits.length === 0 ? (
+        <div className="glass-card" style={{ padding: '6rem', textAlign: 'center', borderStyle: 'dashed' }}>
+          <Code size={48} style={{ margin: '0 auto 1.5rem', color: 'var(--text-muted)', opacity: 0.3 }} />
+          <h3>Chưa có dữ liệu đóng góp</h3>
+          <p style={{ color: 'var(--text-muted)' }}>Hãy bắt đầu bằng cách commit mã nguồn với định dạng kèm mã Jira Task.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative' }}>
+          {/* Vertical line indicator */}
+          <div style={{ position: 'absolute', left: '26px', top: '20px', bottom: '20px', width: '2px', background: 'linear-gradient(to bottom, var(--primary), var(--accent), transparent)', opacity: 0.2 }}></div>
+
+          {filteredCommits.map((commit, idx) => {
+            const isMine = commit.author?.toLowerCase().includes(user?.hoTen?.toLowerCase()) || commit.author?.toLowerCase().includes(user?.tenDangNhap?.toLowerCase());
+
+            return (
+              <div key={idx} className="animate-slide-up" style={{ display: 'flex', gap: '1.5rem', position: 'relative' }}>
+                <div style={{
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '50%',
+                  background: isMine ? 'linear-gradient(135deg, var(--primary), var(--accent))' : 'rgba(255,255,255,0.05)',
+                  border: '2px solid rgba(255,255,255,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 2,
+                  boxShadow: isMine ? '0 0 20px rgba(99, 102, 241, 0.3)' : 'none'
+                }}>
+                  <GitCommit size={24} color="white" />
+                </div>
+
+                <div className="glass-card" style={{ flex: 1, padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: isMine ? '3px solid var(--primary)' : '1px solid var(--glass-border)' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.6rem' }}>
+                      <p style={{ fontWeight: '800', fontSize: '1.1rem' }}>{commit.message}</p>
+                      {commit.taskKey && (
+                        <span style={{ fontSize: '0.65rem', fontWeight: '900', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', padding: '2px 8px', borderRadius: '4px' }}>
+                          {commit.taskKey}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Calendar size={14} />
+                        {commit.timestamp ? new Date(commit.timestamp).toLocaleString() : 'Vừa xong'}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: isMine ? 'var(--primary)' : 'var(--text-muted)' }}>
+                        <GitBranch size={14} />
+                        Tác giả: <strong>{commit.author}</strong> {isMine && '(Bạn)'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ textAlign: 'right', paddingRight: '1rem', borderRight: '1px solid var(--glass-border)', fontSize: '0.75rem' }}>
+                      <p style={{ color: 'var(--text-muted)', marginBottom: '2px' }}>Hash</p>
+                      <p style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{commit.hash?.substring(0, 7) || '7fb3a12'}</p>
+                    </div>
+                    <a href={commit.url || '#'} target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{ padding: '0.6rem' }}>
+                      <ExternalLink size={18} />
                     </a>
-                    <span>{c.time}</span>
-                    <span style={{ color: 'var(--accent)' }}>#{c.branch}</span>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-          <button className="btn btn-outline" style={{ width: '100%', marginTop: '2rem', justifyContent: 'center' }}>
-            Xem tất cả trên GitHub
-          </button>
+            );
+          })}
         </div>
-      </div>
+      )}
     </div>
   );
 };

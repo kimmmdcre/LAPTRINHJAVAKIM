@@ -9,13 +9,14 @@ export const AuthProvider = ({ children }) => {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
   }, []);
 
   const login = async (username, password) => {
     try {
+      setLoading(true);
       const response = await api.post('/auth/login', { username, password });
       const userData = response.data;
       localStorage.setItem('token', userData.token);
@@ -24,6 +25,8 @@ export const AuthProvider = ({ children }) => {
       return userData;
     } catch (error) {
       throw error.response?.data?.message || 'Đăng nhập thất bại';
+    } finally {
+      setLoading(false);
     }
   };
 
