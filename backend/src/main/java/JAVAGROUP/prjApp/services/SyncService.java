@@ -27,17 +27,20 @@ public class SyncService {
     private final NhomRepository nhomRepository;
     private final YeuCauRepository yeuCauRepository;
     private final CommitVCSRepository commitVCSRepository;
+    private final SinhVienRepository sinhVienRepository;
 
     public SyncService(IJiraClient jiraClient, IGitHubClient gitHubClient,
                        CauHinhTichHopRepository cauHinhTichHopRepository,
                        NhomRepository nhomRepository, YeuCauRepository yeuCauRepository,
-                       CommitVCSRepository commitVCSRepository) {
+                       CommitVCSRepository commitVCSRepository,
+                       SinhVienRepository sinhVienRepository) {
         this.jiraClient = jiraClient;
         this.gitHubClient = gitHubClient;
         this.cauHinhTichHopRepository = cauHinhTichHopRepository;
         this.nhomRepository = nhomRepository;
         this.yeuCauRepository = yeuCauRepository;
         this.commitVCSRepository = commitVCSRepository;
+        this.sinhVienRepository = sinhVienRepository;
     }
 
     public void dongBoJira(UUID idNhom) {
@@ -76,6 +79,13 @@ public class SyncService {
                     commit.setSha(dto.getSha());
                     commit.setThongDiep(dto.getThongDiep());
                     commit.setThoiGian(dto.getThoiGian());
+                    
+                    // Link to student by email if possible
+                    if (dto.getAuthorEmail() != null) {
+                        sinhVienRepository.findByEmail(dto.getAuthorEmail())
+                                .ifPresent(commit::setSinhVien);
+                    }
+                    
                     commitVCSRepository.save(commit);
                 }
             }

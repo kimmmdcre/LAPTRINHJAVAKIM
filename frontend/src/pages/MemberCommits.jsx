@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Activity,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Info
 } from 'lucide-react';
 
 const MemberCommits = () => {
@@ -27,15 +28,33 @@ const MemberCommits = () => {
   const fetchMyCommits = useCallback(async () => {
     try {
       setLoading(true);
-      const nhomId = user.idNhom;
+      // Ưu tiên lấy nhomId từ URL (dành cho Admin/Teacher), nếu không có mới lấy từ user context
+      const queryParams = new URLSearchParams(window.location.search);
+      const nhomIdFromUrl = queryParams.get('nhomId');
+      const nhomId = nhomIdFromUrl || user.idNhom;
+
       if (nhomId) {
         const groupRes = await groupService.getDetails(nhomId);
         setGroupInfo(groupRes.data);
         
-        const res = await reportService.getCommitHistory(nhomId);
-        // Lọc commit của chính mình
-        const myCommits = res.data.filter(c => c.authorEmail === user.email || c.authorName === user.hoTen);
-        setCommits(myCommits);
+        const res = await reportService.getDetailedCommits(nhomId);
+        const allCommits = Array.isArray(res.data) ? res.data : [];
+        
+        // Nếu là Sinh viên và không phải đang xem theo URL cụ thể, lọc commit của chính mình
+        if (user.role === 'SINH_VIEN' && !nhomIdFromUrl) {
+          const myCommits = allCommits.filter(c => 
+            c.authorEmail === user.email || 
+            c.authorName === user.hoTen ||
+            c.thongDiep?.toLowerCase().includes(user.hoTen?.toLowerCase())
+          );
+          setCommits(myCommits);
+        } else {
+          // Admin/Teacher hoặc truy cập trực tiếp qua URL -> Xem tất cả commit của nhóm
+          setCommits(allCommits);
+        }
+      } else {
+        setCommits([]);
+        showToast('Bạn chưa thuộc nhóm nào hoặc chưa chọn nhóm để xem.', 'warning');
       }
     } catch (err) {
       console.error('Lỗi tải commit:', err);
@@ -49,11 +68,11 @@ const MemberCommits = () => {
     if (user?.id) {
       fetchMyCommits();
     }
-  }, [user, fetchMyCommits]);
+  }, [user?.id, fetchMyCommits]);
 
   const filteredCommits = commits.filter(c => 
-    c.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.hash.toLowerCase().includes(searchQuery.toLowerCase())
+    (c.thongDiep || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.sha || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) return (
@@ -114,17 +133,18 @@ const MemberCommits = () => {
                    <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                          <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', fontFamily: 'monospace', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
-                           {c.hash.substring(0, 7)}
+                           {c.sha?.substring(0, 7)}
                          </span>
                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                           <Clock size={12} /> {c.timestamp || 'Vừa xong'}
+                           <Clock size={12} /> {c.thoiGian ? new Date(c.thoiGian).toLocaleString('vi-VN') : 'Vừa xong'}
                          </span>
                       </div>
-                      <p style={{ fontWeight: '600', lineHeight: '1.5', marginBottom: '0.75rem' }}>{c.message}</p>
+                      <p style={{ fontWeight: '600', lineHeight: '1.5', marginBottom: '0.75rem' }}>{c.thongDiep}</p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                             <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--primary)', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>{c.authorName?.charAt(0)}</div>
                             {c.authorName}
+                            {c.tieuDeYeuCau && <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>• {c.tieuDeYeuCau}</span>}
                          </div>
                       </div>
                    </div>

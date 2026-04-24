@@ -64,11 +64,20 @@ public class ReportController {
 
     /**
      * GET /api/reports/{idNhom}/commits/history
-     * Lấy lịch sử commit của cả nhóm để vẽ Heatmap
+     * Lấy lịch sử commit của cả nhóm để vẽ Heatmap (dữ liệu tổng hợp theo ngày)
      */
     @GetMapping("/{idNhom}/commits/history")
     public ResponseEntity<List<java.util.Map<String, Object>>> xemLichSuCommitNhom(@PathVariable UUID idNhom) {
         return ResponseEntity.ok(reportService.xemLichSuCommitNhom(idNhom));
+    }
+
+    /**
+     * GET /api/reports/{idNhom}/commits/detailed
+     * Lấy danh sách chi tiết từng commit của nhóm
+     */
+    @GetMapping("/{idNhom}/commits/detailed")
+    public ResponseEntity<List<JAVAGROUP.prjApp.dtos.CommitDTO>> xemChiTietCommitNhom(@PathVariable UUID idNhom) {
+        return ResponseEntity.ok(reportService.layChiTietCommitNhom(idNhom));
     }
 
     /**

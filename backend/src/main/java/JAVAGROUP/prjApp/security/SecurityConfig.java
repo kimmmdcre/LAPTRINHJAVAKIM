@@ -56,11 +56,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/groups/**").hasAnyRole("ADMIN", "GIANG_VIEN", "SINH_VIEN")
                         .requestMatchers("/api/config/**").hasAnyRole("ADMIN", "GIANG_VIEN", "SINH_VIEN")
                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "GIANG_VIEN", "SINH_VIEN")
+                        .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "GIANG_VIEN", "SINH_VIEN")
                         .anyRequest().authenticated());
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

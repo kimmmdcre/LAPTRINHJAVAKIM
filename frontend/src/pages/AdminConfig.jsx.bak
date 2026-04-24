@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { groupService, configService, taskService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
@@ -39,26 +39,21 @@ const AdminConfig = () => {
 
   const { user } = useAuth();
   const { showToast } = useUI();
-  const isMounted = useRef(true);
 
   useEffect(() => {
-    isMounted.current = true;
-    return () => { isMounted.current = false; };
-  }, []);
+    fetchGroups();
+  }, [fetchGroups]);
 
   const fetchCurrentConfig = useCallback(async (groupId) => {
     if (!groupId) return;
     try {
       const res = await configService.getConfig(groupId);
-      if (!isMounted.current) return;
-
       const configs = Array.isArray(res.data) ? res.data : [];
 
       const newJira = { url: '', email: '', token: '', projectKey: '', doneStatusName: 'Done' };
       const newGithub = { repo: '', token: '', since: '2024-01-01T00:00:00Z' };
 
       configs.forEach(conf => {
-        if (!conf) return;
         if (conf.loaiNenTang === 'JIRA') {
           newJira.url = conf.url || '';
           newJira.email = conf.email || '';
@@ -82,12 +77,10 @@ const AdminConfig = () => {
   const fetchGroups = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       const res = await groupService.getAll();
-      if (!isMounted.current) return;
-
       const rawGroups = Array.isArray(res.data) ? res.data : [];
       
+      // Lọc nhóm nếu là sinh viên (chỉ thấy nhóm mình)
       const filteredGroups = user?.role === 'SINH_VIEN' 
         ? rawGroups.filter(g => g && g.idNhom === user.idNhom)
         : rawGroups;
@@ -95,31 +88,18 @@ const AdminConfig = () => {
       setGroups(filteredGroups);
 
       if (filteredGroups.length > 0) {
+        // Ưu tiên groupId từ location state, sau đó là idNhom của user, sau đó là nhóm đầu tiên
         const targetId = location.state?.groupId || user?.idNhom || filteredGroups[0]?.idNhom;
         if (targetId) {
           setActiveGroupId(targetId);
           fetchCurrentConfig(targetId);
         }
-      }
-    } catch (err) {
-      console.error('Groups Fetch Error:', err);
-      setError('Không thể kết nối đến hệ thống máy chủ. Vui lòng kiểm tra lại đường truyền.');
-      showToast('Không thể kết nối đến danh sách nhóm.', 'danger');
-    } finally {
-      if (isMounted.current) setLoading(false);
-    }
-  }, [location.state?.groupId, user?.idNhom, user?.role, fetchCurrentConfig, showToast]);
 
-  // Fetch stats separately to avoid blocking main UI
-  useEffect(() => {
-    if (groups.length > 0) {
-      const fetchStats = async () => {
         const stats = {};
-        for (const g of groups) {
+        for (const g of filteredGroups) {
           if (!g?.idNhom) continue;
           try {
             const confRes = await configService.getConfig(g.idNhom);
-            if (!isMounted.current) return;
             const configs = Array.isArray(confRes.data) ? confRes.data : [];
             stats[g.idNhom] = {
               jira: configs.some(c => c?.loaiNenTang === 'JIRA' && c?.url),
@@ -129,15 +109,15 @@ const AdminConfig = () => {
             stats[g.idNhom] = { jira: false, github: false };
           }
         }
-        if (isMounted.current) setGroupStats(stats);
-      };
-      fetchStats();
+        setGroupStats(stats);
+      }
+    } catch (err) {
+      console.error('Groups Fetch Error:', err);
+      showToast('Không thể kết nối đến danh sách nhóm.', 'danger');
+    } finally {
+      setLoading(false);
     }
-  }, [groups]);
-
-  useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+  }, [location.state?.groupId, user?.idNhom, user?.role, fetchCurrentConfig, showToast]);
 
   const handleGroupChange = (id) => {
     setActiveGroupId(id);
@@ -151,8 +131,7 @@ const AdminConfig = () => {
       await configService.saveJira(activeGroupId, jiraData);
       showToast('Đã lưu cấu hình Jira Cloud thành công!', 'success');
       fetchGroups();
-    } catch (err) {
-      console.error('Save Jira Error:', err);
+    } catch {
       showToast('Lỗi lưu cấu hình Jira.', 'danger');
     } finally {
       setIsSaving(false);
@@ -166,8 +145,7 @@ const AdminConfig = () => {
       await configService.saveGithub(activeGroupId, githubData);
       showToast('Đã lưu cấu hình GitHub Repository!', 'success');
       fetchGroups();
-    } catch (err) {
-      console.error('Save Github Error:', err);
+    } catch {
       showToast('Lỗi lưu cấu hình GitHub.', 'danger');
     } finally {
       setIsSaving(false);
@@ -180,10 +158,9 @@ const AdminConfig = () => {
       const res = type === 'Jira'
         ? await configService.testJira(jiraData)
         : await configService.testGithub(githubData);
-      showToast(res.data?.message || `Kết nối ${type} ổn định!`, 'success');
-    } catch (err) {
-      console.error('Test Connection Error:', err);
-      showToast(`Ping ${type} thất bại. Vui lòng kiểm tra lại cấu hình.`, 'danger');
+      showToast(res.data.message || `Kết nối ${type} ổn định!`, 'success');
+    } catch {
+      showToast('Ping failed. Vui lòng kiểm tra lại cấu hình.', 'danger');
     }
   };
 
@@ -197,8 +174,7 @@ const AdminConfig = () => {
       else if (type === 'mapping') await taskService.mapping();
 
       showToast(`Đồng bộ ${type.toUpperCase()} hoàn tất!`, 'success');
-    } catch (err) {
-      console.error('Sync error:', err);
+    } catch {
       showToast(`Đồng bộ ${type} không thành công.`, 'danger');
     } finally {
       setSyncing(prev => ({ ...prev, [type]: false }));
@@ -211,11 +187,11 @@ const AdminConfig = () => {
        <div>
          <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>Trung tâm tích hợp đang gặp sự cố</h3>
          <p style={{ color: 'var(--text-secondary)', maxWidth: '500px' }}>
-           {error}
+           {error || 'Đã xảy ra lỗi không xác định khi kết nối đến hệ thống điều khiển. Vui lòng kiểm tra lại trạng thái server.'}
          </p>
        </div>
        <div style={{ display: 'flex', gap: '1rem' }}>
-         <button className="btn btn-primary" onClick={() => fetchGroups()}>
+         <button className="btn btn-primary" onClick={() => window.location.reload()}>
            <RefreshCw size={18} /> Thử lại ngay
          </button>
          <button className="btn btn-outline" onClick={() => setError(null)}>
@@ -225,13 +201,12 @@ const AdminConfig = () => {
     </div>
   );
 
-  if (loading && groups.length === 0) return (
+  if (loading && (!groups || groups.length === 0)) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px', gap: '1rem' }}>
       <div className="animate-spin" style={{ width: '40px', height: '40px', border: '4px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
       <p style={{ color: 'var(--text-secondary)' }}>Đang truy xuất hệ thống cấu hình...</p>
     </div>
   );
-
   const activeGroup = Array.isArray(groups) ? groups.find(g => g?.idNhom === activeGroupId) : null;
 
   return (
@@ -271,7 +246,7 @@ const AdminConfig = () => {
                     borderRadius: '12px',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.02)',
+                    background: isActive ? 'var(--primary-glow)' : 'rgba(255,255,255,0.02)',
                     border: '1px solid',
                     borderColor: isActive ? 'var(--primary)' : 'var(--glass-border)',
                     position: 'relative',
@@ -296,7 +271,7 @@ const AdminConfig = () => {
         {activeGroupId ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Status Header */}
-            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'linear-gradient(to right, rgba(99, 102, 241, 0.1), transparent)' }}>
+            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'linear-gradient(to right, var(--primary-glow), transparent)' }}>
               <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--glass-border)' }}>
                 <Cpu size={32} color="var(--primary)" />
               </div>
@@ -325,7 +300,7 @@ const AdminConfig = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              {/* Jira Card */}
+              {/* Jira Crystal Card */}
               <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
                   <div style={{ padding: '10px', background: 'rgba(0, 82, 204, 0.1)', color: '#0052CC', borderRadius: '12px' }}>
@@ -380,7 +355,7 @@ const AdminConfig = () => {
                 </div>
               </div>
 
-              {/* GitHub Card */}
+              {/* GitHub Crystal Card */}
               <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
                   <div style={{ padding: '10px', background: 'rgba(255,255,255,0.05)', color: 'white', borderRadius: '12px' }}>
@@ -402,7 +377,7 @@ const AdminConfig = () => {
                   <div className="glass-card" style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', marginTop: '0.5rem' }}>
                     <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: '1.6' }}>
                       <Terminal size={20} style={{ flexShrink: 0 }} />
-                      <p>Hệ thống sử dụng PAT để quét Commit API. Đảm bảo Scope <strong>repo:status</strong> được bật.</p>
+                      <p>Hệ thống sử dụng PAT để quét Commit API. Đảm bảo Scope <strong>repo:status</strong> được bật để xem tiến độ thực tế.</p>
                     </div>
                   </div>
                 </div>
@@ -431,7 +406,7 @@ const AdminConfig = () => {
           </div>
         ) : (
           <div className="glass-card" style={{ padding: '8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Settings size={48} style={{ opacity: 0.1, marginBottom: '2rem' }} />
+            <Settings size={48} style={{ opacity: 0.1, marginBottom: '2rem' }} className="animate-spin" />
             <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Infrastructure Ready</h3>
             <p style={{ color: 'var(--text-muted)', maxWidth: '300px', marginTop: '0.5rem' }}>Vui lòng chọn một hàng dự án để thực hiện cầu nối dữ liệu (Data Bridge).</p>
           </div>

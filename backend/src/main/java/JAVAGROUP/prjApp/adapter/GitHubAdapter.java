@@ -67,19 +67,25 @@ public class GitHubAdapter implements IGitHubClient {
                 if (commitInfo == null) continue;
                 String thongDiep = (String) commitInfo.get("message");
                 
-                // Parse date if available
+                // Parse date and author info if available
                 LocalDateTime thoiGian = LocalDateTime.now();
+                String authorName = null;
+                String authorEmail = null;
                 try {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> author = (Map<String, Object>) commitInfo.get("author");
-                    if (author != null && author.get("date") != null) {
-                        thoiGian = ZonedDateTime.parse((String) author.get("date")).toLocalDateTime();
+                    if (author != null) {
+                        if (author.get("date") != null) {
+                            thoiGian = ZonedDateTime.parse((String) author.get("date")).toLocalDateTime();
+                        }
+                        authorName = (String) author.get("name");
+                        authorEmail = (String) author.get("email");
                     }
                 } catch (Exception e) {
-                    log.warn("Lỗi phân tích ngày commit cho {}: {}", sha, e.getMessage());
+                    log.warn("Lỗi phân tích thông tin tác giả commit cho {}: {}", sha, e.getMessage());
                 }
 
-                CommitDTO dto = new CommitDTO(sha, thongDiep != null ? thongDiep : "", thoiGian, null, null, null);
+                CommitDTO dto = new CommitDTO(sha, thongDiep != null ? thongDiep : "", thoiGian, null, null, authorName, authorEmail);
                 result.add(dto);
             }
             log.info("Đã lấy thành công {} commits từ GitHub", result.size());

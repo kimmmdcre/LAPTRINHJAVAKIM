@@ -161,6 +161,33 @@ public class ReportService {
         return toHistoryData(commits);
     }
 
+    public java.util.List<JAVAGROUP.prjApp.dtos.CommitDTO> layChiTietCommitNhom(UUID idNhom) {
+        return commitVCSRepository.findAll().stream()
+                .filter(c -> c.getNhiemVu() != null
+                        && c.getNhiemVu().getYeuCau() != null
+                        && c.getNhiemVu().getYeuCau().getNhom() != null
+                        && idNhom.equals(c.getNhiemVu().getYeuCau().getNhom().getIdNhom()))
+                .sorted(Comparator.comparing(CommitVCS::getThoiGian).reversed())
+                .map(c -> {
+                    JAVAGROUP.prjApp.dtos.CommitDTO dto = new JAVAGROUP.prjApp.dtos.CommitDTO();
+                    dto.setSha(c.getSha());
+                    dto.setThongDiep(c.getThongDiep());
+                    dto.setThoiGian(c.getThoiGian());
+                    if (c.getSinhVien() != null) {
+                        dto.setAuthorName(c.getSinhVien().getHoTen());
+                        dto.setAuthorEmail(c.getSinhVien().getEmail());
+                    } else {
+                        dto.setAuthorName("Unknown");
+                    }
+                    if (c.getYeuCau() != null) {
+                        dto.setIdYeuCau(c.getYeuCau().getIdYeuCau().toString());
+                        dto.setTieuDeYeuCau(c.getYeuCau().getTieuDe());
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
     private java.util.List<java.util.Map<String, Object>> toHistoryData(java.util.List<CommitVCS> commits) {
         java.util.Map<String, Integer> countPerDay = new LinkedHashMap<>();
         for (CommitVCS c : commits) {

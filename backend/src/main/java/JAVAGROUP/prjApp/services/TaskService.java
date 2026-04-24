@@ -24,20 +24,17 @@ public class TaskService {
     private final YeuCauRepository yeuCauRepository;
     private final NhiemVuRepository nhiemVuRepository;
     private final SinhVienRepository sinhVienRepository;
-    private final JAVAGROUP.prjApp.repositories.NhomRepository nhomRepository;
     private final ThanhVienNhomRepository thanhVienNhomRepository;
     private final JAVAGROUP.prjApp.repositories.CommitVCSRepository commitVCSRepository;
 
     public TaskService(YeuCauRepository yeuCauRepository, 
                        NhiemVuRepository nhiemVuRepository,
                        SinhVienRepository sinhVienRepository,
-                       JAVAGROUP.prjApp.repositories.NhomRepository nhomRepository,
                        ThanhVienNhomRepository thanhVienNhomRepository,
                        JAVAGROUP.prjApp.repositories.CommitVCSRepository commitVCSRepository) {
         this.yeuCauRepository = yeuCauRepository;
         this.nhiemVuRepository = nhiemVuRepository;
         this.sinhVienRepository = sinhVienRepository;
-        this.nhomRepository = nhomRepository;
         this.thanhVienNhomRepository = thanhVienNhomRepository;
         this.commitVCSRepository = commitVCSRepository;
     }

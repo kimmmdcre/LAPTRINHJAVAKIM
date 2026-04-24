@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { taskService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
@@ -27,13 +27,7 @@ const MemberTasks = () => {
   const [filter, setFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchTasks();
-    }
-  }, [user]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       const res = await taskService.getMine(user.id);
@@ -44,7 +38,13 @@ const MemberTasks = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id, showToast]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchTasks();
+    }
+  }, [user, fetchTasks]);
 
   const updateStatus = async (taskId, newStatus) => {
     try {

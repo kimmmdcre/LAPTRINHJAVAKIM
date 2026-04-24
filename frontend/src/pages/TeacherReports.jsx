@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { reportService, groupService } from '../services/api';
 import { useUI } from '../context/UIContext';
@@ -35,13 +35,7 @@ const TeacherReports = () => {
   const [gitStats, setGitStats] = useState([]);
   const [contributions, setContributions] = useState([]);
 
-  useEffect(() => {
-    if (nhomId) {
-      fetchReportData();
-    }
-  }, [nhomId]);
-
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     try {
       setLoading(true);
       const [infoRes, progressRes, historyRes, gitRes, contribRes] = await Promise.all([
@@ -69,7 +63,13 @@ const TeacherReports = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [nhomId, showToast]);
+
+  useEffect(() => {
+    if (nhomId) {
+      fetchReportData();
+    }
+  }, [nhomId, fetchReportData]);
 
   const handleExport = async (format) => {
     try {
@@ -86,7 +86,8 @@ const TeacherReports = () => {
       link.click();
       link.remove();
       showToast('Xuất báo cáo thành công!');
-    } catch (err) {
+    } catch (error) {
+      console.error('Export error:', error);
       showToast('Lỗi khi xuất file báo cáo.', 'danger');
     }
   };

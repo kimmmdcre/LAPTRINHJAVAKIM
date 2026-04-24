@@ -11,4 +11,5 @@ import java.util.UUID;
 @Repository
 public interface SinhVienRepository extends JpaRepository<SinhVien, UUID> {
     Optional<SinhVien> findByMaSv(String maSv);
+    Optional<SinhVien> findByEmail(String email);
 }

@@ -28,8 +28,11 @@ const ContributionTracking = () => {
   const fetchAnalyticsData = useCallback(async () => {
     try {
       setLoading(true);
-      // Dùng idNhom từ login nếu có
-      const nhomId = user.idNhom;
+      // Ưu tiên lấy nhomId từ URL (dành cho Admin/Teacher)
+      const queryParams = new URLSearchParams(window.location.search);
+      const nhomIdFromUrl = queryParams.get('nhomId');
+      const nhomId = nhomIdFromUrl || user.idNhom;
+
       if (nhomId) {
         const groupRes = await groupService.getDetails(nhomId);
         setGroupInfo(groupRes.data);
@@ -40,9 +43,10 @@ const ContributionTracking = () => {
         setContributions(contribRes.data || []);
         setHistory(historyRes.data || []);
       } else {
-        // fallback
+        // fallback cho Sinh viên nếu idNhom trong user context bị thiếu
         const groupsRes = await groupService.getAll();
-        const myGroup = groupsRes.data.find(g => 
+        const allGroups = Array.isArray(groupsRes.data) ? groupsRes.data : [];
+        const myGroup = allGroups.find(g => 
           g.thanhViens?.some(m => m.idSinhVien === user.id)
         );
         if (myGroup) {
@@ -53,6 +57,8 @@ const ContributionTracking = () => {
           ]);
           setContributions(contribRes.data || []);
           setHistory(historyRes.data || []);
+        } else if (user.role === 'ADMIN' || user.role === 'GIANG_VIEN') {
+          showToast('Vui lòng chọn một nhóm từ danh sách Lớp học để xem báo cáo đóng góp.', 'info');
         }
       }
     } catch (err) {

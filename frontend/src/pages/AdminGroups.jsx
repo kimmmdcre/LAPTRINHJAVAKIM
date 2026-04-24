@@ -14,6 +14,8 @@ import {
   Layers,
   UserPlus,
   UserMinus,
+  GitCommit,
+  Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -260,12 +262,18 @@ const AdminGroups = () => {
                 <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', color: 'var(--primary)' }}>
                   <FolderOpen size={20} />
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn-hover" onClick={() => navigate('/admin/config', { state: { groupId: group.idNhom } })} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}>
-                    <Settings size={18} />
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <button className="btn-hover" title="Cấu hình" onClick={() => navigate('/admin/config', { state: { groupId: group.idNhom } })} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}>
+                    <Settings size={16} />
                   </button>
-                  <button className="btn-hover" onClick={() => handleDeleteGroup(group.idNhom)} style={{ background: 'none', border: 'none', color: 'var(--danger)' }}>
-                    <Trash2 size={18} />
+                  <button className="btn-hover" title="Lịch sử Commit" onClick={() => navigate(`/member/commits?nhomId=${group.idNhom}`)} style={{ background: 'none', border: 'none', color: 'var(--primary)' }}>
+                    <GitCommit size={16} />
+                  </button>
+                  <button className="btn-hover" title="Phân tích" onClick={() => navigate(`/project/heatmap?nhomId=${group.idNhom}`)} style={{ background: 'none', border: 'none', color: 'var(--accent)' }}>
+                    <Activity size={16} />
+                  </button>
+                  <button className="btn-hover" title="Xóa nhóm" onClick={() => handleDeleteGroup(group.idNhom)} style={{ background: 'none', border: 'none', color: 'var(--danger)' }}>
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>

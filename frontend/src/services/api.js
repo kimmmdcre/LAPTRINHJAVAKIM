@@ -53,6 +53,7 @@ export const reportService = {
   getHistory: (idNhom) => api.get(`/reports/${idNhom}/history`),
   getCommits: (idNhom) => api.get(`/reports/${idNhom}/commits`),
   getCommitHistory: (idNhom) => api.get(`/reports/${idNhom}/commits/history`),
+  getDetailedCommits: (idNhom) => api.get(`/reports/${idNhom}/commits/detailed`),
   getContributions: (idNhom) => api.get(`/reports/${idNhom}/contributions`),
   getPersonalHistory: (idSinhVien) => api.get(`/reports/personal/${idSinhVien}/history`),
   exportCsv: (idNhom) => api.get(`/reports/${idNhom}/export`, { responseType: 'blob' }),

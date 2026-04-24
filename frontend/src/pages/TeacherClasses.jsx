@@ -14,7 +14,9 @@ import {
   GitBranch,
   ChevronDown,
   ChevronUp,
-  FileText
+  FileText,
+  GitCommit,
+  Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,17 +30,11 @@ const TeacherClasses = () => {
   const { showToast } = useUI();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchClasses();
-    }
-  }, [user, fetchClasses]);
-
   const fetchClasses = useCallback(async () => {
     try {
       setLoading(true);
       const res = await groupService.getByTeacher(user.id);
-      const fetchedGroups = res.data;
+      const fetchedGroups = Array.isArray(res.data) ? res.data : [];
       setClasses(fetchedGroups);
 
       // Fetch additional status for each group
@@ -47,7 +43,7 @@ const TeacherClasses = () => {
         for (const g of fetchedGroups) {
           try {
             const confRes = await configService.getConfig(g.idNhom);
-            const configs = confRes.data;
+            const configs = Array.isArray(confRes.data) ? confRes.data : [];
             statuses[g.idNhom] = {
               hasJira: configs.some(c => c.loaiNenTang === 'JIRA' && c.url),
               hasGithub: configs.some(c => c.loaiNenTang === 'GITHUB' && c.repoUrl)
@@ -65,6 +61,12 @@ const TeacherClasses = () => {
       setLoading(false);
     }
   }, [user?.id, showToast]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchClasses();
+    }
+  }, [user, fetchClasses]);
 
   const toggleMembers = async (groupId) => {
     if (expandingGroupId === groupId) {
@@ -153,19 +155,35 @@ const TeacherClasses = () => {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: 'auto' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: 'auto' }}>
                 <button 
                   onClick={() => navigate(`/teacher/reports?nhomId=${cls.idNhom}`)}
                   className="btn btn-primary" 
-                  style={{ flex: 1, justifyContent: 'center', padding: '0.85rem' }}
+                  style={{ flex: 1, justifyContent: 'center', padding: '0.65rem', fontSize: '0.8rem' }}
                 >
-                  <FileText size={18} />
-                  Báo cáo Phân tích
+                  <FileText size={16} />
+                  Báo cáo
+                </button>
+                <button 
+                  onClick={() => navigate(`/member/commits?nhomId=${cls.idNhom}`)}
+                  className="btn btn-outline" 
+                  style={{ flex: 1, justifyContent: 'center', padding: '0.65rem', fontSize: '0.8rem', color: 'var(--primary)', borderColor: 'rgba(99, 102, 241, 0.2)' }}
+                >
+                  <GitCommit size={16} />
+                  Commits
+                </button>
+                <button 
+                  onClick={() => navigate(`/project/heatmap?nhomId=${cls.idNhom}`)}
+                  className="btn btn-outline" 
+                  style={{ flex: 1, justifyContent: 'center', padding: '0.65rem', fontSize: '0.8rem', color: 'var(--accent)', borderColor: 'rgba(139, 92, 246, 0.2)' }}
+                >
+                  <Activity size={16} />
+                  Heatmap
                 </button>
                 <button 
                   onClick={() => toggleMembers(cls.idNhom)}
                   className="btn btn-outline" 
-                  style={{ padding: '0.85rem', borderColor: expandingGroupId === cls.idNhom ? 'var(--primary)' : '' }}
+                  style={{ padding: '0.65rem', borderColor: expandingGroupId === cls.idNhom ? 'var(--primary)' : '' }}
                 >
                   {expandingGroupId === cls.idNhom ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </button>
