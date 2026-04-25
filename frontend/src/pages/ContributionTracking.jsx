@@ -28,32 +28,32 @@ const ContributionTracking = () => {
   const fetchAnalyticsData = useCallback(async () => {
     try {
       setLoading(true);
-      // Ưu tiên lấy nhomId từ URL (dành cho Admin/Teacher)
+      // Ưu tiên lấy groupId từ URL (dành cho Admin/Teacher)
       const queryParams = new URLSearchParams(window.location.search);
-      const nhomIdFromUrl = queryParams.get('nhomId');
-      const nhomId = nhomIdFromUrl || user.idNhom;
+      const groupIdFromUrl = queryParams.get('groupId');
+      const groupId = groupIdFromUrl || user.groupId;
 
-      if (nhomId) {
-        const groupRes = await groupService.getDetails(nhomId);
+      if (groupId) {
+        const groupRes = await groupService.getDetails(groupId);
         setGroupInfo(groupRes.data);
         const [contribRes, historyRes] = await Promise.all([
-          reportService.getContributions(nhomId),
-          reportService.getCommitHistory(nhomId)
+          reportService.getContributions(groupId),
+          reportService.getCommitHistory(groupId)
         ]);
         setContributions(contribRes.data || []);
         setHistory(historyRes.data || []);
       } else {
-        // fallback cho Sinh viên nếu idNhom trong user context bị thiếu
+        // fallback cho Sinh viên nếu groupId trong user context bị thiếu
         const groupsRes = await groupService.getAll();
         const allGroups = Array.isArray(groupsRes.data) ? groupsRes.data : [];
         const myGroup = allGroups.find(g => 
-          g.thanhViens?.some(m => m.idSinhVien === user.id)
+          g.members?.some(m => m.studentId === user.id)
         );
         if (myGroup) {
           setGroupInfo(myGroup);
           const [contribRes, historyRes] = await Promise.all([
-            reportService.getContributions(myGroup.idNhom),
-            reportService.getCommitHistory(myGroup.idNhom)
+            reportService.getContributions(myGroup.groupId),
+            reportService.getCommitHistory(myGroup.groupId)
           ]);
           setContributions(contribRes.data || []);
           setHistory(historyRes.data || []);
@@ -98,7 +98,7 @@ const ContributionTracking = () => {
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Phân tích sâu hiệu năng lập trình và tần suất hoàn thành mục tiêu</p>
         </div>
         <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', padding: '0.6rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '800' }}>
-           Group: {groupInfo?.tenNhom || 'N/A'}
+           Group: {groupInfo?.groupName || 'N/A'}
         </div>
       </div>
 
@@ -115,15 +115,15 @@ const ContributionTracking = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={contributions}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.05} vertical={false} />
-                <XAxis dataKey="tenSinhVien" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
+                <XAxis dataKey="studentName" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <YAxis fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{fill: 'rgba(255,255,255,0.03)'}}
                   contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
                 />
-                <Bar dataKey="soCommit" fill="var(--primary)" radius={[6, 6, 0, 0]} barSize={40}>
+                <Bar dataKey="commitCount" fill="var(--primary)" radius={[6, 6, 0, 0]} barSize={40}>
                    {contributions.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fillOpacity={entry.idSinhVien === user.id ? 1 : 0.4} />
+                    <Cell key={`cell-${index}`} fillOpacity={entry.studentId === user.id ? 1 : 0.4} />
                   ))}
                 </Bar>
               </BarChart>
@@ -143,15 +143,15 @@ const ContributionTracking = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={contributions}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.05} vertical={false} />
-                <XAxis dataKey="tenSinhVien" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
+                <XAxis dataKey="studentName" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <YAxis fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{fill: 'rgba(255,255,255,0.03)'}}
                   contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
                 />
-                <Bar dataKey="soNhiemVuHoanThanh" fill="var(--success)" radius={[6, 6, 0, 0]} barSize={40}>
+                <Bar dataKey="completedTaskCount" fill="var(--success)" radius={[6, 6, 0, 0]} barSize={40}>
                    {contributions.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fillOpacity={entry.idSinhVien === user.id ? 1 : 0.4} />
+                    <Cell key={`cell-${index}`} fillOpacity={entry.studentId === user.id ? 1 : 0.4} />
                   ))}
                 </Bar>
               </BarChart>
@@ -233,7 +233,7 @@ const ContributionTracking = () => {
                        </div>
                        <div>
                           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOP CONTRIBUTOR</p>
-                          <p style={{ fontWeight: '800' }}>{top.tenSinhVien}</p>
+                          <p style={{ fontWeight: '800' }}>{top.studentName}</p>
                        </div>
                     </div>
                   ))}

@@ -11,20 +11,20 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CommitDTO {
     private String sha;
-    private String thongDiep;
-    private LocalDateTime thoiGian;
-    private String idYeuCau;
-    private String tieuDeYeuCau;
+    private String message;
+    private LocalDateTime commitTime;
+    private String requirementId;
+    private String requirementTitle;
     private String authorName;
     private String authorEmail;
 
     // Manual constructor for 6 arguments used in GitHubAdapter
-    public CommitDTO(String sha, String thongDiep, LocalDateTime thoiGian, String idYeuCau, String tieuDeYeuCau, String authorName) {
+    public CommitDTO(String sha, String message, LocalDateTime commitTime, String requirementId, String requirementTitle, String authorName) {
         this.sha = sha;
-        this.thongDiep = thongDiep;
-        this.thoiGian = thoiGian;
-        this.idYeuCau = idYeuCau;
-        this.tieuDeYeuCau = tieuDeYeuCau;
+        this.message = message;
+        this.commitTime = commitTime;
+        this.requirementId = requirementId;
+        this.requirementTitle = requirementTitle;
         this.authorName = authorName;
     }
 }

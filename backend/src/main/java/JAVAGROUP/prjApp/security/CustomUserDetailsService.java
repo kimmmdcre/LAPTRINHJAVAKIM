@@ -1,7 +1,7 @@
 package JAVAGROUP.prjApp.security;
 
-import JAVAGROUP.prjApp.entities.NguoiDung;
-import JAVAGROUP.prjApp.repositories.NguoiDungRepository;
+import JAVAGROUP.prjApp.entities.User;
+import JAVAGROUP.prjApp.repositories.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,18 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final NguoiDungRepository nguoiDungRepository;
+    private final UserRepository userRepository;
 
-    public CustomUserDetailsService(NguoiDungRepository nguoiDungRepository) {
-        this.nguoiDungRepository = nguoiDungRepository;
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        NguoiDung user = nguoiDungRepository.findByTenDangNhap(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(
-                        "Không tìm thấy người dùng với tên đăng nhập: " + username));
+                        "User not found with username: " + username));
 
         return UserPrincipal.create(user);
     }

@@ -1,6 +1,6 @@
 package JAVAGROUP.prjApp.entities;
 
-public enum VaiTroNhom {
+public enum GroupRole {
     LEADER,
     MEMBER
 }

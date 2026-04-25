@@ -8,32 +8,30 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.UUID;
-
 @Configuration
 public class DataInitializer implements CommandLineRunner {
 
-    private final NguoiDungRepository nguoiDungRepository;
-    private final QuanTriVienRepository quanTriVienRepository;
-    private final GiangVienRepository giangVienRepository;
-    private final SinhVienRepository sinhVienRepository;
-    private final NhomRepository nhomRepository;
-    private final ThanhVienNhomRepository thanhVienNhomRepository;
+    private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
+    private final TeacherRepository teacherRepository;
+    private final StudentRepository studentRepository;
+    private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public DataInitializer(NguoiDungRepository nguoiDungRepository,
-                           QuanTriVienRepository quanTriVienRepository,
-                           GiangVienRepository giangVienRepository,
-                           SinhVienRepository sinhVienRepository,
-                           NhomRepository nhomRepository,
-                           ThanhVienNhomRepository thanhVienNhomRepository,
+    public DataInitializer(UserRepository userRepository,
+                           AdminRepository adminRepository,
+                           TeacherRepository teacherRepository,
+                           StudentRepository studentRepository,
+                           GroupRepository groupRepository,
+                           GroupMemberRepository groupMemberRepository,
                            PasswordEncoder passwordEncoder) {
-        this.nguoiDungRepository = nguoiDungRepository;
-        this.quanTriVienRepository = quanTriVienRepository;
-        this.giangVienRepository = giangVienRepository;
-        this.sinhVienRepository = sinhVienRepository;
-        this.nhomRepository = nhomRepository;
-        this.thanhVienNhomRepository = thanhVienNhomRepository;
+        this.userRepository = userRepository;
+        this.adminRepository = adminRepository;
+        this.teacherRepository = teacherRepository;
+        this.studentRepository = studentRepository;
+        this.groupRepository = groupRepository;
+        this.groupMemberRepository = groupMemberRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -42,94 +40,94 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         // 1. Seed Admin
-        QuanTriVien admin = quanTriVienRepository.findByMaGv("AD001")
+        Admin admin = adminRepository.findByAdminCode("AD001")
                 .orElseGet(() -> {
-                    QuanTriVien newAdmin = new QuanTriVien();
-                    newAdmin.setMaGv("AD001");
+                    Admin newAdmin = new Admin();
+                    newAdmin.setAdminCode("AD001");
                     return newAdmin;
                 });
-        admin.setTenDangNhap("admin");
-        admin.setMatKhauHash(passwordEncoder.encode("admin"));
-        admin.setHoTen("Admin Hệ Thống");
+        admin.setUsername("admin");
+        admin.setPasswordHash(passwordEncoder.encode("admin"));
+        admin.setFullName("Admin Hệ Thống");
         admin.setEmail("admin@prj.com");
-        admin.setTrangThai(TrangThaiUser.ACTIVE);
-        admin.setMaVaiTro("ADMIN");
-        admin.setCapDoQuyen(1);
-        quanTriVienRepository.save(admin);
+        admin.setStatus(UserStatus.ACTIVE);
+        admin.setRoleCode("ADMIN");
+        admin.setAdminLevel("SUPER_ADMIN");
+        adminRepository.save(admin);
 
-        // 2. Seed Giang Vien
-        GiangVien gv = giangVienRepository.findByMaGiangVien("GV001")
+        // 2. Seed Teacher
+        Teacher teacher = teacherRepository.findByTeacherCode("GV001")
                 .orElseGet(() -> {
-                    GiangVien newGv = new GiangVien();
-                    newGv.setMaGiangVien("GV001");
-                    return newGv;
+                    Teacher newTeacher = new Teacher();
+                    newTeacher.setTeacherCode("GV001");
+                    return newTeacher;
                 });
-        gv.setTenDangNhap("teacher");
-        gv.setMatKhauHash(passwordEncoder.encode("teacher"));
-        gv.setHoTen("Giảng Viên Hướng Dẫn");
-        gv.setEmail("teacher@prj.com");
-        gv.setTrangThai(TrangThaiUser.ACTIVE);
-        gv.setMaVaiTro("GIANG_VIEN");
-        gv.setKhoa("Công nghệ thông tin");
-        gv = giangVienRepository.save(gv);
+        teacher.setUsername("teacher");
+        teacher.setPasswordHash(passwordEncoder.encode("teacher"));
+        teacher.setFullName("Giảng Viên Hướng Dẫn");
+        teacher.setEmail("teacher@prj.com");
+        teacher.setStatus(UserStatus.ACTIVE);
+        teacher.setRoleCode("GIANG_VIEN");
+        teacher.setDepartment("Công nghệ thông tin");
+        teacher = teacherRepository.save(teacher);
 
         // 3. Seed Students
-        SinhVien leader = sinhVienRepository.findByMaSv("SV001")
+        Student leader = studentRepository.findByStudentCode("SV001")
                 .orElseGet(() -> {
-                    SinhVien newL = new SinhVien();
-                    newL.setMaSv("SV001");
+                    Student newL = new Student();
+                    newL.setStudentCode("SV001");
                     return newL;
                 });
-        leader.setTenDangNhap("leader");
-        leader.setMatKhauHash(passwordEncoder.encode("leader"));
-        leader.setHoTen("Sinh Viên Trưởng Nhóm");
+        leader.setUsername("leader");
+        leader.setPasswordHash(passwordEncoder.encode("leader"));
+        leader.setFullName("Sinh Viên Trưởng Nhóm");
         leader.setEmail("leader@prj.com");
-        leader.setTrangThai(TrangThaiUser.ACTIVE);
-        leader.setMaVaiTro("SINH_VIEN");
-        leader.setLop("K65-CNTT");
-        leader = sinhVienRepository.save(leader);
+        leader.setStatus(UserStatus.ACTIVE);
+        leader.setRoleCode("SINH_VIEN");
+        leader.setClassName("K65-CNTT");
+        leader = studentRepository.save(leader);
 
-        SinhVien member = sinhVienRepository.findByMaSv("SV002")
+        Student member = studentRepository.findByStudentCode("SV002")
                 .orElseGet(() -> {
-                    SinhVien newM = new SinhVien();
-                    newM.setMaSv("SV002");
+                    Student newM = new Student();
+                    newM.setStudentCode("SV002");
                     return newM;
                 });
-        member.setTenDangNhap("member");
-        member.setMatKhauHash(passwordEncoder.encode("member"));
-        member.setHoTen("Sinh Viên Thành Viên");
+        member.setUsername("member");
+        member.setPasswordHash(passwordEncoder.encode("member"));
+        member.setFullName("Sinh Viên Thành Viên");
         member.setEmail("member@prj.com");
-        member.setTrangThai(TrangThaiUser.ACTIVE);
-        member.setMaVaiTro("SINH_VIEN");
-        member.setLop("K65-CNTT");
-        member = sinhVienRepository.save(member);
+        member.setStatus(UserStatus.ACTIVE);
+        member.setRoleCode("SINH_VIEN");
+        member.setClassName("K65-CNTT");
+        member = studentRepository.save(member);
 
-        // 4. Seed Nhom (Group)
-        final GiangVien finalGv = gv;
-        final SinhVien finalLeader = leader;
-        final SinhVien finalMember = member;
+        // 4. Seed Group
+        final Teacher finalTeacher = teacher;
+        final Student finalLeader = leader;
+        final Student finalMember = member;
 
-        if (nhomRepository.findAll().stream().noneMatch(n -> n.getTenNhom().contains("JiraGit"))) {
-            Nhom nhom = new Nhom();
-            nhom.setTenNhom("Nhóm 1 - Dự án JiraGit");
-            nhom.setDeTai("Xây dựng hệ thống quản lý đồ án sinh viên tích hợp Jira/GitHub");
-            nhom.setGiangVien(finalGv);
-            nhom = nhomRepository.save(nhom);
+        if (groupRepository.findAll().stream().noneMatch(n -> n.getGroupName().contains("JiraGit"))) {
+            Group group = new Group();
+            group.setGroupName("Nhóm 1 - Dự án JiraGit");
+            group.setProjectTopic("Xây dựng hệ thống quản lý đồ án sinh viên tích hợp Jira/GitHub");
+            group.setTeacher(finalTeacher);
+            group = groupRepository.save(group);
 
             // Add members to group
-            ThanhVienNhom leaderReg = new ThanhVienNhom();
-            leaderReg.setId(new ThanhVienNhomId(nhom.getIdNhom(), finalLeader.getId()));
-            leaderReg.setNhom(nhom);
-            leaderReg.setSinhVien(finalLeader);
-            leaderReg.setVaiTro(VaiTroNhom.LEADER);
-            thanhVienNhomRepository.save(leaderReg);
+            GroupMember leaderMember = new GroupMember();
+            leaderMember.setId(new GroupMemberId(group.getGroupId(), finalLeader.getId()));
+            leaderMember.setProjectGroup(group);
+            leaderMember.setStudent(finalLeader);
+            leaderMember.setRole(GroupRole.LEADER);
+            groupMemberRepository.save(leaderMember);
 
-            ThanhVienNhom memberReg = new ThanhVienNhom();
-            memberReg.setId(new ThanhVienNhomId(nhom.getIdNhom(), finalMember.getId()));
-            memberReg.setNhom(nhom);
-            memberReg.setSinhVien(finalMember);
-            memberReg.setVaiTro(VaiTroNhom.MEMBER);
-            thanhVienNhomRepository.save(memberReg);
+            GroupMember regularMember = new GroupMember();
+            regularMember.setId(new GroupMemberId(group.getGroupId(), finalMember.getId()));
+            regularMember.setProjectGroup(group);
+            regularMember.setStudent(finalMember);
+            regularMember.setRole(GroupRole.MEMBER);
+            groupMemberRepository.save(regularMember);
         }
         
         System.out.println(">>> Hệ thống đã cập nhật/khởi tạo tài khoản test (admin/teacher/leader/member) thành công!");

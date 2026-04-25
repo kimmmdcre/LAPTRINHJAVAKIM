@@ -3,15 +3,14 @@ package JAVAGROUP.prjApp.dtos;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TienDoDTO {
-    private UUID idNhom;
-    private int tongSoNhiemVu;
-    private int nhiemVuHoanThanh;
-    private double phanTramTienDo;
+public class ContributionDTO {
+    private UUID studentId;
+    private String studentName;
+    private int completedTaskCount;
+    private int commitCount;
 }

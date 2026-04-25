@@ -3,12 +3,12 @@ package JAVAGROUP.prjApp.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import JAVAGROUP.prjApp.entities.YeuCau;
+import JAVAGROUP.prjApp.entities.Admin;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface YeuCauRepository extends JpaRepository<YeuCau, String> {
-    List<YeuCau> findByNhom_IdNhom(UUID idNhom);
+public interface AdminRepository extends JpaRepository<Admin, UUID> {
+    Optional<Admin> findByAdminCode(String adminCode);
 }

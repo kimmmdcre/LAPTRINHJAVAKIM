@@ -44,7 +44,7 @@ const Dashboard = () => {
           totalUsers: usersRes.data.length,
           totalGroups: groupsRes.data.length,
           topPerformers: groupsRes.data.slice(0, 5).map(g => ({ 
-            name: g.tenNhom, 
+            name: g.groupName, 
             progress: Math.floor(Math.random() * 40) + 60 
           }))
         }));
@@ -59,17 +59,17 @@ const Dashboard = () => {
       } else if (role === 'SINH_VIEN') {
         const myTasksRes = await taskService.getMine(user.id);
         
-        if (user.idNhom) {
+        if (user.groupId) {
           try {
             const [groupDetailsRes, progressRes] = await Promise.all([
-              groupService.getDetails(user.idNhom),
-              reportService.getProgress(user.idNhom)
+              groupService.getDetails(user.groupId),
+              reportService.getProgress(user.groupId)
             ]);
             
             setStats(prev => ({
               ...prev,
               myGroups: [groupDetailsRes.data],
-              groupProgress: progressRes.data.phanTramTienDo || 0
+              groupProgress: progressRes.data.progressPercentage || 0
             }));
           } catch (e) {
             console.error('Lỗi lấy thông tin nhóm:', e);
@@ -80,9 +80,9 @@ const Dashboard = () => {
         setStats(prev => ({
           ...prev,
           studentTasks: {
-            todo: tasks.filter(t => t.trangThai === 'TODO').length,
-            doing: tasks.filter(t => t.trangThai === 'IN_PROGRESS').length,
-            done: tasks.filter(t => t.trangThai === 'DONE').length
+            todo: tasks.filter(t => t.status === 'TODO').length,
+            doing: tasks.filter(t => t.status === 'IN_PROGRESS').length,
+            done: tasks.filter(t => t.status === 'DONE').length
           }
         }));
       }
@@ -148,7 +148,7 @@ const Dashboard = () => {
         </div>
         <div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Cần đánh giá</p>
-          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.myGroups.some(g => (g.tienDo || 0) > 80) ? '2 nhóm' : 'Sẵn sàng'}</h3>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.myGroups.some(g => (g.progress || 0) > 80) ? '2 nhóm' : 'Sẵn sàng'}</h3>
         </div>
       </div>
     </div>
@@ -199,7 +199,7 @@ const Dashboard = () => {
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
         <div>
-          <h2 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Chào {user?.hoTen}! 🚀</h2>
+          <h2 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Chào {user?.fullName}! 🚀</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
             Bạn đang truy cập với vai trò <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{role}</span>. Dưới đây là tóm tắt hoạt động của bạn.
           </p>
@@ -244,12 +244,12 @@ const Dashboard = () => {
             ))}
 
             {role === 'GIANG_VIEN' && stats.myGroups.map((g, i) => (
-              <div key={i} onClick={() => navigate(`/teacher/reports?nhomId=${g.idNhom}`)} className="table-row-hover" style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+              <div key={i} onClick={() => navigate(`/teacher/reports?groupId=${g.groupId}`)} className="table-row-hover" style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '8px' }}><LayoutGrid size={20} /></div>
                   <div>
-                    <p style={{ fontWeight: '700' }}>{g.tenNhom}</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{g.deTai || 'Chưa cập nhật đề tài'}</p>
+                    <p style={{ fontWeight: '700' }}>{g.groupName}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{g.projectTopic || 'Chưa cập nhật đề tài'}</p>
                   </div>
                 </div>
                 <ArrowRight size={18} color="var(--text-muted)" />

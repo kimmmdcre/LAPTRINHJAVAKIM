@@ -28,24 +28,24 @@ const MemberCommits = () => {
   const fetchMyCommits = useCallback(async () => {
     try {
       setLoading(true);
-      // Ưu tiên lấy nhomId từ URL (dành cho Admin/Teacher), nếu không có mới lấy từ user context
+      // Ưu tiên lấy groupId từ URL (dành cho Admin/Teacher), nếu không có mới lấy từ user context
       const queryParams = new URLSearchParams(window.location.search);
-      const nhomIdFromUrl = queryParams.get('nhomId');
-      const nhomId = nhomIdFromUrl || user.idNhom;
+      const groupIdFromUrl = queryParams.get('groupId');
+      const groupId = groupIdFromUrl || user.groupId;
 
-      if (nhomId) {
-        const groupRes = await groupService.getDetails(nhomId);
+      if (groupId) {
+        const groupRes = await groupService.getDetails(groupId);
         setGroupInfo(groupRes.data);
         
-        const res = await reportService.getDetailedCommits(nhomId);
+        const res = await reportService.getDetailedCommits(groupId);
         const allCommits = Array.isArray(res.data) ? res.data : [];
         
         // Nếu là Sinh viên và không phải đang xem theo URL cụ thể, lọc commit của chính mình
-        if (user.role === 'SINH_VIEN' && !nhomIdFromUrl) {
+        if (user.role === 'SINH_VIEN' && !groupIdFromUrl) {
           const myCommits = allCommits.filter(c => 
             c.authorEmail === user.email || 
-            c.authorName === user.hoTen ||
-            c.thongDiep?.toLowerCase().includes(user.hoTen?.toLowerCase())
+            c.authorName === user.fullName ||
+            c.message?.toLowerCase().includes(user.fullName?.toLowerCase())
           );
           setCommits(myCommits);
         } else {
@@ -71,7 +71,7 @@ const MemberCommits = () => {
   }, [user?.id, fetchMyCommits]);
 
   const filteredCommits = commits.filter(c => 
-    (c.thongDiep || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.sha || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -87,7 +87,7 @@ const MemberCommits = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
         <div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Lịch sử Đóng góp (Commits)</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Dữ liệu được đồng bộ từ Repository: <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{groupInfo?.tenNhom}</span></p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Dữ liệu được đồng bộ từ Repository: <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{groupInfo?.groupName}</span></p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
            <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', border: 'none' }}>
@@ -136,15 +136,15 @@ const MemberCommits = () => {
                            {c.sha?.substring(0, 7)}
                          </span>
                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                           <Clock size={12} /> {c.thoiGian ? new Date(c.thoiGian).toLocaleString('vi-VN') : 'Vừa xong'}
+                           <Clock size={12} /> {c.commitTime ? new Date(c.commitTime).toLocaleString('vi-VN') : 'Vừa xong'}
                          </span>
                       </div>
-                      <p style={{ fontWeight: '600', lineHeight: '1.5', marginBottom: '0.75rem' }}>{c.thongDiep}</p>
+                      <p style={{ fontWeight: '600', lineHeight: '1.5', marginBottom: '0.75rem' }}>{c.message}</p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                             <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--primary)', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>{c.authorName?.charAt(0)}</div>
                             {c.authorName}
-                            {c.tieuDeYeuCau && <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>• {c.tieuDeYeuCau}</span>}
+                            {c.requirementTitle && <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>• {c.requirementTitle}</span>}
                          </div>
                       </div>
                    </div>

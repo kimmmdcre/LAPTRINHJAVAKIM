@@ -1,12 +1,13 @@
 package JAVAGROUP.prjApp.services;
 
 import JAVAGROUP.prjApp.dtos.UserDTO;
-import JAVAGROUP.prjApp.entities.GiangVien;
-import JAVAGROUP.prjApp.entities.NguoiDung;
-import JAVAGROUP.prjApp.entities.QuanTriVien;
-import JAVAGROUP.prjApp.entities.SinhVien;
-import JAVAGROUP.prjApp.repositories.NguoiDungRepository;
-import JAVAGROUP.prjApp.repositories.SinhVienRepository;
+import JAVAGROUP.prjApp.entities.Teacher;
+import JAVAGROUP.prjApp.entities.User;
+import JAVAGROUP.prjApp.entities.Admin;
+import JAVAGROUP.prjApp.entities.Student;
+import JAVAGROUP.prjApp.entities.UserStatus;
+import JAVAGROUP.prjApp.repositories.UserRepository;
+import JAVAGROUP.prjApp.repositories.StudentRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,136 +21,133 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserService {
 
-    private final NguoiDungRepository nguoiDungRepository;
-    private final SinhVienRepository sinhVienRepository;
+    private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(NguoiDungRepository nguoiDungRepository,
-                       SinhVienRepository sinhVienRepository,
+    public UserService(UserRepository userRepository,
+                       StudentRepository studentRepository,
                        PasswordEncoder passwordEncoder) {
-        this.nguoiDungRepository = nguoiDungRepository;
-        this.sinhVienRepository = sinhVienRepository;
+        this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     /**
-     * Tạo tài khoản người dùng mới từ DTO.
-     * Lưu ý: password phải được hash trước khi lưu (TODO: BCrypt).
+     * Create new user account from DTO.
      */
-    public void taoTaiKhoan(UserDTO dto) {
-        NguoiDung nd;
-        String role = dto.getMaVaiTro();
+    public void createAccount(UserDTO dto) {
+        User user;
+        String role = dto.getRoleCode();
         
         if ("ADMIN".equals(role)) {
-            QuanTriVien qtv = new QuanTriVien();
-            qtv.setMaGv("ADM_" + dto.getTenDangNhap());
-            qtv.setCapDoQuyen(1);
-            nd = qtv;
+            Admin admin = new Admin();
+            admin.setAdminCode("AD_" + dto.getUsername());
+            admin.setAdminLevel("1");
+            user = admin;
         } else if ("GIANG_VIEN".equals(role)) {
-            GiangVien gv = new GiangVien();
-            gv.setMaGiangVien("GV_" + dto.getTenDangNhap());
-            gv.setKhoa("Công nghệ thông tin");
-            nd = gv;
+            Teacher teacher = new Teacher();
+            teacher.setTeacherCode("GV_" + dto.getUsername());
+            teacher.setDepartment("Information Technology");
+            user = teacher;
         } else {
-            SinhVien sv = new SinhVien();
-            sv.setMaSv("SV_" + dto.getTenDangNhap());
-            sv.setLop("K70-IT");
-            nd = sv;
+            Student student = new Student();
+            student.setStudentCode("SV_" + dto.getUsername());
+            student.setClassName("K70-IT");
+            user = student;
         }
 
-        nd.setTenDangNhap(dto.getTenDangNhap());
-        String matKhau = (dto.getMatKhau() != null && !dto.getMatKhau().trim().isEmpty()) ? dto.getMatKhau() : "123456";
-        nd.setMatKhauHash(passwordEncoder.encode(matKhau)); 
-        nd.setHoTen(dto.getHoTen());
-        nd.setEmail(dto.getEmail());
-        nd.setMaVaiTro(role);
-        nd.setTrangThai(JAVAGROUP.prjApp.entities.TrangThaiUser.ACTIVE);
+        user.setUsername(dto.getUsername());
+        String password = (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) ? dto.getPassword() : "123456";
+        user.setPasswordHash(passwordEncoder.encode(password)); 
+        user.setFullName(dto.getFullName());
+        user.setEmail(dto.getEmail());
+        user.setRoleCode(role);
+        user.setStatus(UserStatus.ACTIVE);
         
-        nguoiDungRepository.save(nd);
+        userRepository.save(user);
     }
 
     /**
-     * Xoá tài khoản bằng ID.
+     * Delete account by ID.
      */
-    public void xoaTaiKhoan(UUID id) {
-        if (!nguoiDungRepository.existsById(id)) {
-            throw new RuntimeException("Người dùng không tồn tại: " + id);
+    public void deleteAccount(UUID id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User does not exist: " + id);
         }
-        nguoiDungRepository.deleteById(id);
+        userRepository.deleteById(id);
     }
 
     /**
-     * Cập nhật quyền (maVaiTro) cho người dùng.
+     * Update role (roleCode) for user.
      */
-    public void phanQuyen(UUID id, String role) {
-        NguoiDung nd = nguoiDungRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại: " + id));
-        nd.setMaVaiTro(role);
-        nguoiDungRepository.save(nd);
+    public void assignRole(UUID id, String role) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User does not exist: " + id));
+        user.setRoleCode(role);
+        userRepository.save(user);
     }
 
     /**
-     * Cập nhật thông tin người dùng
+     * Update user information.
      */
-    public void capNhatTaiKhoan(UUID id, UserDTO dto) {
-        NguoiDung nd = nguoiDungRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại: " + id));
-        nd.setHoTen(dto.getHoTen());
-        nd.setEmail(dto.getEmail());
-        nd.setTenDangNhap(dto.getTenDangNhap());
-        if (dto.getMaVaiTro() != null) {
-            nd.setMaVaiTro(dto.getMaVaiTro());
+    public void updateAccount(UUID id, UserDTO dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User does not exist: " + id));
+        user.setFullName(dto.getFullName());
+        user.setEmail(dto.getEmail());
+        user.setUsername(dto.getUsername());
+        if (dto.getRoleCode() != null) {
+            user.setRoleCode(dto.getRoleCode());
         }
-        if (dto.getMatKhau() != null && !dto.getMatKhau().trim().isEmpty()) {
-            nd.setMatKhauHash(passwordEncoder.encode(dto.getMatKhau()));
+        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         }
-        nguoiDungRepository.save(nd);
+        userRepository.save(user);
     }
 
     /**
-     * Lấy danh sách tất cả người dùng.
+     * Get list of all users.
      */
-    public java.util.List<UserDTO> layDanhSachNguoiDung() {
-        return nguoiDungRepository.findAll().stream()
-                .map(this::toDTO)
-                .collect(java.util.stream.Collectors.toList());
-    }
-
-    /**
-     * Lấy danh sách chỉ các giảng viên.
-     */
-    public java.util.List<UserDTO> layDanhSachGiangVien() {
-        return nguoiDungRepository.findAll().stream()
-                .filter(nd -> "GIANG_VIEN".equals(nd.getMaVaiTro()))
-                .map(this::toDTO)
-                .collect(java.util.stream.Collectors.toList());
-    }
-
-    /**
-     * Lấy danh sách sinh viên chưa có nhóm.
-     */
-    public java.util.List<UserDTO> layDanhSachSinhVienTuDo() {
-        // Lấy tất cả sinh viên
-        List<SinhVien> tatCaSv = sinhVienRepository.findAll();
-        
-        // Lọc những sinh viên không nằm trong bất kỳ nhóm nào
-        return tatCaSv.stream()
-                .filter(sv -> sv.getThanhVienNhoms() == null || sv.getThanhVienNhoms().isEmpty())
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Chuyển đổi Entity NguoiDung sang UserDTO (không lộ passwordHash).
+     * Get list of only teachers.
      */
-    public UserDTO toDTO(NguoiDung nd) {
+    public List<UserDTO> getAllTeachers() {
+        return userRepository.findAll().stream()
+                .filter(user -> "GIANG_VIEN".equals(user.getRoleCode()))
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get list of unassigned students.
+     */
+    public List<UserDTO> getUnassignedStudents() {
+        List<Student> allStudents = studentRepository.findAll();
+        
+        return allStudents.stream()
+                .filter(student -> student.getGroupMembers() == null || student.getGroupMembers().isEmpty())
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Convert User Entity to UserDTO.
+     */
+    public UserDTO toDTO(User user) {
         return new UserDTO(
-                nd.getId(),
-                nd.getTenDangNhap(),
-                nd.getHoTen(),
-                nd.getEmail(),
-                nd.getTrangThai(),
-                nd.getMaVaiTro(),
+                user.getId(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getStatus(),
+                user.getRoleCode(),
                 null // hide password
         );
     }

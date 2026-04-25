@@ -28,11 +28,11 @@ const AdminUsers = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
-    tenDangNhap: '',
-    hoTen: '',
+    username: '',
+    fullName: '',
     email: '',
-    maVaiTro: 'SINH_VIEN',
-    matKhau: '',
+    roleCode: 'SINH_VIEN',
+    password: '',
     confirmPassword: ''
   });
 
@@ -59,7 +59,7 @@ const AdminUsers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.matKhau && formData.matKhau !== formData.confirmPassword) {
+    if (formData.password && formData.password !== formData.confirmPassword) {
       showToast('Mật khẩu xác nhận không trùng khớp!', 'danger');
       return;
     }
@@ -87,7 +87,7 @@ const AdminUsers = () => {
   const closeModal = () => {
     setShowAddModal(false);
     setEditingId(null);
-    setFormData({ tenDangNhap: '', hoTen: '', email: '', maVaiTro: 'SINH_VIEN', matKhau: '', confirmPassword: '' });
+    setFormData({ username: '', fullName: '', email: '', roleCode: 'SINH_VIEN', password: '', confirmPassword: '' });
   };
 
   const handleDelete = async (id) => {
@@ -120,8 +120,8 @@ const AdminUsers = () => {
   };
 
   const filteredUsers = users.filter(u =>
-    u.hoTen?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.tenDangNhap?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -180,7 +180,7 @@ const AdminUsers = () => {
             </thead>
             <tbody>
               {filteredUsers.length > 0 ? filteredUsers.map((u) => {
-                const roleStyle = getRoleColor(u.maVaiTro);
+                const roleStyle = getRoleColor(u.roleCode);
                 return (
                   <tr key={u.id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'var(--transition)' }} className="table-row-hover">
                     <td style={{ padding: '1.25rem' }}>
@@ -192,11 +192,11 @@ const AdminUsers = () => {
                           border: '1px solid var(--glass-border)',
                           color: 'var(--text-secondary)'
                         }}>
-                          {u.maVaiTro === 'GIANG_VIEN' ? <GraduationCap size={20} /> : <User size={20} />}
+                          {u.roleCode === 'GIANG_VIEN' ? <GraduationCap size={20} /> : <User size={20} />}
                         </div>
                         <div>
                           <p style={{ fontWeight: '700', fontSize: '0.95rem' }}>
-                            {u.hoTen}
+                            {u.fullName}
                             {currentUser?.id === u.id && <span style={{ marginLeft: '8px', fontSize: '0.65rem', color: 'var(--primary)', background: 'var(--primary-glow)', padding: '2px 8px', borderRadius: '10px' }}>TÔI</span>}
                           </p>
                           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -207,7 +207,7 @@ const AdminUsers = () => {
                     </td>
                     <td style={{ padding: '1.25rem' }}>
                       <code style={{ fontSize: '0.85rem', color: 'var(--accent)', background: 'rgba(139, 92, 246, 0.05)', padding: '2px 6px', borderRadius: '4px' }}>
-                        @{u.tenDangNhap}
+                        @{u.username}
                       </code>
                     </td>
                     <td style={{ padding: '1.25rem' }}>
@@ -216,14 +216,14 @@ const AdminUsers = () => {
                         padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '800',
                         backgroundColor: roleStyle.bg, color: roleStyle.text, border: `1px solid ${roleStyle.border}`
                       }}>
-                        {getRoleIcon(u.maVaiTro)}
-                        {u.maVaiTro}
+                        {getRoleIcon(u.roleCode)}
+                        {u.roleCode}
                       </span>
                     </td>
                     <td style={{ padding: '1.25rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: u.trangThai === 'ACTIVE' ? 'var(--success)' : 'var(--danger)' }}></div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>{u.trangThai === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa'}</span>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: u.status === 'ACTIVE' ? 'var(--success)' : 'var(--danger)' }}></div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>{u.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa'}</span>
                       </div>
                     </td>
                     <td style={{ padding: '1.25rem', textAlign: 'right' }}>
@@ -232,11 +232,11 @@ const AdminUsers = () => {
                           onClick={() => {
                             setEditingId(u.id);
                             setFormData({
-                              tenDangNhap: u.tenDangNhap || '',
-                              hoTen: u.hoTen || '',
+                              username: u.username || '',
+                              fullName: u.fullName || '',
                               email: u.email || '',
-                              maVaiTro: u.maVaiTro || 'SINH_VIEN',
-                              matKhau: '',
+                              roleCode: u.roleCode || 'SINH_VIEN',
+                              password: '',
                               confirmPassword: ''
                             });
                             setShowAddModal(true);
@@ -295,8 +295,8 @@ const AdminUsers = () => {
                   type="text"
                   className="input-field"
                   required
-                  value={formData.hoTen}
-                  onChange={e => setFormData({ ...formData, hoTen: e.target.value })}
+                  value={formData.fullName}
+                  onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder="Ví dụ: Nguyễn Văn A"
                 />
               </div>
@@ -308,8 +308,8 @@ const AdminUsers = () => {
                     type="text"
                     className="input-field"
                     required
-                    value={formData.tenDangNhap}
-                    onChange={e => setFormData({ ...formData, tenDangNhap: e.target.value })}
+                    value={formData.username}
+                    onChange={e => setFormData({ ...formData, username: e.target.value })}
                     placeholder="nva_student"
                     disabled={!!editingId}
                   />
@@ -318,8 +318,8 @@ const AdminUsers = () => {
                   <label className="input-label">Quyền hạn</label>
                   <select
                     className="input-field"
-                    value={formData.maVaiTro}
-                    onChange={e => setFormData({ ...formData, maVaiTro: e.target.value })}
+                    value={formData.roleCode}
+                    onChange={e => setFormData({ ...formData, roleCode: e.target.value })}
                   >
                     <option value="SINH_VIEN">Sinh viên</option>
                     <option value="GIANG_VIEN">Giảng viên</option>
@@ -348,8 +348,8 @@ const AdminUsers = () => {
                       type={showPassword ? 'text' : 'password'}
                       className="input-field"
                       style={{ paddingRight: '45px' }}
-                      value={formData.matKhau}
-                      onChange={e => setFormData({ ...formData, matKhau: e.target.value })}
+                      value={formData.password}
+                      onChange={e => setFormData({ ...formData, password: e.target.value })}
                       placeholder="••••••••"
                     />
                     <button
@@ -369,7 +369,7 @@ const AdminUsers = () => {
                     value={formData.confirmPassword}
                     onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
                     placeholder="••••••••"
-                    required={!!formData.matKhau}
+                    required={!!formData.password}
                   />
                 </div>
               </div>

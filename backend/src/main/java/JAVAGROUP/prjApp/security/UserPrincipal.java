@@ -1,6 +1,6 @@
 package JAVAGROUP.prjApp.security;
 
-import JAVAGROUP.prjApp.entities.NguoiDung;
+import JAVAGROUP.prjApp.entities.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,53 +12,52 @@ import java.util.UUID;
 
 public class UserPrincipal implements UserDetails {
     private UUID id;
-    private String tenDangNhap;
-    private String matKhauHash;
-    private String hoTen;
+    private String username;
+    private String passwordHash;
+    private String fullName;
     private String email;
-    private String maVaiTro;
+    private String roleCode;
     private String groupRole; // LEADER, MEMBER
-    private UUID idNhom;
+    private UUID groupId;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserPrincipal(UUID id, String tenDangNhap, String matKhauHash, String hoTen, String email, String maVaiTro,
-            String groupRole, UUID idNhom, Collection<? extends GrantedAuthority> authorities) {
+    public UserPrincipal(UUID id, String username, String passwordHash, String fullName, String email, String roleCode,
+            String groupRole, UUID groupId, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
-        this.tenDangNhap = tenDangNhap;
-        this.matKhauHash = matKhauHash;
-        this.hoTen = hoTen;
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.fullName = fullName;
         this.email = email;
-        this.maVaiTro = maVaiTro;
+        this.roleCode = roleCode;
         this.groupRole = groupRole;
-        this.idNhom = idNhom;
+        this.groupId = groupId;
         this.authorities = authorities;
     }
 
-    public static UserPrincipal create(NguoiDung user) {
+    public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + user.getMaVaiTro()));
+                new SimpleGrantedAuthority("ROLE_" + user.getRoleCode()));
 
         String groupRole = null;
-        UUID idNhom = null;
+        UUID groupId = null;
 
-        if (user instanceof JAVAGROUP.prjApp.entities.SinhVien sv) {
-            if (sv.getThanhVienNhoms() != null && !sv.getThanhVienNhoms().isEmpty()) {
-                // Lấy nhóm đầu tiên (giả định sinh viên chỉ thuộc 1 nhóm đồ án)
-                var tv = sv.getThanhVienNhoms().get(0);
-                groupRole = tv.getVaiTro().name();
-                idNhom = tv.getNhom().getIdNhom();
+        if (user instanceof JAVAGROUP.prjApp.entities.Student sv) {
+            if (sv.getGroupMembers() != null && !sv.getGroupMembers().isEmpty()) {
+                var gm = sv.getGroupMembers().get(0);
+                groupRole = gm.getRole().name();
+                groupId = gm.getProjectGroup().getGroupId();
             }
         }
 
         return new UserPrincipal(
                 user.getId(),
-                user.getTenDangNhap(),
-                user.getMatKhauHash(),
-                user.getHoTen(),
+                user.getUsername(),
+                user.getPasswordHash(),
+                user.getFullName(),
                 user.getEmail(),
-                user.getMaVaiTro(),
+                user.getRoleCode(),
                 groupRole,
-                idNhom,
+                groupId,
                 authorities);
     }
 
@@ -68,12 +67,12 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public String getUsername() {
-        return tenDangNhap;
+        return username;
     }
 
     @Override
     public String getPassword() {
-        return matKhauHash;
+        return passwordHash;
     }
 
     @Override
@@ -81,24 +80,24 @@ public class UserPrincipal implements UserDetails {
         return authorities;
     }
 
-    public String getHoTen() {
-        return hoTen;
+    public String getFullName() {
+        return fullName;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public String getMaVaiTro() {
-        return maVaiTro;
+    public String getRoleCode() {
+        return roleCode;
     }
 
     public String getGroupRole() {
         return groupRole;
     }
 
-    public UUID getIdNhom() {
-        return idNhom;
+    public UUID getGroupId() {
+        return groupId;
     }
 
     @Override

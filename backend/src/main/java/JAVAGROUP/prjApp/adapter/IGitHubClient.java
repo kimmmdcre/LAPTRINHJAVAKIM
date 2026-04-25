@@ -5,7 +5,7 @@ import java.util.List;
 import JAVAGROUP.prjApp.dtos.CommitDTO;
 
 public interface IGitHubClient {
-    List<CommitDTO> layDanhSachCommit(String repo, String maTruyCap, String tuNgay);
+    List<CommitDTO> getCommits(String repo, String accessToken, String sinceDate);
 
-    void kiemTraKetNoi(String repo, String maTruyCap);
+    void checkConnection(String repo, String accessToken);
 }

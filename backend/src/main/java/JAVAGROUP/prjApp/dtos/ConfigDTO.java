@@ -6,17 +6,16 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-import JAVAGROUP.prjApp.entities.UserStatus;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDTO {
+public class ConfigDTO {
     private UUID id;
-    private String username;
-    private String fullName;
+    private UUID groupId;
+    private String platformType; // JIRA or GITHUB
+    private String url;
     private String email;
-    private UserStatus status;
-    private String roleCode;
-    private String password;
+    private String apiToken;
+    private String projectKey;
+    private String repoUrl;
 }

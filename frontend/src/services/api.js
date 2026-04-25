@@ -28,44 +28,44 @@ export const userService = {
 
 export const groupService = {
   getAll: () => api.get('/groups'),
-  getByTeacher: (teacherId) => api.get(`/groups?idGiangVien=${teacherId}`),
+  getByTeacher: (teacherId) => api.get(`/groups?teacherId=${teacherId}`),
   getDetails: (id) => api.get(`/groups/${id}`),
   getMembers: (id) => api.get(`/groups/${id}/members`),
   create: (data) => api.post('/groups', data),
   delete: (id) => api.delete(`/groups/${id}`),
-  assignTeacher: (groupId, teacherId) => api.patch(`/groups/${groupId}/assign`, { idGiangVien: teacherId }),
+  assignTeacher: (groupId, teacherId) => api.patch(`/groups/${groupId}/assign`, { teacherId }),
   addMember: (groupId, studentId) => api.post(`/groups/${groupId}/members/${studentId}`),
   removeMember: (studentId) => api.delete(`/groups/members/${studentId}`),
 };
 
 export const taskService = {
-  getGroupTasks: (idNhom) => api.get(`/tasks/${idNhom}`),
-  getMine: (idSinhVien) => api.get(`/tasks/nhiem-vu?idSinhVien=${idSinhVien}`),
-  updateStatus: (id, status) => api.patch(`/tasks/nhiem-vu/${id}/status`, { status }),
-  assignMember: (id, memberId) => api.patch(`/tasks/nhiem-vu/${id}/assign`, { idSinhVien: memberId }),
-  syncJira: (idNhom) => api.get(`/tasks/jira/sync/${idNhom}`), // Updated to match @GetMapping in TaskController
-  syncGithub: (idNhom) => api.post(`/sync/${idNhom}/github`),
+  getGroupTasks: (groupId) => api.get(`/tasks/${groupId}`),
+  getMine: (studentId) => api.get(`/tasks/personal?studentId=${studentId}`),
+  updateStatus: (id, status) => api.patch(`/tasks/${id}/status`, { status }),
+  assignMember: (id, studentId) => api.patch(`/tasks/${id}/assign`, { studentId }),
+  syncJira: (groupId) => api.get(`/tasks/jira/sync/${groupId}`),
+  syncGithub: (groupId) => api.post(`/sync/${groupId}/github`),
   mapping: () => api.post('/sync/mapping'),
 };
 
 export const reportService = {
-  getProgress: (idNhom) => api.get(`/reports/${idNhom}/progress`),
-  getHistory: (idNhom) => api.get(`/reports/${idNhom}/history`),
-  getCommits: (idNhom) => api.get(`/reports/${idNhom}/commits`),
-  getCommitHistory: (idNhom) => api.get(`/reports/${idNhom}/commits/history`),
-  getDetailedCommits: (idNhom) => api.get(`/reports/${idNhom}/commits/detailed`),
-  getContributions: (idNhom) => api.get(`/reports/${idNhom}/contributions`),
-  getPersonalHistory: (idSinhVien) => api.get(`/reports/personal/${idSinhVien}/history`),
-  exportCsv: (idNhom) => api.get(`/reports/${idNhom}/export`, { responseType: 'blob' }),
-  exportDocx: (idNhom) => api.get(`/reports/${idNhom}/export/docx`, { responseType: 'blob' }),
-  exportPdf: (idNhom) => api.get(`/reports/${idNhom}/export/pdf`, { responseType: 'blob' }),
-  exportSRS: (idNhom) => api.get(`/reports/${idNhom}/export/srs`, { responseType: 'blob' }),
+  getProgress: (groupId) => api.get(`/reports/${groupId}/progress`),
+  getHistory: (groupId) => api.get(`/reports/${groupId}/history`),
+  getCommits: (groupId) => api.get(`/reports/${groupId}/commits`),
+  getCommitHistory: (groupId) => api.get(`/reports/${groupId}/commits/history`),
+  getDetailedCommits: (groupId) => api.get(`/reports/${groupId}/commits/detailed`),
+  getContributions: (groupId) => api.get(`/reports/${groupId}/contributions`),
+  getPersonalHistory: (studentId) => api.get(`/reports/personal/${studentId}/history`),
+  exportCsv: (groupId) => api.get(`/reports/${groupId}/export`, { responseType: 'blob' }),
+  exportDocx: (groupId) => api.get(`/reports/${groupId}/export/docx`, { responseType: 'blob' }),
+  exportPdf: (groupId) => api.get(`/reports/${groupId}/export/pdf`, { responseType: 'blob' }),
+  exportSRS: (groupId) => api.get(`/reports/${groupId}/export/srs`, { responseType: 'blob' }),
 };
 
 export const configService = {
-  saveJira: (idNhom, data) => api.post(`/config/${idNhom}/jira`, data),
-  saveGithub: (idNhom, data) => api.post(`/config/${idNhom}/github`, data),
-  getConfig: (idNhom) => api.get(`/config/${idNhom}`),
+  saveJira: (groupId, data) => api.post(`/config/${groupId}/jira`, data),
+  saveGithub: (groupId, data) => api.post(`/config/${groupId}/github`, data),
+  getConfig: (groupId) => api.get(`/config/${groupId}`),
   testJira: (data) => api.post('/config/test/jira', data),
   testGithub: (data) => api.post('/config/test/github', data),
 };

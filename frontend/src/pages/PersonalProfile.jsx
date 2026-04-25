@@ -38,7 +38,7 @@ const PersonalProfile = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
-    hoTen: '',
+    fullName: '',
     email: '',
     currentPassword: '',
     newPassword: ''
@@ -50,22 +50,21 @@ const PersonalProfile = () => {
       
       // 1. Fetch group info if student
       if (user?.role === 'SINH_VIEN') {
-        // Dùng idNhom từ login nếu có
-        const targetNhomId = user.idNhom;
-        if (targetNhomId) {
+        const targetGroupId = user.groupId;
+        if (targetGroupId) {
           try {
-            const groupRes = await groupService.getDetails(targetNhomId);
-            setGroupName(groupRes.data.tenNhom || 'Nhóm chưa có tên');
+            const groupRes = await groupService.getDetails(targetGroupId);
+            setGroupName(groupRes.data.groupName || 'Nhóm chưa có tên');
             
             // 2. Fetch real stats
-            const contribRes = await reportService.getContributions(targetNhomId);
-            const myContrib = contribRes.data?.find(c => c.idSinhVien === user.id);
+            const contribRes = await reportService.getContributions(targetGroupId);
+            const myContrib = contribRes.data?.find(c => c.studentId === user.id);
             if (myContrib) {
               setStats({
-                tasksDone: myContrib.soNhiemVuHoanThanh || 0,
+                tasksDone: myContrib.completedTasks || 0,
                 onTimeRate: 100,
-                totalCommits: myContrib.soCommit || 0,
-                points: (myContrib.soCommit * 10) + (myContrib.soNhiemVuHoanThanh * 50)
+                totalCommits: myContrib.commitCount || 0,
+                points: (myContrib.commitCount * 10) + (myContrib.completedTasks * 50)
               });
             }
           } catch {
@@ -142,7 +141,7 @@ const PersonalProfile = () => {
             transform: 'rotate(-5deg)'
           }}>
             <span style={{ fontSize: '4rem', fontWeight: '900', color: 'white', transform: 'rotate(5deg)' }}>
-              {user?.hoTen?.[0]}
+              {user?.fullName?.[0]}
             </span>
           </div>
           <div style={{ position: 'absolute', bottom: '-10px', right: '-10px', padding: '8px', background: 'var(--success)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)' }}>
@@ -152,9 +151,9 @@ const PersonalProfile = () => {
 
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-             <h2 style={{ fontSize: '2.25rem', fontWeight: '900', letterSpacing: '-0.03em' }}>{user?.hoTen}</h2>
+             <h2 style={{ fontSize: '2.25rem', fontWeight: '900', letterSpacing: '-0.03em' }}>{user?.fullName}</h2>
              <span style={{ padding: '0.25rem 1rem', borderRadius: '20px', background: 'rgba(255,255,255,0.05)', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)' }}>
-               ID: {user?.username}
+                ID: {user?.username}
              </span>
           </div>
           <p style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '1.1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -179,7 +178,7 @@ const PersonalProfile = () => {
              style={{ padding: '0.8rem 1.5rem' }}
              onClick={() => {
                 setFormData({
-                  hoTen: user.hoTen || '',
+                  fullName: user.fullName || '',
                   username: user.username || '',
                   email: user.email || '',
                   password: '',
@@ -286,7 +285,7 @@ const PersonalProfile = () => {
             <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                <div className="input-group">
                   <label className="input-label">Họ và Tên</label>
-                  <input type="text" className="input-field" value={formData.hoTen} onChange={e => setFormData({...formData, hoTen: e.target.value})} />
+                  <input type="text" className="input-field" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
                </div>
                <div className="input-group">
                   <label className="input-label">Email công việc</label>

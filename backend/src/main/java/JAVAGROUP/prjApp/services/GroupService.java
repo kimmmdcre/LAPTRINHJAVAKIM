@@ -1,7 +1,7 @@
 package JAVAGROUP.prjApp.services;
 
-import JAVAGROUP.prjApp.dtos.NhomDTO;
-import JAVAGROUP.prjApp.dtos.ThanhVienNhomDTO;
+import JAVAGROUP.prjApp.dtos.GroupDTO;
+import JAVAGROUP.prjApp.dtos.GroupMemberDTO;
 import JAVAGROUP.prjApp.entities.*;
 import JAVAGROUP.prjApp.repositories.*;
 
@@ -16,135 +16,127 @@ import java.util.stream.Collectors;
 @Transactional
 public class GroupService {
 
-    private final NhomRepository nhomRepository;
-    private final GiangVienRepository giangVienRepository;
-    private final ThanhVienNhomRepository thanhVienNhomRepository;
-    private final SinhVienRepository sinhVienRepository;
+    private final GroupRepository groupRepository;
+    private final TeacherRepository teacherRepository;
+    private final GroupMemberRepository groupMemberRepository;
+    private final StudentRepository studentRepository;
 
-    public GroupService(NhomRepository nhomRepository,
-                        GiangVienRepository giangVienRepository,
-                        ThanhVienNhomRepository thanhVienNhomRepository,
-                        SinhVienRepository sinhVienRepository) {
-        this.nhomRepository = nhomRepository;
-        this.giangVienRepository = giangVienRepository;
-        this.thanhVienNhomRepository = thanhVienNhomRepository;
-        this.sinhVienRepository = sinhVienRepository;
+    public GroupService(GroupRepository groupRepository,
+                        TeacherRepository teacherRepository,
+                        GroupMemberRepository groupMemberRepository,
+                        StudentRepository studentRepository) {
+        this.groupRepository = groupRepository;
+        this.teacherRepository = teacherRepository;
+        this.groupMemberRepository = groupMemberRepository;
+        this.studentRepository = studentRepository;
     }
 
-    public Nhom taoNhom(NhomDTO dto) {
-        Nhom nhom = new Nhom();
-        nhom.setTenNhom(dto.getTenNhom());
-        nhom.setDeTai(dto.getDeTai());
+    public Group createGroup(GroupDTO dto) {
+        Group group = new Group();
+        group.setGroupName(dto.getGroupName());
+        group.setProjectTopic(dto.getProjectTopic());
 
-        if (dto.getIdGiangVien() != null && !dto.getIdGiangVien().trim().isEmpty()) {
-            GiangVien gv = giangVienRepository.findById(UUID.fromString(dto.getIdGiangVien()))
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy giảng viên: " + dto.getIdGiangVien()));
-            nhom.setGiangVien(gv);
+        if (dto.getTeacherId() != null) {
+            Teacher teacher = teacherRepository.findById(dto.getTeacherId())
+                    .orElseThrow(() -> new RuntimeException("Teacher not found: " + dto.getTeacherId()));
+            group.setTeacher(teacher);
         }
         
-        return nhomRepository.save(nhom);
+        return groupRepository.save(group);
     }
 
-    public void xoaNhom(UUID idNhom) {
-        if (!nhomRepository.existsById(idNhom)) {
-            throw new RuntimeException("Nhóm không tồn tại: " + idNhom);
+    public void deleteGroup(UUID groupId) {
+        if (!groupRepository.existsById(groupId)) {
+            throw new RuntimeException("Group does not exist: " + groupId);
         }
-        nhomRepository.deleteById(idNhom);
+        groupRepository.deleteById(groupId);
     }
 
-    public void phanCongGiangVien(UUID idNhom, UUID idGV) {
-        Nhom nhom = nhomRepository.findById(idNhom)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại: " + idNhom));
-        GiangVien gv = giangVienRepository.findById(idGV)
-                .orElseThrow(() -> new RuntimeException("Giảng viên không tồn tại: " + idGV));
-        nhom.setGiangVien(gv);
-        nhomRepository.save(nhom);
+    public void assignTeacher(UUID groupId, UUID teacherId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Teacher does not exist: " + teacherId));
+        group.setTeacher(teacher);
+        groupRepository.save(group);
     }
 
     @Transactional(readOnly = true)
-    public java.util.List<NhomDTO> layDanhSachNhom(UUID idGV) {
-        if (idGV == null) {
-            return nhomRepository.findAll()
-                    .stream().map(this::toDTO).collect(java.util.stream.Collectors.toList());
+    public List<GroupDTO> getAllGroups(UUID teacherId) {
+        if (teacherId == null) {
+            return groupRepository.findAll()
+                    .stream().map(this::toDTO).collect(Collectors.toList());
         }
-        GiangVien gv = giangVienRepository.findById(idGV)
-                .orElseThrow(() -> new RuntimeException("Giảng viên không tồn tại: " + idGV));
-        return (gv.getNhoms() == null ? java.util.List.<Nhom>of() : gv.getNhoms())
-                .stream().map(this::toDTO).collect(java.util.stream.Collectors.toList());
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Teacher does not exist: " + teacherId));
+        return (teacher.getProjectGroups() == null ? List.<Group>of() : teacher.getProjectGroups())
+                .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public NhomDTO xemThongTinNhom(UUID idNhom) {
-        Nhom nhom = nhomRepository.findById(idNhom)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại: " + idNhom));
-        return toDTO(nhom);
+    public GroupDTO getGroupInfo(UUID groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
+        return toDTO(group);
     }
 
     @Transactional(readOnly = true)
-    public List<ThanhVienNhomDTO> layDanhSachThanhVien(UUID idNhom) {
-        return thanhVienNhomRepository.findById_IdNhom(idNhom)
+    public List<GroupMemberDTO> getGroupMembers(UUID groupId) {
+        return groupMemberRepository.findById_GroupId(groupId)
                 .stream()
-                .map(tv -> {
-                    SinhVien sv = tv.getSinhVien();
-                    return new ThanhVienNhomDTO(
-                            sv.getId(), sv.getMaSv(), sv.getHoTen(), sv.getLop(), tv.getVaiTro()
+                .map(gm -> {
+                    Student student = gm.getStudent();
+                    return new GroupMemberDTO(
+                            student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole()
                     );
                 })
                 .collect(Collectors.toList());
     }
 
     /**
-     * Thêm sinh viên vào nhóm. 
-     * Một sinh viên chỉ được tham gia 1 nhóm (remove cũ nếu có).
+     * Add student to group. 
      */
-    public void themThanhVien(UUID idNhom, UUID idSinhVien) {
-        // 1. Kiểm tra tồn tại
-        Nhom nhom = nhomRepository.findById(idNhom)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại: " + idNhom));
-        SinhVien sv = sinhVienRepository.findById(idSinhVien)
-                .orElseThrow(() -> new RuntimeException("Sinh viên không tồn tại: " + idSinhVien));
+    public void addMember(UUID groupId, UUID studentId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student does not exist: " + studentId));
 
-        // 2. Xoá sinh viên khỏi các nhóm cũ (nếu có)
-        List<ThanhVienNhom> cu = thanhVienNhomRepository.findById_IdSinhVien(idSinhVien);
-        if (!cu.isEmpty()) {
-            thanhVienNhomRepository.deleteAll(cu);
-        }
+        // Remove from old groups if any
+        groupMemberRepository.deleteById_StudentId(studentId);
 
-        // 3. Thêm vào nhóm mới
-        ThanhVienNhom tv = new ThanhVienNhom();
-        tv.setId(new ThanhVienNhomId(idNhom, idSinhVien));
-        tv.setNhom(nhom);
-        tv.setSinhVien(sv);
-        tv.setVaiTro(VaiTroNhom.MEMBER); // Default role
-        thanhVienNhomRepository.save(tv);
+        GroupMember gm = new GroupMember();
+        gm.setId(new GroupMemberId(groupId, studentId));
+        gm.setProjectGroup(group);
+        gm.setStudent(student);
+        gm.setRole(GroupRole.MEMBER); 
+        groupMemberRepository.save(gm);
     }
 
     /**
-     * Loại bỏ sinh viên khỏi nhóm.
+     * Remove student from group.
      */
-    public void boThanhVien(UUID idSinhVien) {
-        List<ThanhVienNhom> list = thanhVienNhomRepository.findById_IdSinhVien(idSinhVien);
-        if (!list.isEmpty()) {
-            thanhVienNhomRepository.deleteAll(list);
-        }
+    public void removeMember(UUID studentId) {
+        groupMemberRepository.deleteById_StudentId(studentId);
     }
 
-    private NhomDTO toDTO(Nhom nhom) {
-        GiangVien gv = nhom.getGiangVien();
-        List<ThanhVienNhomDTO> members = nhom.getThanhVienNhoms() == null ? List.of() :
-            nhom.getThanhVienNhoms().stream()
-                .map(tv -> {
-                    SinhVien sv = tv.getSinhVien();
-                    return new ThanhVienNhomDTO(
-                        sv.getId(), sv.getMaSv(), sv.getHoTen(), sv.getLop(), tv.getVaiTro()
+    private GroupDTO toDTO(Group group) {
+        Teacher teacher = group.getTeacher();
+        List<GroupMemberDTO> members = group.getMembers() == null ? List.of() :
+            group.getMembers().stream()
+                .map(gm -> {
+                    Student student = gm.getStudent();
+                    return new GroupMemberDTO(
+                        student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole()
                     );
                 })
                 .collect(Collectors.toList());
                 
-        return new NhomDTO(
-                nhom.getIdNhom(), nhom.getTenNhom(), nhom.getDeTai(),
-                gv != null ? gv.getId().toString() : null,
-                gv != null ? gv.getHoTen() : null,
+        return new GroupDTO(
+                group.getGroupId(), group.getGroupName(), group.getProjectTopic(),
+                teacher != null ? teacher.getId() : null,
+                teacher != null ? teacher.getFullName() : null,
+                group.getLeaderId(),
                 members
         );
     }

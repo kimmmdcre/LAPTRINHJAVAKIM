@@ -10,6 +10,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
 @Service
 public class AuthService {
 
@@ -26,27 +30,27 @@ public class AuthService {
     }
 
     /**
-     * Xác thực đăng nhập bằng tên đăng nhập + mật khẩu.
-     * Trả về token JWT thực tế.
+     * Authenticate login with username + password.
+     * Returns JWT token.
      */
-    public String dangNhap(String tenDangNhap, String matKhau) {
+    public String login(String username, String password) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(tenDangNhap, matKhau)
+                new UsernamePasswordAuthenticationToken(username, password)
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return tokenProvider.generateToken(authentication);
     }
 
-    public void dangXuat(String token) {
+    public void logout(String token) {
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
         
         if (tokenProvider.validateToken(token)) {
-            java.util.Date expiryDate = tokenProvider.getExpirationDateFromJWT(token);
-            java.time.LocalDateTime expiryLDT = expiryDate.toInstant()
-                    .atZone(java.time.ZoneId.systemDefault())
+            Date expiryDate = tokenProvider.getExpirationDateFromJWT(token);
+            LocalDateTime expiryLDT = expiryDate.toInstant()
+                    .atZone(ZoneId.systemDefault())
                     .toLocalDateTime();
             
             BlacklistedToken blacklisted = new BlacklistedToken();

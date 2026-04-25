@@ -1,14 +1,13 @@
 package JAVAGROUP.prjApp.repositories;
 
+import JAVAGROUP.prjApp.entities.Teacher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import JAVAGROUP.prjApp.entities.GiangVien;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface GiangVienRepository extends JpaRepository<GiangVien, UUID> {
-    Optional<GiangVien> findByMaGiangVien(String maGiangVien);
+public interface TeacherRepository extends JpaRepository<Teacher, UUID> {
+    Optional<Teacher> findByTeacherCode(String teacherCode);
 }

@@ -31,12 +31,12 @@ const ReportGenerator = () => {
       setLoading(true);
       const groupsRes = await groupService.getAll();
       const myGroup = groupsRes.data.find(g => 
-        g.thanhViens?.some(m => m.idSinhVien === user?.id)
+        g.members?.some(m => m.studentId === user?.id)
       );
 
       if (myGroup) {
         setGroupInfo(myGroup);
-        const taskRes = await taskService.getGroupTasks(myGroup.idNhom);
+        const taskRes = await taskService.getByGroup(myGroup.groupId);
         setTasks(taskRes.data || []);
       }
     } catch (err) {
@@ -60,16 +60,16 @@ const ReportGenerator = () => {
       showToast(`Đang chuẩn bị file ${type.toUpperCase()}...`, 'info');
       
       let res;
-      let filename = `${template}-nhom-${groupInfo.tenNhom}.${type}`;
+      let filename = `${template}-nhom-${groupInfo.groupName}.${type}`;
 
       switch(type) {
         case 'csv':
           res = await reportService.exportCsv(groupInfo.idNhom);
-          filename = `bao-cao-nhom-${groupInfo.tenNhom}.csv`;
+          filename = `bao-cao-nhom-${groupInfo.groupName}.csv`;
           break;
         case 'srs':
           res = await reportService.exportSRS(groupInfo.idNhom);
-          filename = `SRS-nhom-${groupInfo.tenNhom}.docx`;
+          filename = `SRS-nhom-${groupInfo.groupName}.docx`;
           break;
         case 'docx':
           res = await reportService.exportDocx(groupInfo.idNhom);
@@ -179,8 +179,8 @@ const ReportGenerator = () => {
                  <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Nhóm kết xuất</label>
                     <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '10px' }}>
-                       <p style={{ fontWeight: '700', fontSize: '0.9rem' }}>{groupInfo?.tenNhom}</p>
-                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Project Key: {groupInfo?.keyJira || 'PRJ'}</p>
+                       <p style={{ fontWeight: '700', fontSize: '0.9rem' }}>{groupInfo?.groupName}</p>
+                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Project Key: {groupInfo?.jiraKey || 'PRJ'}</p>
                     </div>
                  </div>
 
@@ -217,15 +217,15 @@ const ReportGenerator = () => {
                      {template === 'srs' ? 'SOFTWARE REQUIREMENTS SPECIFICATION' : 'BÁO CÁO TỔNG KẾT ĐỒ ÁN'}
                    </h1>
                    <div style={{ width: '60px', height: '4px', background: '#111827', margin: '0 auto 20px' }}></div>
-                   <p style={{ fontSize: '1.2rem', fontWeight: '600' }}>Dự án: {groupInfo?.tenNhom}</p>
-                   <p style={{ fontSize: '1.1rem', color: '#4b5563' }}>Phân hệ: {groupInfo?.deTai || 'Quản lý Dự án Tích hợp'}</p>
+                   <p style={{ fontSize: '1.2rem', fontWeight: '600' }}>Dự án: {groupInfo?.groupName}</p>
+                   <p style={{ fontSize: '1.1rem', color: '#4b5563' }}>Phân hệ: {groupInfo?.topic || 'Quản lý Dự án Tích hợp'}</p>
                 </div>
 
                 {/* Section 1 */}
                 <div style={{ marginBottom: '40px' }}>
                    <h2 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '15px' }}>1. TỔNG QUAN HỆ THỐNG</h2>
                    <p style={{ lineHeight: '1.8', color: '#374151' }}>
-                     Tài liệu này cung cấp các thông số kỹ thuật và đặc tả yêu cầu cho dự án <strong>{groupInfo?.tenNhom}</strong>. 
+                     Tài liệu này cung cấp các thông số kỹ thuật và đặc tả yêu cầu cho dự án <strong>{groupInfo?.groupName}</strong>. 
                      Mục tiêu của dự án là xây dựng một nền tảng hỗ trợ sinh viên trong quá trình phát triển phần mềm, 
                      tích hợp chặt chẽ với các nền tảng quản lý dự án hàng đầu như <strong>Jira</strong> và hệ quản trị phiên bản <strong>GitHub</strong>.
                    </p>
@@ -243,11 +243,11 @@ const ReportGenerator = () => {
                          </tr>
                       </thead>
                       <tbody>
-                         {groupInfo?.thanhViens?.map((m, i) => (
+                         {groupInfo?.members?.map((m, i) => (
                            <tr key={i}>
-                              <td style={{ fontWeight: '600' }}>{m.idSinhVien === groupInfo.idTruongNhom ? 'Trưởng nhóm' : 'Thành viên'}</td>
-                              <td>{m.hoTen}</td>
-                              <td>{m.maSv || 'SV' + (i+1)}</td>
+                              <td style={{ fontWeight: '600' }}>{m.studentId === groupInfo.leaderId ? 'Trưởng nhóm' : 'Thành viên'}</td>
+                              <td>{m.fullName}</td>
+                              <td>{m.studentCode || 'SV' + (i+1)}</td>
                            </tr>
                          ))}
                       </tbody>
@@ -271,14 +271,14 @@ const ReportGenerator = () => {
                       <tbody>
                          {tasks.map((task, i) => (
                            <tr key={i}>
-                              <td style={{ fontWeight: 'bold' }}>{task.idYeuCau}</td>
+                              <td style={{ fontWeight: 'bold' }}>{task.jiraKey}</td>
                               <td>
-                                 <p style={{ fontWeight: '600' }}>{task.tieuDe}</p>
-                                 <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px' }}>Giao cho: {task.tenSinhVien || 'Chưa phân công'}</p>
+                                 <p style={{ fontWeight: '600' }}>{task.taskName}</p>
+                                 <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px' }}>Giao cho: {task.studentFullName || 'Chưa phân công'}</p>
                               </td>
                               <td style={{ textAlign: 'center' }}>
-                                 <span style={{ fontSize: '0.7rem', fontWeight: '800', padding: '4px 8px', borderRadius: '4px', background: task.trangThai === 'DONE' ? '#dcfce7' : '#f3f4f6' }}>
-                                    {task.trangThai}
+                                 <span style={{ fontSize: '0.7rem', fontWeight: '800', padding: '4px 8px', borderRadius: '4px', background: task.status === 'DONE' ? '#dcfce7' : '#f3f4f6' }}>
+                                    {task.status}
                                  </span>
                               </td>
                            </tr>

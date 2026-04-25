@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -24,71 +25,70 @@ public class UserController {
 
     /**
      * GET /api/users
-     * Lấy danh sách tất cả người dùng
+     * Get list of all users
      */
     @GetMapping
-    public ResponseEntity<java.util.List<JAVAGROUP.prjApp.dtos.UserDTO>> layDanhSachNguoiDung() {
-        return ResponseEntity.ok(userService.layDanhSachNguoiDung());
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     /**
      * GET /api/users/teachers
-     * Lấy danh sách chỉ các giảng viên
+     * Get list of only teachers
      */
     @GetMapping("/teachers")
-    public ResponseEntity<java.util.List<JAVAGROUP.prjApp.dtos.UserDTO>> layDanhSachGiangVien() {
-        return ResponseEntity.ok(userService.layDanhSachGiangVien());
+    public ResponseEntity<List<UserDTO>> getAllTeachers() {
+        return ResponseEntity.ok(userService.getAllTeachers());
     }
 
     /**
      * GET /api/users/unassigned
-     * Lấy danh sách sinh viên tự do (chưa có nhóm)
+     * Get list of unassigned students
      */
     @GetMapping("/unassigned")
-    public ResponseEntity<java.util.List<JAVAGROUP.prjApp.dtos.UserDTO>> layDanhSachSinhVienTuDo() {
-        return ResponseEntity.ok(userService.layDanhSachSinhVienTuDo());
+    public ResponseEntity<List<UserDTO>> getUnassignedStudents() {
+        return ResponseEntity.ok(userService.getUnassignedStudents());
     }
 
     /**
      * POST /api/users
-     * Body: UserDTO (tạo tài khoản mới)
+     * Create new account
      */
     @PostMapping
-    public ResponseEntity<Map<String, String>> taoTaiKhoan(@RequestBody UserDTO dto) {
-        userService.taoTaiKhoan(dto);
-        return ResponseEntity.ok(Map.of("message", "Tạo tài khoản thành công"));
+    public ResponseEntity<Map<String, String>> createAccount(@RequestBody UserDTO dto) {
+        userService.createAccount(dto);
+        return ResponseEntity.ok(Map.of("message", "Account created successfully"));
     }
 
     /**
      * DELETE /api/users/{id}
-     * Xoá tài khoản theo ID
+     * Delete account by ID
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> xoaTaiKhoan(@PathVariable UUID id) {
-        userService.xoaTaiKhoan(id);
-        return ResponseEntity.ok(Map.of("message", "Xoá tài khoản thành công"));
+    public ResponseEntity<Map<String, String>> deleteAccount(@PathVariable UUID id) {
+        userService.deleteAccount(id);
+        return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
     }
 
     /**
      * PUT /api/users/{id}
-     * Cập nhật thông tin
+     * Update account info
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, String>> capNhatTaiKhoan(@PathVariable UUID id, @RequestBody UserDTO dto) {
-        userService.capNhatTaiKhoan(id, dto);
-        return ResponseEntity.ok(Map.of("message", "Cập nhật thành công"));
+    public ResponseEntity<Map<String, String>> updateAccount(@PathVariable UUID id, @RequestBody UserDTO dto) {
+        userService.updateAccount(id, dto);
+        return ResponseEntity.ok(Map.of("message", "Account updated successfully"));
     }
 
     /**
      * PATCH /api/users/{id}/role
-     * Body: { "role": "GIANG_VIEN" }
-     * Cập nhật quyền người dùng
+     * Update user role
      */
     @PatchMapping("/{id}/role")
-    public ResponseEntity<Map<String, String>> phanQuyen(
+    public ResponseEntity<Map<String, String>> assignRole(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body) {
-        userService.phanQuyen(id, body.get("role"));
-        return ResponseEntity.ok(Map.of("message", "Cập nhật quyền thành công"));
+        userService.assignRole(id, body.get("role"));
+        return ResponseEntity.ok(Map.of("message", "Role updated successfully"));
     }
 }

@@ -68,9 +68,9 @@ const MemberTasks = () => {
   };
 
   const filteredTasks = tasks.filter(t => {
-    const matchesFilter = filter === 'ALL' || t.trangThai === filter;
-    const matchesSearch = t.tieuDe?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          t.idYeuCau?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filter === 'ALL' || t.status === filter;
+    const matchesSearch = t.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          t.jiraKey?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -138,30 +138,30 @@ const MemberTasks = () => {
       ) : (
         <div style={{ display: 'grid', gap: '1rem' }}>
           {filteredTasks.map(task => {
-            const style = getStatusStyle(task.trangThai);
+            const style = getStatusStyle(task.status);
             return (
-              <div key={task.idNhiemVu} className="glass-card table-row-hover animate-slide-up" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '2rem', borderLeft: `5px solid ${style.color}` }}>
+              <div key={task.taskId} className="glass-card table-row-hover animate-slide-up" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '2rem', borderLeft: `5px solid ${style.color}` }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: '900', color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', padding: '4px 8px', borderRadius: '6px' }}>
-                      {task.idYeuCau}
+                      {task.jiraKey}
                     </span>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>{task.tieuDe}</h3>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>{task.taskName}</h3>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: (task.commitCount || 0) > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
                       <GitBranch size={14} />
                       <strong>{task.commitCount || 0}</strong> Commits được ghi nhận
                     </div>
-                    {task.trangThai === 'DONE' && (task.commitCount || 0) === 0 && (
+                    {task.status === 'DONE' && (task.commitCount || 0) === 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--danger)', fontWeight: '900', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
                         <AlertCircle size={12} />
                         GHOST TASK
                       </div>
                     )}
-                    {task.tenSinhVien && (
+                    {task.studentFullName && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-                        Giao cho: <strong>{task.tenSinhVien}</strong>
+                        Giao cho: <strong>{task.studentFullName}</strong>
                       </div>
                     )}
                   </div>
@@ -173,9 +173,9 @@ const MemberTasks = () => {
                   </div>
                   
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    {task.trangThai === 'TODO' && (
+                    {task.status === 'TODO' && (
                       <button 
-                        onClick={() => updateStatus(task.idNhiemVu, 'IN_PROGRESS')}
+                        onClick={() => updateStatus(task.taskId, 'IN_PROGRESS')}
                         className="btn btn-outline" 
                         style={{ padding: '0.6rem', color: 'var(--primary)', borderRadius: '10px' }}
                         title="Bắt đầu thực hiện"
@@ -183,9 +183,9 @@ const MemberTasks = () => {
                         <PlayCircle size={20} />
                       </button>
                     )}
-                    {task.trangThai === 'IN_PROGRESS' && (
+                    {task.status === 'IN_PROGRESS' && (
                       <button 
-                        onClick={() => updateStatus(task.idNhiemVu, 'DONE')}
+                        onClick={() => updateStatus(task.taskId, 'DONE')}
                         className="btn btn-outline" 
                         style={{ padding: '0.6rem', color: 'var(--success)', borderRadius: '10px' }}
                         title="Hoàn thành nhiệm vụ"

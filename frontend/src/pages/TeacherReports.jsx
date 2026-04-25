@@ -26,7 +26,7 @@ const TeacherReports = () => {
   const navigate = useNavigate();
   const { showToast } = useUI();
   const queryParams = new URLSearchParams(location.search);
-  const nhomId = queryParams.get('nhomId');
+  const groupId = queryParams.get('groupId');
 
   const [groupInfo, setGroupInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,11 +39,11 @@ const TeacherReports = () => {
     try {
       setLoading(true);
       const [infoRes, progressRes, historyRes, gitRes, contribRes] = await Promise.all([
-        groupService.getDetails(nhomId),
-        reportService.getProgress(nhomId),
-        reportService.getHistory(nhomId),
-        reportService.getCommits(nhomId),
-        reportService.getContributions(nhomId)
+        groupService.getDetails(groupId),
+        reportService.getProgress(groupId),
+        reportService.getHistory(groupId),
+        reportService.getCommits(groupId),
+        reportService.getContributions(groupId)
       ]);
 
       setGroupInfo(infoRes.data);
@@ -51,7 +51,7 @@ const TeacherReports = () => {
       setHistoryData(historyRes.data);
       setContributions(contribRes.data);
       
-      const commitMap = gitRes.data?.soCommitTheoSinhVien || {};
+      const commitMap = gitRes.data?.commitsByStudent || {};
       const formattedGitData = Object.keys(commitMap).map(key => ({
         username: key,
         commits: commitMap[key]
@@ -63,25 +63,25 @@ const TeacherReports = () => {
     } finally {
       setLoading(false);
     }
-  }, [nhomId, showToast]);
+  }, [groupId, showToast]);
 
   useEffect(() => {
-    if (nhomId) {
+    if (groupId) {
       fetchReportData();
     }
-  }, [nhomId, fetchReportData]);
+  }, [groupId, fetchReportData]);
 
   const handleExport = async (format) => {
     try {
       showToast(`Đang khởi tạo tệp ${format.toUpperCase()}...`, 'info');
       const res = format === 'pdf' 
-        ? await reportService.exportPdf(nhomId) 
-        : await reportService.exportDocx(nhomId);
+        ? await reportService.exportPdf(groupId) 
+        : await reportService.exportDocx(groupId);
       
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Bao-cao-nhom-${groupInfo?.tenNhom}.${format}`);
+      link.setAttribute('download', `Bao-cao-nhom-${groupInfo?.groupName}.${format}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -92,7 +92,7 @@ const TeacherReports = () => {
     }
   };
 
-  if (!nhomId) return (
+  if (!groupId) return (
     <div className="glass-card animate-fade-in" style={{ padding: '6rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
         <Filter size={48} color="var(--primary)" style={{ opacity: 0.3 }} />
@@ -120,8 +120,8 @@ const TeacherReports = () => {
            <button onClick={() => navigate('/teacher/classes')} style={{ background: 'none', border: 'none', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', marginBottom: '1rem' }}>
              <ArrowLeft size={16} /> Quay lại Lớp học
            </button>
-           <h2 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Phân tích Dự án: {groupInfo?.tenNhom}</h2>
-           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>Đề tài: <span style={{ color: 'white', fontWeight: '600' }}>{groupInfo?.deTai || 'Chưa cập nhật'}</span></p>
+           <h2 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Phân tích Dự án: {groupInfo?.groupName}</h2>
+           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>Đề tài: <span style={{ color: 'white', fontWeight: '600' }}>{groupInfo?.projectTopic || 'Chưa cập nhật'}</span></p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
            <button className="btn btn-outline" onClick={() => handleExport('docx')}>
@@ -136,9 +136,9 @@ const TeacherReports = () => {
       {/* Summary Widgets */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
         {[
-          { label: 'Tiến độ hoàn thành', value: `${progressSummary?.phanTramTienDo || 0}%`, sub: `${progressSummary?.nhiemVuHoanThanh}/${progressSummary?.tongSoNhiemVu} Nhiệm vụ`, icon: TrendingUp, color: 'var(--success)' },
+          { label: 'Tiến độ hoàn thành', value: `${progressSummary?.progressPercentage || 0}%`, sub: `${progressSummary?.completedTasks}/${progressSummary?.totalTasks} Nhiệm vụ`, icon: TrendingUp, color: 'var(--success)' },
           { label: 'Tổng số Commits', value: gitStats.reduce((acc, curr) => acc + curr.commits, 0), sub: 'Dữ liệu từ GitHub', icon: GitCommit, color: 'var(--accent)' },
-          { label: 'Thành viên nhóm', value: groupInfo?.soLuongThanhVien || '5', sub: 'Đang hoạt động', icon: Users, color: 'var(--primary)' },
+          { label: 'Thành viên nhóm', value: groupInfo?.memberCount || '5', sub: 'Đang hoạt động', icon: Users, color: 'var(--primary)' },
           { label: 'Điểm nỗ lực trung bình', value: '8.5', sub: 'Dựa trên Task/Commit', icon: Award, color: 'var(--warning)' },
         ].map((stat, i) => (
           <div key={i} className="glass-card" style={{ padding: '1.5rem' }}>
@@ -175,13 +175,13 @@ const TeacherReports = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="ngay" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
                   contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--surface-border)', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
                   itemStyle={{ color: 'white', fontWeight: 'bold' }}
                 />
-                <Area type="monotone" dataKey="hoanThanh" stroke="var(--primary)" fillOpacity={1} fill="url(#colorProgress)" strokeWidth={3} />
+                <Area type="monotone" dataKey="completed" stroke="var(--primary)" fillOpacity={1} fill="url(#colorProgress)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -239,28 +239,28 @@ const TeacherReports = () => {
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '0.8rem' }}>
-                         {m.tenSinhVien?.[0]}
+                         {m.studentFullName?.[0]}
                        </div>
                        <div>
-                         <p style={{ fontWeight: '700' }}>{m.tenSinhVien}</p>
-                         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.idSinhVien?.toString().substring(0, 8)}</p>
+                         <p style={{ fontWeight: '700' }}>{m.studentFullName}</p>
+                         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.studentId?.toString().substring(0, 8)}</p>
                        </div>
                     </div>
                   </td>
-                  <td style={{ textAlign: 'center', fontWeight: '700' }}>{m.soNhiemVuHoanThanh}</td>
-                  <td style={{ textAlign: 'center', fontWeight: '700', color: 'var(--accent)' }}>{m.soCommit}</td>
+                  <td style={{ textAlign: 'center', fontWeight: '700' }}>{m.completedTasks}</td>
+                  <td style={{ textAlign: 'center', fontWeight: '700', color: 'var(--accent)' }}>{m.commitCount}</td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'center' }}>
                       <div style={{ width: '100px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ width: `${Math.min((m.soNhiemVuHoanThanh || 0) * 20, 100)}%`, height: '100%', background: 'var(--primary)' }}></div>
+                        <div style={{ width: `${Math.min((m.completedTasks || 0) * 20, 100)}%`, height: '100%', background: 'var(--primary)' }}></div>
                       </div>
-                      <span style={{ fontSize: '0.8rem', fontWeight: '800' }}>{m.soNhiemVuHoanThanh || 0} tasks</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '800' }}>{m.completedTasks || 0} tasks</span>
                     </div>
                   </td>
                   <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '20px', background: m.soNhiemVuHoanThanh > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: m.soNhiemVuHoanThanh > 0 ? 'var(--success)' : 'var(--danger)', fontSize: '0.7rem', fontWeight: '900' }}>
-                       {m.soNhiemVuHoanThanh > 0 ? <CheckCircle2 size={12} /> : <Zap size={12} />}
-                       {m.soNhiemVuHoanThanh > 0 ? 'ACTIVE' : 'INACTIVE'}
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '20px', background: m.completedTasks > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: m.completedTasks > 0 ? 'var(--success)' : 'var(--danger)', fontSize: '0.7rem', fontWeight: '900' }}>
+                       {m.completedTasks > 0 ? <CheckCircle2 size={12} /> : <Zap size={12} />}
+                       {m.completedTasks > 0 ? 'ACTIVE' : 'INACTIVE'}
                     </div>
                   </td>
                 </tr>

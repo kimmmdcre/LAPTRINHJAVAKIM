@@ -3,13 +3,14 @@ package JAVAGROUP.prjApp.services;
 import JAVAGROUP.prjApp.adapter.IGitHubClient;
 import JAVAGROUP.prjApp.adapter.IJiraClient;
 import JAVAGROUP.prjApp.dtos.CommitDTO;
-import JAVAGROUP.prjApp.dtos.YeuCauDTO;
+import JAVAGROUP.prjApp.dtos.RequirementDTO;
 import JAVAGROUP.prjApp.entities.*;
 import JAVAGROUP.prjApp.repositories.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,105 +24,118 @@ public class SyncService {
 
     private final IJiraClient jiraClient;
     private final IGitHubClient gitHubClient;
-    private final CauHinhTichHopRepository cauHinhTichHopRepository;
-    private final NhomRepository nhomRepository;
-    private final YeuCauRepository yeuCauRepository;
-    private final CommitVCSRepository commitVCSRepository;
-    private final SinhVienRepository sinhVienRepository;
+    private final IntegrationConfigRepository integrationConfigRepository;
+    private final GroupRepository groupRepository;
+    private final RequirementRepository requirementRepository;
+    private final VcsCommitRepository vcsCommitRepository;
+    private final StudentRepository studentRepository;
 
     public SyncService(IJiraClient jiraClient, IGitHubClient gitHubClient,
-                       CauHinhTichHopRepository cauHinhTichHopRepository,
-                       NhomRepository nhomRepository, YeuCauRepository yeuCauRepository,
-                       CommitVCSRepository commitVCSRepository,
-                       SinhVienRepository sinhVienRepository) {
+                       IntegrationConfigRepository integrationConfigRepository,
+                       GroupRepository groupRepository, RequirementRepository requirementRepository,
+                       VcsCommitRepository vcsCommitRepository,
+                       StudentRepository studentRepository) {
         this.jiraClient = jiraClient;
         this.gitHubClient = gitHubClient;
-        this.cauHinhTichHopRepository = cauHinhTichHopRepository;
-        this.nhomRepository = nhomRepository;
-        this.yeuCauRepository = yeuCauRepository;
-        this.commitVCSRepository = commitVCSRepository;
-        this.sinhVienRepository = sinhVienRepository;
+        this.integrationConfigRepository = integrationConfigRepository;
+        this.groupRepository = groupRepository;
+        this.requirementRepository = requirementRepository;
+        this.vcsCommitRepository = vcsCommitRepository;
+        this.studentRepository = studentRepository;
     }
 
-    public void dongBoJira(UUID idNhom) {
-        Nhom nhom = nhomRepository.findById(idNhom)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại: " + idNhom));
-        List<CauHinhTichHop> configs = cauHinhTichHopRepository.findByNhom_IdNhom(idNhom);
-        CauHinhTichHop jiraConf = configs.stream()
-                .filter(c -> "JIRA".equals(c.getLoaiNenTang())).findFirst()
-                .orElseThrow(() -> new RuntimeException("Chưa cấu hình Jira cho nhóm: " + idNhom));
+    @Transactional
+    public void syncJira(UUID groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
+        List<IntegrationConfig> configs = integrationConfigRepository.findByGroupId(groupId);
+        IntegrationConfig jiraConf = configs.stream()
+                .filter(c -> "JIRA".equals(c.getPlatformType())).findFirst()
+                .orElseThrow(() -> new RuntimeException("Jira integration not configured for group: " + groupId));
 
-        List<YeuCauDTO> issues = jiraClient.layDanhSachYeuCau(jiraConf.getUrl(), jiraConf.getEmail(), jiraConf.getApiToken(), jiraConf.getProjectKey());
-        for (YeuCauDTO dto : issues) {
-            if (!yeuCauRepository.existsById(dto.getIdYeuCau())) {
-                YeuCau yc = new YeuCau();
-                yc.setIdYeuCau(dto.getIdYeuCau());
-                yc.setNhom(nhom);
-                yc.setTieuDe(dto.getTieuDe());
-                yc.setMoTa(dto.getMoTa());
-                yc.setTrangThai(dto.getTrangThai());
-                yeuCauRepository.save(yc);
-            }
+        List<RequirementDTO> issues = jiraClient.getRequirements(
+                jiraConf.getUrl(), 
+                jiraConf.getEmail(), 
+                jiraConf.getApiToken(), 
+                jiraConf.getProjectKey()
+        );
+
+        for (RequirementDTO dto : issues) {
+            requirementRepository.findByJiraKeyAndProjectGroup(dto.getJiraKey(), group)
+                .ifPresentOrElse(
+                    existing -> {
+                        existing.setTitle(dto.getTitle());
+                        existing.setDescription(dto.getDescription());
+                        existing.setStatus(dto.getStatus());
+                        requirementRepository.save(existing);
+                    },
+                    () -> {
+                        Requirement req = new Requirement();
+                        req.setJiraKey(dto.getJiraKey());
+                        req.setProjectGroup(group);
+                        req.setTitle(dto.getTitle());
+                        req.setDescription(dto.getDescription());
+                        req.setStatus(dto.getStatus());
+                        requirementRepository.save(req);
+                    }
+                );
         }
     }
 
-    public void dongBoGithub(UUID idNhom) {
-        List<CauHinhTichHop> configs = cauHinhTichHopRepository.findByNhom_IdNhom(idNhom);
-        CauHinhTichHop ghConf = configs.stream()
-                .filter(c -> "GITHUB".equals(c.getLoaiNenTang())).findFirst()
-                .orElseThrow(() -> new RuntimeException("Chưa cấu hình GitHub cho nhóm: " + idNhom));
+    @Transactional
+    public void syncGithub(UUID groupId) {
+        List<IntegrationConfig> configs = integrationConfigRepository.findByGroupId(groupId);
+        IntegrationConfig ghConf = configs.stream()
+                .filter(c -> "GITHUB".equals(c.getPlatformType())).findFirst()
+                .orElseThrow(() -> new RuntimeException("GitHub integration not configured for group: " + groupId));
 
         try {
-            List<CommitDTO> commits = gitHubClient.layDanhSachCommit(ghConf.getRepoUrl(), ghConf.getApiToken(), null);
+            List<CommitDTO> commits = gitHubClient.getCommits(ghConf.getRepoUrl(), ghConf.getApiToken(), null);
             for (CommitDTO dto : commits) {
-                if (!commitVCSRepository.existsById(dto.getSha())) {
-                    CommitVCS commit = new CommitVCS();
+                if (!vcsCommitRepository.existsById(dto.getSha())) {
+                    VcsCommit commit = new VcsCommit();
                     commit.setSha(dto.getSha());
-                    commit.setThongDiep(dto.getThongDiep());
-                    commit.setThoiGian(dto.getThoiGian());
+                    commit.setMessage(dto.getMessage());
+                    commit.setCommitTime(dto.getCommitTime());
                     
-                    // Link to student by email if possible
                     if (dto.getAuthorEmail() != null) {
-                        sinhVienRepository.findByEmail(dto.getAuthorEmail())
-                                .ifPresent(commit::setSinhVien);
+                        studentRepository.findByEmail(dto.getAuthorEmail())
+                                .ifPresent(commit::setStudent);
                     }
                     
-                    commitVCSRepository.save(commit);
+                    vcsCommitRepository.save(commit);
                 }
             }
         } catch (Exception e) {
-            log.error("Lỗi khi đồng bộ GitHub cho nhóm {}: {}", idNhom, e.getMessage());
+            log.error("Error syncing GitHub for group {}: {}", groupId, e.getMessage());
             throw e;
         }
     }
 
-    public void mappingTaskCommit() {
-        List<CommitVCS> commits = commitVCSRepository.findAll();
-        // Regex to find patterns like [PROJ-123], PROJ-123
+    @Transactional
+    public void mapTasksToCommits() {
+        List<VcsCommit> commits = vcsCommitRepository.findAll();
         Pattern taskPattern = Pattern.compile("([A-Z]+-\\d+)");
         Pattern donePattern = Pattern.compile("(?i)(done|base|fix|fixed|close|closed)\\s+([A-Z]+-\\d+)");
 
-        for (CommitVCS commit : commits) {
-            if (commit.getThongDiep() == null) continue;
+        for (VcsCommit commit : commits) {
+            if (commit.getMessage() == null) continue;
 
-            // Check if this commit maps to a task (Requirement/YeuCau)
-            Matcher matcher = taskPattern.matcher(commit.getThongDiep());
+            Matcher matcher = taskPattern.matcher(commit.getMessage());
             if (matcher.find()) {
-                String taskId = matcher.group(1);
-                // Tìm kiếm trong bảng Yêu Cầu (nơi Jira issues được lưu)
-                yeuCauRepository.findById(taskId).ifPresent(yc -> {
-                    commit.setYeuCau(yc);
-                    commitVCSRepository.save(commit);
+                String jiraKey = matcher.group(1);
+                requirementRepository.findByJiraKey(jiraKey).ifPresent(req -> {
+                    commit.setRequirement(req);
+                    vcsCommitRepository.save(commit);
                     
-                    // Check for auto-update keywords (e.g. "fix JT-1")
-                    Matcher doneMatcher = donePattern.matcher(commit.getThongDiep());
+                    Matcher doneMatcher = donePattern.matcher(commit.getMessage());
                     if (doneMatcher.find()) {
-                        yc.setTrangThai("DONE");
-                        yeuCauRepository.save(yc);
-                        log.info("Đã tự động chuyển trạng thái Yêu cầu {} sang DONE dựa trên commit message", taskId);
+                        req.setStatus("DONE");
+                        requirementRepository.save(req);
+                        log.info("Automatically updated status of Requirement {} to DONE", jiraKey);
                     }
                     
-                    log.info("Đã link commit {} với yêu cầu {}", commit.getSha(), taskId);
+                    log.info("Linked commit {} with requirement {}", commit.getSha(), jiraKey);
                 });
             }
         }

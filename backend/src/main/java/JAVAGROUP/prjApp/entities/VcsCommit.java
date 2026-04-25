@@ -9,32 +9,32 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "COMMIT_VCS")
+@Table(name = "vcs_commits")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CommitVCS {
+public class VcsCommit {
 
     @Id
     @Column(name = "sha", nullable = false)
     private String sha;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_yeu_cau")
-    private YeuCau yeuCau;
+    @JoinColumn(name = "requirement_id")
+    private Requirement requirement;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_nhiem_vu")
-    private NhiemVu nhiemVu;
+    @JoinColumn(name = "task_id")
+    private Task task;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_sinh_vien")
-    private SinhVien sinhVien;
+    @JoinColumn(name = "student_id")
+    private Student student;
 
-    @Column(name = "thong_diep")
-    private String thongDiep;
+    @Column(name = "message")
+    private String message;
 
-    @Column(name = "thoi_gian")
-    private LocalDateTime thoiGian;
+    @Column(name = "commit_time")
+    private LocalDateTime commitTime;
 }

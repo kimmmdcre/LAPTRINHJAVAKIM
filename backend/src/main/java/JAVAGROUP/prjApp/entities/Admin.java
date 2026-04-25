@@ -9,16 +9,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "QUAN_TRI_VIEN")
+@Table(name = "admins")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuanTriVien extends NguoiDung {
+public class Admin extends User {
+    @Column(name = "admin_code", nullable = false, unique = true)
+    private String adminCode;
 
-    @Column(name = "ma_gv", nullable = false, unique = true)
-    private String maGv;
-
-    @Column(name = "cap_do_quyen")
-    private Integer capDoQuyen;
+    @Column(name = "admin_level")
+    private String adminLevel;
 }

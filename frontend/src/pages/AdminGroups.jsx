@@ -34,9 +34,9 @@ const AdminGroups = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [newGroupData, setNewGroupData] = useState({
-    tenNhom: '',
-    deTai: '',
-    idGiangVien: ''
+    groupName: '',
+    projectTopic: '',
+    teacherId: ''
   });
 
   const { showToast } = useUI();
@@ -58,16 +58,16 @@ const AdminGroups = () => {
       if (fetchedGroups.length > 0) {
         const configMap = {};
         for (const group of fetchedGroups) {
-          if (!group?.idNhom) continue;
+          if (!group?.groupId) continue;
           try {
-            const configRes = await configService.getConfig(group.idNhom);
+            const configRes = await configService.getConfig(group.groupId);
             const configs = Array.isArray(configRes.data) ? configRes.data : [];
-            configMap[group.idNhom] = {
-              hasJira: configs.some(c => c?.loaiNenTang === 'JIRA' && c?.url),
-              hasGithub: configs.some(c => c?.loaiNenTang === 'GITHUB' && c?.repoUrl),
+            configMap[group.groupId] = {
+              hasJira: configs.some(c => c?.platformType === 'JIRA' && c?.url),
+              hasGithub: configs.some(c => c?.platformType === 'GITHUB' && c?.repoUrl),
             };
           } catch {
-            configMap[group.idNhom] = { hasJira: false, hasGithub: false };
+            configMap[group.groupId] = { hasJira: false, hasGithub: false };
           }
         }
         setGroupConfigs(configMap);
@@ -114,7 +114,7 @@ const AdminGroups = () => {
       await groupService.create(newGroupData);
       showToast('Khởi tạo nhóm dự án thành công!', 'success');
       setShowCreateModal(false);
-      setNewGroupData({ tenNhom: '', deTai: '', idGiangVien: '' });
+      setNewGroupData({ groupName: '', projectTopic: '', teacherId: '' });
       fetchData();
     } catch (err) {
       console.error(err);
@@ -123,9 +123,9 @@ const AdminGroups = () => {
   };
 
   const handleAssignTeacher = async () => {
-    if (!selectedTeacherId || !selectedGroup?.idNhom) return;
+    if (!selectedTeacherId || !selectedGroup?.groupId) return;
     try {
-      await groupService.assignTeacher(selectedGroup.idNhom, selectedTeacherId);
+      await groupService.assignTeacher(selectedGroup.groupId, selectedTeacherId);
       showToast('Đã cập nhật giảng viên hướng dẫn.', 'success');
       setShowAssignModal(false);
       fetchData();
@@ -157,8 +157,8 @@ const AdminGroups = () => {
   );
 
   const filteredGroups = groups.filter(g => g && (
-    (g.tenNhom?.toLowerCase() || "").includes(searchQuery.toLowerCase()) || 
-    (g.deTai?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+    (g.groupName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) || 
+    (g.projectTopic?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   ));
 
   return (
@@ -199,8 +199,8 @@ const AdminGroups = () => {
           onDragOver={e => e.preventDefault()}
           onDrop={e => {
             e.preventDefault();
-            if (draggedStudent?.isFromGroup && draggedStudent?.idSinhVien) {
-              handleRemoveMember(draggedStudent.idSinhVien);
+            if (draggedStudent?.isFromGroup && draggedStudent?.studentId) {
+              handleRemoveMember(draggedStudent.studentId);
             }
           }}
         >
@@ -219,7 +219,7 @@ const AdminGroups = () => {
               <div
                 key={s.id}
                 draggable
-                onDragStart={() => setDraggedStudent({ ...s, idSinhVien: s.id, isFromGroup: false })}
+                onDragStart={() => setDraggedStudent({ ...s, studentId: s.id, isFromGroup: false })}
                 onDragEnd={() => setDraggedStudent(null)}
                 className="table-row-hover"
                 style={{
@@ -228,11 +228,11 @@ const AdminGroups = () => {
                   border: '1px solid var(--glass-border)',
                   borderRadius: '10px',
                   cursor: 'grab',
-                  opacity: draggedStudent?.idSinhVien === s.id ? 0.3 : 1
+                  opacity: draggedStudent?.studentId === s.id ? 0.3 : 1
                 }}
               >
-                <p style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{s.hoTen}</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.maSv}</p>
+                <p style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{s.fullName}</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.studentCode}</p>
               </div>
             ))}
           </div>
@@ -247,14 +247,14 @@ const AdminGroups = () => {
             </div>
           ) : filteredGroups.map(group => (
             <div
-              key={group.idNhom}
+              key={group.groupId}
               className="glass-card animate-slide-up"
               style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--glass-border)' }}
               onDragOver={e => e.preventDefault()}
               onDrop={e => {
                 e.preventDefault();
-                if (!draggedStudent?.isFromGroup && draggedStudent?.idSinhVien) {
-                  handleAssignStudent(group.idNhom, draggedStudent.idSinhVien);
+                if (!draggedStudent?.isFromGroup && draggedStudent?.studentId) {
+                  handleAssignStudent(group.groupId, draggedStudent.studentId);
                 }
               }}
             >
@@ -263,45 +263,45 @@ const AdminGroups = () => {
                   <FolderOpen size={20} />
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button className="btn-hover" title="Cấu hình" onClick={() => navigate('/admin/config', { state: { groupId: group.idNhom } })} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}>
+                  <button className="btn-hover" title="Cấu hình" onClick={() => navigate('/admin/config', { state: { groupId: group.groupId } })} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}>
                     <Settings size={16} />
                   </button>
-                  <button className="btn-hover" title="Lịch sử Commit" onClick={() => navigate(`/member/commits?nhomId=${group.idNhom}`)} style={{ background: 'none', border: 'none', color: 'var(--primary)' }}>
+                  <button className="btn-hover" title="Lịch sử Commit" onClick={() => navigate(`/member/commits?groupId=${group.groupId}`)} style={{ background: 'none', border: 'none', color: 'var(--primary)' }}>
                     <GitCommit size={16} />
                   </button>
-                  <button className="btn-hover" title="Phân tích" onClick={() => navigate(`/project/heatmap?nhomId=${group.idNhom}`)} style={{ background: 'none', border: 'none', color: 'var(--accent)' }}>
+                  <button className="btn-hover" title="Phân tích" onClick={() => navigate(`/project/heatmap?groupId=${group.groupId}`)} style={{ background: 'none', border: 'none', color: 'var(--accent)' }}>
                     <Activity size={16} />
                   </button>
-                  <button className="btn-hover" title="Xóa nhóm" onClick={() => handleDeleteGroup(group.idNhom)} style={{ background: 'none', border: 'none', color: 'var(--danger)' }}>
+                  <button className="btn-hover" title="Xóa nhóm" onClick={() => handleDeleteGroup(group.groupId)} style={{ background: 'none', border: 'none', color: 'var(--danger)' }}>
                     <Trash2 size={16} />
                   </button>
                 </div>
               </div>
 
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>{group.tenNhom}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{group.deTai || 'Chưa có đề tài'}</p>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: '800' }}>{group.groupName}</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{group.projectTopic || 'Chưa có đề tài'}</p>
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                   <span>Thành viên</span>
-                  <span>{group.thanhViens?.length || 0}/5</span>
+                  <span>{group.members?.length || 0}/5</span>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                  {group.thanhViens?.map((m, idx) => (
+                  {group.members?.map((m, idx) => (
                     <div
-                      key={m.idSinhVien || idx}
+                      key={m.studentId || idx}
                       draggable
                       onDragStart={() => setDraggedStudent({ ...m, isFromGroup: true })}
                       onDragEnd={() => setDraggedStudent(null)}
                       style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '0.75rem', cursor: 'grab', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: m.idSinhVien === group.idTruongNhom ? 'var(--warning)' : 'var(--primary)' }}></div>
-                      {m.hoTen}
+                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: m.studentId === group.leaderId ? 'var(--warning)' : 'var(--primary)' }}></div>
+                      {m.fullName}
                     </div>
                   ))}
-                  {(!group.thanhViens || group.thanhViens.length < 5) && (
+                  {(!group.members || group.members.length < 5) && (
                     <div style={{ padding: '4px 10px', border: '1px dashed var(--glass-border)', borderRadius: '8px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                       + Drop here
                     </div>
@@ -310,10 +310,10 @@ const AdminGroups = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', paddingTop: '1rem' }}>
-                 <span style={{ fontSize: '0.65rem', fontWeight: '800', padding: '4px 8px', borderRadius: '4px', background: groupConfigs[group.idNhom]?.hasJira ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)', color: groupConfigs[group.idNhom]?.hasJira ? 'var(--success)' : 'var(--text-muted)' }}>
+                 <span style={{ fontSize: '0.65rem', fontWeight: '800', padding: '4px 8px', borderRadius: '4px', background: groupConfigs[group.groupId]?.hasJira ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)', color: groupConfigs[group.groupId]?.hasJira ? 'var(--success)' : 'var(--text-muted)' }}>
                    JIRA
                  </span>
-                 <span style={{ fontSize: '0.65rem', fontWeight: '800', padding: '4px 8px', borderRadius: '4px', background: groupConfigs[group.idNhom]?.hasGithub ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)', color: groupConfigs[group.idNhom]?.hasGithub ? 'var(--success)' : 'var(--text-muted)' }}>
+                 <span style={{ fontSize: '0.65rem', fontWeight: '800', padding: '4px 8px', borderRadius: '4px', background: groupConfigs[group.groupId]?.hasGithub ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)', color: groupConfigs[group.groupId]?.hasGithub ? 'var(--success)' : 'var(--text-muted)' }}>
                    GITHUB
                  </span>
               </div>
@@ -321,15 +321,15 @@ const AdminGroups = () => {
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem' }}>
-                    {group.tenGiangVien?.[0] || '?'}
+                    {group.teacherName?.[0] || '?'}
                   </div>
                   <div>
                     <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>CỐ VẤN</p>
-                    <p style={{ fontSize: '0.8rem', fontWeight: '700' }}>{group.tenGiangVien || 'Chưa phân công'}</p>
+                    <p style={{ fontSize: '0.8rem', fontWeight: '700' }}>{group.teacherName || 'Chưa phân công'}</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => { setSelectedGroup(group); setSelectedTeacherId(group.idGiangVien || ''); setShowAssignModal(true); }}
+                  onClick={() => { setSelectedGroup(group); setSelectedTeacherId(group.teacherId || ''); setShowAssignModal(true); }}
                   style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}
                 >
                   <UserPlus size={18} />
@@ -348,17 +348,17 @@ const AdminGroups = () => {
             <form onSubmit={handleCreateGroup}>
               <div className="input-group">
                 <label className="input-label">Tên nhóm</label>
-                <input type="text" className="input-field" required value={newGroupData.tenNhom} onChange={e => setNewGroupData({ ...newGroupData, tenNhom: e.target.value })} />
+                <input type="text" className="input-field" required value={newGroupData.groupName} onChange={e => setNewGroupData({ ...newGroupData, groupName: e.target.value })} />
               </div>
               <div className="input-group">
                 <label className="input-label">Đề tài</label>
-                <textarea className="input-field" rows={2} value={newGroupData.deTai} onChange={e => setNewGroupData({ ...newGroupData, deTai: e.target.value })} />
+                <textarea className="input-field" rows={2} value={newGroupData.projectTopic} onChange={e => setNewGroupData({ ...newGroupData, projectTopic: e.target.value })} />
               </div>
               <div className="input-group">
                 <label className="input-label">Giảng viên hướng dẫn</label>
-                <select className="input-field" required value={newGroupData.idGiangVien} onChange={e => setNewGroupData({ ...newGroupData, idGiangVien: e.target.value })}>
+                <select className="input-field" required value={newGroupData.teacherId} onChange={e => setNewGroupData({ ...newGroupData, teacherId: e.target.value })}>
                   <option value="">-- Chọn --</option>
-                  {teachers.filter(t => t).map(t => <option key={t.id} value={t.id}>{t.hoTen}</option>)}
+                  {teachers.filter(t => t).map(t => <option key={t.id} value={t.id}>{t.fullName}</option>)}
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
@@ -374,10 +374,10 @@ const AdminGroups = () => {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card animate-slide-up" style={{ width: '400px', padding: '2rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1.5rem' }}>Phân công Cố vấn</h3>
-            <p style={{ marginBottom: '1.5rem', opacity: 0.8 }}>Nhóm: <strong>{selectedGroup?.tenNhom}</strong></p>
+            <p style={{ marginBottom: '1.5rem', opacity: 0.8 }}>Nhóm: <strong>{selectedGroup?.groupName}</strong></p>
             <select className="input-field" value={selectedTeacherId} onChange={e => setSelectedTeacherId(e.target.value)}>
               <option value="">-- Chọn giảng viên --</option>
-              {teachers.filter(t => t).map(t => <option key={t.id} value={t.id}>{t.hoTen}</option>)}
+              {teachers.filter(t => t).map(t => <option key={t.id} value={t.id}>{t.fullName}</option>)}
             </select>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
               <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowAssignModal(false)}>Đóng</button>

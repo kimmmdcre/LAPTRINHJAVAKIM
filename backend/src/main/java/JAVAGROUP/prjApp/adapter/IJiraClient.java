@@ -2,9 +2,9 @@ package JAVAGROUP.prjApp.adapter;
 
 import java.util.List;
 
-import JAVAGROUP.prjApp.dtos.YeuCauDTO;
+import JAVAGROUP.prjApp.dtos.RequirementDTO;
 
 public interface IJiraClient {
-    List<YeuCauDTO> layDanhSachYeuCau(String duongDan, String email, String maTruyCap, String maDuAn);
-    void kiemTraKetNoi(String duongDan, String email, String maTruyCap, String maDuAn);
+    List<RequirementDTO> getRequirements(String url, String email, String accessToken, String projectKey);
+    void checkConnection(String url, String email, String accessToken, String projectKey);
 }

@@ -1,16 +1,18 @@
 package JAVAGROUP.prjApp.services;
 
-import JAVAGROUP.prjApp.dtos.NhiemVuDTO;
-import JAVAGROUP.prjApp.dtos.YeuCauDTO;
-import JAVAGROUP.prjApp.entities.NhiemVu;
-import JAVAGROUP.prjApp.entities.SinhVien;
-import JAVAGROUP.prjApp.repositories.NhiemVuRepository;
-import JAVAGROUP.prjApp.repositories.SinhVienRepository;
-import JAVAGROUP.prjApp.repositories.YeuCauRepository;
-import JAVAGROUP.prjApp.repositories.ThanhVienNhomRepository;
-import JAVAGROUP.prjApp.entities.ThanhVienNhom;
-import JAVAGROUP.prjApp.entities.VaiTroNhom;
-import JAVAGROUP.prjApp.entities.ThanhVienNhomId;
+import JAVAGROUP.prjApp.dtos.TaskDTO;
+import JAVAGROUP.prjApp.dtos.RequirementDTO;
+import JAVAGROUP.prjApp.dtos.CommitDTO;
+import JAVAGROUP.prjApp.entities.Task;
+import JAVAGROUP.prjApp.entities.Student;
+import JAVAGROUP.prjApp.repositories.TaskRepository;
+import JAVAGROUP.prjApp.repositories.StudentRepository;
+import JAVAGROUP.prjApp.repositories.RequirementRepository;
+import JAVAGROUP.prjApp.repositories.GroupMemberRepository;
+import JAVAGROUP.prjApp.repositories.VcsCommitRepository;
+import JAVAGROUP.prjApp.entities.GroupMember;
+import JAVAGROUP.prjApp.entities.GroupRole;
+import JAVAGROUP.prjApp.entities.GroupMemberId;
 
 import org.springframework.stereotype.Service;
 
@@ -21,111 +23,123 @@ import java.util.stream.Collectors;
 @Service
 public class TaskService {
 
-    private final YeuCauRepository yeuCauRepository;
-    private final NhiemVuRepository nhiemVuRepository;
-    private final SinhVienRepository sinhVienRepository;
-    private final ThanhVienNhomRepository thanhVienNhomRepository;
-    private final JAVAGROUP.prjApp.repositories.CommitVCSRepository commitVCSRepository;
+    private final RequirementRepository requirementRepository;
+    private final TaskRepository taskRepository;
+    private final StudentRepository studentRepository;
+    private final GroupMemberRepository groupMemberRepository;
+    private final VcsCommitRepository vcsCommitRepository;
 
-    public TaskService(YeuCauRepository yeuCauRepository, 
-                       NhiemVuRepository nhiemVuRepository,
-                       SinhVienRepository sinhVienRepository,
-                       ThanhVienNhomRepository thanhVienNhomRepository,
-                       JAVAGROUP.prjApp.repositories.CommitVCSRepository commitVCSRepository) {
-        this.yeuCauRepository = yeuCauRepository;
-        this.nhiemVuRepository = nhiemVuRepository;
-        this.sinhVienRepository = sinhVienRepository;
-        this.thanhVienNhomRepository = thanhVienNhomRepository;
-        this.commitVCSRepository = commitVCSRepository;
+    public TaskService(RequirementRepository requirementRepository, 
+                       TaskRepository taskRepository,
+                       StudentRepository studentRepository,
+                       GroupMemberRepository groupMemberRepository,
+                       VcsCommitRepository vcsCommitRepository) {
+        this.requirementRepository = requirementRepository;
+        this.taskRepository = taskRepository;
+        this.studentRepository = studentRepository;
+        this.groupMemberRepository = groupMemberRepository;
+        this.vcsCommitRepository = vcsCommitRepository;
     }
 
-    public java.util.List<YeuCauDTO> layYeuCauNhom(UUID idNhom) {
-        return yeuCauRepository.findByNhom_IdNhom(idNhom)
+    public List<RequirementDTO> getRequirementsByGroup(UUID groupId) {
+        return requirementRepository.findByProjectGroup_GroupId(groupId)
                 .stream()
-                .map(yc -> new YeuCauDTO(
-                        yc.getIdYeuCau(),
-                        yc.getNhom().getIdNhom(),
-                        yc.getTieuDe(),
-                        yc.getMoTa(),
-                        yc.getTrangThai()
+                .map(req -> new RequirementDTO(
+                        req.getRequirementId(),
+                        req.getJiraKey(),
+                        req.getTitle(),
+                        req.getDescription(),
+                        req.getStatus(),
+                        req.getProjectGroup().getGroupId()
                 ))
                 .collect(Collectors.toList());
     }
 
-    public java.util.List<NhiemVuDTO> layNhiemVuNhom(UUID idNhom) {
-        // Mocking task retrieval for leader view based on group ID
-        return nhiemVuRepository.findAll().stream()
-                .filter(nv -> nv.getYeuCau() != null && nv.getYeuCau().getNhom().getIdNhom().equals(idNhom))
-                .map(this::toNhiemVuDTO)
+    public List<TaskDTO> getTasksByGroup(UUID groupId) {
+        return taskRepository.findAll().stream()
+                .filter(task -> task.getRequirement() != null && task.getRequirement().getProjectGroup().getGroupId().equals(groupId))
+                .map(this::toTaskDTO)
                 .collect(Collectors.toList());
     }
 
-    public void phanCongNhiemVu(String idNhiemVu, UUID idSinhVien, UUID idNguoiYeuCau) {
-        NhiemVu nv = nhiemVuRepository.findById(idNhiemVu)
-                .orElseThrow(() -> new RuntimeException("Nhiệm vụ không tồn tại: " + idNhiemVu));
+    public void assignTask(UUID taskId, UUID studentId, UUID requesterId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task does not exist: " + taskId));
         
-        UUID idNhom = nv.getYeuCau().getNhom().getIdNhom();
+        UUID groupId = task.getRequirement().getProjectGroup().getGroupId();
         
-        // Kiểm tra xem người yêu cầu có phải là LEADER của nhóm này không
-        ThanhVienNhomId requesterId = new ThanhVienNhomId(idNhom, idNguoiYeuCau);
-        ThanhVienNhom thanhVien = thanhVienNhomRepository.findById(requesterId)
-                .orElseThrow(() -> new RuntimeException("Bạn không thuộc nhóm này"));
+        // Check if requester is LEADER of this group
+        GroupMemberId memberId = new GroupMemberId(groupId, requesterId);
+        GroupMember member = groupMemberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("You are not a member of this group"));
         
-        if (thanhVien.getVaiTro() != VaiTroNhom.LEADER) {
-            throw new RuntimeException("Chỉ Trưởng nhóm (Leader) mới có quyền phân công nhiệm vụ");
+        if (member.getRole() != GroupRole.LEADER) {
+            throw new RuntimeException("Only the group leader can assign tasks");
         }
 
-        SinhVien sv = sinhVienRepository.findById(idSinhVien)
-                .orElseThrow(() -> new RuntimeException("Sinh viên được phân công không tồn tại: " + idSinhVien));
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Assigned student does not exist: " + studentId));
         
-        nv.setSinhVien(sv);
-        nhiemVuRepository.save(nv);
+        task.setStudent(student);
+        taskRepository.save(task);
     }
 
-    public List<NhiemVuDTO> layNhiemVuCaNhan(UUID idSinhVien) {
-        return nhiemVuRepository.findBySinhVien_Id(idSinhVien)
+    public List<TaskDTO> getPersonalTasks(UUID studentId) {
+        return taskRepository.findByStudent_Id(studentId)
                 .stream()
-                .map(this::toNhiemVuDTO)
+                .map(this::toTaskDTO)
                 .collect(Collectors.toList());
     }
 
-    public void capNhatTrangThaiTask(String idNhiemVu, String status) {
-        NhiemVu nv = nhiemVuRepository.findById(idNhiemVu)
-                .orElseThrow(() -> new RuntimeException("Nhiệm vụ không tồn tại: " + idNhiemVu));
-        nv.setTrangThai(status);
-        nv.setThoiGianCapNhat(java.time.LocalDateTime.now());
-        nhiemVuRepository.save(nv);
+    public void updateTaskStatus(UUID taskId, String status) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task does not exist: " + taskId));
+        task.setStatus(status);
+        task.setUpdatedAt(java.time.LocalDateTime.now());
+        taskRepository.save(task);
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    public List<JAVAGROUP.prjApp.dtos.CommitDTO> layCommitNhom(UUID idNhom) {
-        return commitVCSRepository.findByYeuCau_Nhom_IdNhom(idNhom)
+    public List<CommitDTO> getGroupCommits(UUID groupId) {
+        return vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId)
                 .stream()
                 .map(c -> {
-                    JAVAGROUP.prjApp.dtos.CommitDTO dto = new JAVAGROUP.prjApp.dtos.CommitDTO();
+                    CommitDTO dto = new CommitDTO();
                     dto.setSha(c.getSha());
-                    dto.setThongDiep(c.getThongDiep());
-                    dto.setThoiGian(c.getThoiGian());
-                    if (c.getYeuCau() != null) {
-                        dto.setIdYeuCau(c.getYeuCau().getIdYeuCau());
-                        dto.setTieuDeYeuCau(c.getYeuCau().getTieuDe());
+                    dto.setMessage(c.getMessage());
+                    dto.setCommitTime(c.getCommitTime());
+                    if (c.getRequirement() != null) {
+                        dto.setRequirementId(c.getRequirement().getRequirementId().toString());
+                        dto.setRequirementTitle(c.getRequirement().getTitle());
                     }
                     return dto;
                 })
                 .collect(Collectors.toList());
     }
 
-    private NhiemVuDTO toNhiemVuDTO(NhiemVu nv) {
-        SinhVien sv = nv.getSinhVien();
-        int commitCount = nv.getCommitVCSs() != null ? nv.getCommitVCSs().size() : 0;
-        return new NhiemVuDTO(
-                nv.getIdNhiemVu(),
-                nv.getYeuCau() != null ? nv.getYeuCau().getIdYeuCau() : null,
-                sv != null ? sv.getId() : null,
-                sv != null ? sv.getHoTen() : null,
-                nv.getTieuDe(),
-                nv.getTrangThai(),
-                commitCount
+    private TaskDTO toTaskDTO(Task task) {
+        Student student = task.getStudent();
+        String jiraKey = task.getRequirement() != null ? task.getRequirement().getJiraKey() : null;
+        String studentFullName = student != null ? student.getFullName() : null;
+        
+        long commitCount = vcsCommitRepository.findAll().stream()
+                .filter(c -> c.getRequirement() != null && task.getRequirement() != null 
+                        && c.getRequirement().getRequirementId().equals(task.getRequirement().getRequirementId())
+                        && student != null && c.getStudent() != null && student.getId().equals(c.getStudent().getId()))
+                .count();
+
+        return new TaskDTO(
+                task.getTaskId(),
+                task.getTaskName(),
+                jiraKey,
+                task.getDescription(),
+                task.getStatus(),
+                task.getDeadline(),
+                task.getProgressPercentage(),
+                task.getRequirement() != null ? task.getRequirement().getRequirementId() : null,
+                student != null ? student.getId() : null,
+                studentFullName,
+                (int) commitCount
         );
     }
 }

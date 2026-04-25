@@ -59,13 +59,13 @@ const AdminConfig = () => {
 
       configs.forEach(conf => {
         if (!conf) return;
-        if (conf.loaiNenTang === 'JIRA') {
+        if (conf.platformType === 'JIRA') {
           newJira.url = conf.url || '';
           newJira.email = conf.email || '';
           newJira.token = conf.apiToken || '';
           newJira.projectKey = conf.projectKey || '';
           newJira.doneStatusName = conf.doneStatusName || 'Done';
-        } else if (conf.loaiNenTang === 'GITHUB') {
+        } else if (conf.platformType === 'GITHUB') {
           newGithub.repo = conf.repoUrl || '';
           newGithub.token = conf.apiToken || '';
         }
@@ -89,13 +89,13 @@ const AdminConfig = () => {
       const rawGroups = Array.isArray(res.data) ? res.data : [];
       
       const filteredGroups = user?.role === 'SINH_VIEN' 
-        ? rawGroups.filter(g => g && g.idNhom === user.idNhom)
+        ? rawGroups.filter(g => g && g.groupId === user.groupId)
         : rawGroups;
         
       setGroups(filteredGroups);
 
       if (filteredGroups.length > 0) {
-        const targetId = location.state?.groupId || user?.idNhom || filteredGroups[0]?.idNhom;
+        const targetId = location.state?.groupId || user?.groupId || filteredGroups[0]?.groupId;
         if (targetId) {
           setActiveGroupId(targetId);
           fetchCurrentConfig(targetId);
@@ -108,7 +108,7 @@ const AdminConfig = () => {
     } finally {
       if (isMounted.current) setLoading(false);
     }
-  }, [location.state?.groupId, user?.idNhom, user?.role, fetchCurrentConfig, showToast]);
+  }, [location.state?.groupId, user?.groupId, user?.role, fetchCurrentConfig, showToast]);
 
   // Fetch stats separately to avoid blocking main UI
   useEffect(() => {
@@ -116,17 +116,17 @@ const AdminConfig = () => {
       const fetchStats = async () => {
         const stats = {};
         for (const g of groups) {
-          if (!g?.idNhom) continue;
+          if (!g?.groupId) continue;
           try {
-            const confRes = await configService.getConfig(g.idNhom);
+            const confRes = await configService.getConfig(g.groupId);
             if (!isMounted.current) return;
             const configs = Array.isArray(confRes.data) ? confRes.data : [];
-            stats[g.idNhom] = {
-              jira: configs.some(c => c?.loaiNenTang === 'JIRA' && c?.url),
-              github: configs.some(c => c?.loaiNenTang === 'GITHUB' && c?.repoUrl)
+            stats[g.groupId] = {
+              jira: configs.some(c => c?.platformType === 'JIRA' && c?.url),
+              github: configs.some(c => c?.platformType === 'GITHUB' && c?.repoUrl)
             };
           } catch {
-            stats[g.idNhom] = { jira: false, github: false };
+            stats[g.groupId] = { jira: false, github: false };
           }
         }
         if (isMounted.current) setGroupStats(stats);
@@ -211,15 +211,15 @@ const AdminConfig = () => {
        <div>
          <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>Trung tâm tích hợp đang gặp sự cố</h3>
          <p style={{ color: 'var(--text-secondary)', maxWidth: '500px' }}>
-           {error}
+            {error}
          </p>
        </div>
        <div style={{ display: 'flex', gap: '1rem' }}>
          <button className="btn btn-primary" onClick={() => fetchGroups()}>
-           <RefreshCw size={18} /> Thử lại ngay
+            <RefreshCw size={18} /> Thử lại ngay
          </button>
          <button className="btn btn-outline" onClick={() => setError(null)}>
-           Bỏ qua
+            Bỏ qua
          </button>
        </div>
     </div>
@@ -232,7 +232,7 @@ const AdminConfig = () => {
     </div>
   );
 
-  const activeGroup = Array.isArray(groups) ? groups.find(g => g?.idNhom === activeGroupId) : null;
+  const activeGroup = Array.isArray(groups) ? groups.find(g => g?.groupId === activeGroupId) : null;
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
@@ -259,12 +259,12 @@ const AdminConfig = () => {
               <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2rem 0' }}>Không có nhóm nào.</p>
             ) : groups.map(g => {
               if (!g) return null;
-              const stats = groupStats[g.idNhom] || { jira: false, github: false };
-              const isActive = activeGroupId === g.idNhom;
+              const stats = groupStats[g.groupId] || { jira: false, github: false };
+              const isActive = activeGroupId === g.groupId;
               return (
                 <div
-                  key={g.idNhom}
-                  onClick={() => handleGroupChange(g.idNhom)}
+                  key={g.groupId}
+                  onClick={() => handleGroupChange(g.groupId)}
                   className="table-row-hover"
                   style={{
                     padding: '1rem',
@@ -279,7 +279,7 @@ const AdminConfig = () => {
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '800', color: isActive ? 'white' : 'var(--text-secondary)' }}>{g.tenNhom || 'Chưa đặt tên'}</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '800', color: isActive ? 'white' : 'var(--text-secondary)' }}>{g.groupName || 'Chưa đặt tên'}</span>
                     <ChevronRight size={14} style={{ opacity: isActive ? 1 : 0.2 }} />
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -301,7 +301,7 @@ const AdminConfig = () => {
                 <Cpu size={32} color="var(--primary)" />
               </div>
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.25rem' }}>{activeGroup?.tenNhom}</h3>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.25rem' }}>{activeGroup?.groupName}</h3>
                 <div style={{ display: 'flex', gap: '1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     {groupStats[activeGroupId]?.jira ? <Wifi size={14} color="var(--success)" /> : <WifiOff size={14} />}

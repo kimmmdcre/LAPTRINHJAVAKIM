@@ -1,7 +1,8 @@
 package JAVAGROUP.prjApp.controllers;
 
-import JAVAGROUP.prjApp.dtos.NhiemVuDTO;
-import JAVAGROUP.prjApp.dtos.YeuCauDTO;
+import JAVAGROUP.prjApp.dtos.TaskDTO;
+import JAVAGROUP.prjApp.dtos.RequirementDTO;
+import JAVAGROUP.prjApp.dtos.CommitDTO;
 import JAVAGROUP.prjApp.services.SyncService;
 import JAVAGROUP.prjApp.services.TaskService;
 
@@ -29,76 +30,75 @@ public class TaskController {
     }
 
     /**
-     * GET /api/tasks/{idNhom}
-     * Lấy danh sách nhiệm vụ của cả nhóm (dành cho Trưởng nhóm/Giảng viên)
+     * GET /api/tasks/{groupId}
+     * Get list of tasks for the group
      */
-    @GetMapping("/{idNhom}")
-    public ResponseEntity<java.util.List<JAVAGROUP.prjApp.dtos.NhiemVuDTO>> layNhiemVuNhom(
-            @PathVariable UUID idNhom) {
-        return ResponseEntity.ok(taskService.layNhiemVuNhom(idNhom));
+    @GetMapping("/{groupId}")
+    public ResponseEntity<List<TaskDTO>> getTasksByGroup(
+            @PathVariable UUID groupId) {
+        return ResponseEntity.ok(taskService.getTasksByGroup(groupId));
     }
 
     /**
-     * GET /api/tasks/jira/sync/{idNhom}
-     * Kích hoạt đồng bộ hóa từ Jira cho nhóm
+     * GET /api/tasks/jira/sync/{groupId}
+     * Trigger Jira synchronization for the group
      */
-    @GetMapping("/jira/sync/{idNhom}")
-    public ResponseEntity<Map<String, String>> syncJira(@PathVariable UUID idNhom) {
-        syncService.dongBoJira(idNhom);
-        return ResponseEntity.ok(Map.of("message", "Đồng bộ Jira thành công"));
+    @GetMapping("/jira/sync/{groupId}")
+    public ResponseEntity<Map<String, String>> syncJira(@PathVariable UUID groupId) {
+        syncService.syncJira(groupId);
+        return ResponseEntity.ok(Map.of("message", "Jira sync successful"));
     }
 
     /**
-     * GET /api/tasks/yeu-cau?idNhom={uuid}
-     * Lấy danh sách yêu cầu (Jira Issues) của một nhóm
+     * GET /api/tasks/requirements?groupId={uuid}
+     * Get list of requirements (Jira Issues) for a group
      */
-    @GetMapping("/yeu-cau")
-    public ResponseEntity<List<YeuCauDTO>> layYeuCauNhom(@RequestParam UUID idNhom) {
-        return ResponseEntity.ok(taskService.layYeuCauNhom(idNhom));
+    @GetMapping("/requirements")
+    public ResponseEntity<List<RequirementDTO>> getRequirementsByGroup(@RequestParam UUID groupId) {
+        return ResponseEntity.ok(taskService.getRequirementsByGroup(groupId));
     }
 
     /**
-     * GET /api/tasks/nhiem-vu?idSinhVien={uuid}
-     * Lấy danh sách nhiệm vụ cá nhân của một sinh viên
+     * GET /api/tasks/personal?studentId={uuid}
+     * Get personal tasks for a student
      */
-    @GetMapping("/nhiem-vu")
-    public ResponseEntity<List<NhiemVuDTO>> layNhiemVuCaNhan(@RequestParam UUID idSinhVien) {
-        return ResponseEntity.ok(taskService.layNhiemVuCaNhan(idSinhVien));
+    @GetMapping("/personal")
+    public ResponseEntity<List<TaskDTO>> getPersonalTasks(@RequestParam UUID studentId) {
+        return ResponseEntity.ok(taskService.getPersonalTasks(studentId));
     }
 
     /**
-     * PATCH /api/tasks/nhiem-vu/{id}/status
-     * Body: { "status": "IN_PROGRESS" }
-     * Cập nhật trạng thái nhiệm vụ
+     * PATCH /api/tasks/{id}/status
+     * Update task status
      */
-    @PatchMapping("/nhiem-vu/{id}/status")
-    public ResponseEntity<Map<String, String>> capNhatTrangThai(
-            @PathVariable String id,
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Map<String, String>> updateTaskStatus(
+            @PathVariable UUID id,
             @RequestBody Map<String, String> body) {
-        taskService.capNhatTrangThaiTask(id, body.get("status"));
-        return ResponseEntity.ok(Map.of("message", "Cập nhật trạng thái thành công"));
+        taskService.updateTaskStatus(id, body.get("status"));
+        return ResponseEntity.ok(Map.of("message", "Status updated successfully"));
     }
 
     /**
-     * PATCH /api/tasks/nhiem-vu/{id}/assign
-     * Body: { "idSinhVien": "uuid" }
-     * Giao nhiệm vụ cho thành viên (Chỉ Trưởng nhóm có quyền)
+     * PATCH /api/tasks/{id}/assign
+     * Assign task to student
      */
-    @PatchMapping("/nhiem-vu/{id}/assign")
+    @PatchMapping("/{id}/assign")
     @PreAuthorize("hasRole('SINH_VIEN') or hasRole('GIANG_VIEN')")
-    public ResponseEntity<Map<String, String>> phanCongNhiemVu(
-            @PathVariable String id,
+    public ResponseEntity<Map<String, String>> assignTask(
+            @PathVariable UUID id,
             @RequestBody Map<String, String> body) {
         UserPrincipal principal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        taskService.phanCongNhiemVu(id, UUID.fromString(body.get("idSinhVien")), principal.getId());
-        return ResponseEntity.ok(Map.of("message", "Phân công nhiệm vụ thành công"));
+        taskService.assignTask(id, UUID.fromString(body.get("studentId")), principal.getId());
+        return ResponseEntity.ok(Map.of("message", "Task assigned successfully"));
     }
+
     /**
-     * GET /api/tasks/commits?idNhom={uuid}
-     * Lấy danh sách commit đã được mapping cho một nhóm
+     * GET /api/tasks/commits?groupId={uuid}
+     * Get group commits
      */
     @GetMapping("/commits")
-    public ResponseEntity<List<JAVAGROUP.prjApp.dtos.CommitDTO>> layCommitNhom(@RequestParam UUID idNhom) {
-        return ResponseEntity.ok(taskService.layCommitNhom(idNhom));
+    public ResponseEntity<List<CommitDTO>> getGroupCommits(@RequestParam UUID groupId) {
+        return ResponseEntity.ok(taskService.getGroupCommits(groupId));
     }
 }

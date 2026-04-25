@@ -1,61 +1,83 @@
 package JAVAGROUP.prjApp.services;
 
-import JAVAGROUP.prjApp.entities.CauHinhTichHop;
-import JAVAGROUP.prjApp.entities.Nhom;
-import JAVAGROUP.prjApp.repositories.CauHinhTichHopRepository;
-import JAVAGROUP.prjApp.repositories.NhomRepository;
+import JAVAGROUP.prjApp.dtos.ConfigDTO;
+import JAVAGROUP.prjApp.entities.IntegrationConfig;
+import JAVAGROUP.prjApp.entities.Group;
+import JAVAGROUP.prjApp.repositories.IntegrationConfigRepository;
+import JAVAGROUP.prjApp.repositories.GroupRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class ConfigService {
 
-    private final CauHinhTichHopRepository cauHinhTichHopRepository;
-    private final NhomRepository nhomRepository;
+    private final IntegrationConfigRepository integrationConfigRepository;
+    private final GroupRepository groupRepository;
 
-    public ConfigService(CauHinhTichHopRepository cauHinhTichHopRepository, NhomRepository nhomRepository) {
-        this.cauHinhTichHopRepository = cauHinhTichHopRepository;
-        this.nhomRepository = nhomRepository;
+    public ConfigService(IntegrationConfigRepository integrationConfigRepository, GroupRepository groupRepository) {
+        this.integrationConfigRepository = integrationConfigRepository;
+        this.groupRepository = groupRepository;
     }
 
-    public void cauHinhJira(UUID idNhom, String url, String email, String token, String projectKey, String doneStatus) {
-        Nhom nhom = nhomRepository.findById(idNhom)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại: " + idNhom));
+    @Transactional(readOnly = true)
+    public List<IntegrationConfig> getConfigsByGroupId(UUID groupId) {
+        return integrationConfigRepository.findByGroupId(groupId);
+    }
+
+    public void saveConfig(ConfigDTO dto) {
+        if (dto.getGroupId() == null) {
+            throw new RuntimeException("GroupId is required");
+        }
+
+        groupRepository.findById(dto.getGroupId())
+                .orElseThrow(() -> new RuntimeException("Group does not exist: " + dto.getGroupId()));
+
+        IntegrationConfig conf;
+        if (dto.getId() != null) {
+            conf = integrationConfigRepository.findById(dto.getId())
+                    .orElse(new IntegrationConfig());
+        } else {
+            // Check if config for this platform already exists in group
+            conf = integrationConfigRepository.findByGroupId(dto.getGroupId())
+                    .stream()
+                    .filter(c -> dto.getPlatformType().equals(c.getPlatformType()))
+                    .findFirst()
+                    .orElse(new IntegrationConfig());
+        }
+
+        conf.setGroupId(dto.getGroupId());
+        conf.setPlatformType(dto.getPlatformType());
+        conf.setUrl(dto.getUrl());
+        conf.setEmail(dto.getEmail());
+        conf.setApiToken(dto.getApiToken());
+        conf.setProjectKey(dto.getProjectKey());
+        conf.setRepoUrl(dto.getRepoUrl());
         
-        // Find existing or create new
-        CauHinhTichHop conf = cauHinhTichHopRepository.findByNhom_IdNhom(idNhom)
-                .stream().filter(c -> "JIRA".equals(c.getLoaiNenTang())).findFirst()
-                .orElse(new CauHinhTichHop());
-                
-        conf.setNhom(nhom);
-        conf.setLoaiNenTang("JIRA");
-        conf.setUrl(url);
-        conf.setEmail(email);
-        conf.setApiToken(token);
-        conf.setProjectKey(projectKey);
-        conf.setDoneStatusName(doneStatus);
-        cauHinhTichHopRepository.save(conf);
+        integrationConfigRepository.save(conf);
     }
 
-    public void cauHinhGithub(UUID idNhom, String repo, String token, String since) {
-        Nhom nhom = nhomRepository.findById(idNhom)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại: " + idNhom));
-        
-        CauHinhTichHop conf = cauHinhTichHopRepository.findByNhom_IdNhom(idNhom)
-                .stream().filter(c -> "GITHUB".equals(c.getLoaiNenTang())).findFirst()
-                .orElse(new CauHinhTichHop());
-
-        conf.setNhom(nhom);
-        conf.setLoaiNenTang("GITHUB");
-        conf.setRepoUrl(repo);
-        conf.setApiToken(token);
-        cauHinhTichHopRepository.save(conf);
+    public void removeConfig(UUID id) {
+        if (!integrationConfigRepository.existsById(id)) {
+            throw new RuntimeException("Configuration does not exist: " + id);
+        }
+        integrationConfigRepository.deleteById(id);
     }
 
-    public List<CauHinhTichHop> getConfigsByNhom(UUID idNhom) {
-        return cauHinhTichHopRepository.findByNhom_IdNhom(idNhom);
+    /**
+     * Dry run test connection logic
+     */
+    public boolean testConnection(ConfigDTO dto) {
+        // Simple validation for now
+        if ("JIRA".equals(dto.getPlatformType())) {
+            return dto.getUrl() != null && dto.getApiToken() != null && dto.getProjectKey() != null;
+        } else if ("GITHUB".equals(dto.getPlatformType())) {
+            return dto.getRepoUrl() != null && dto.getApiToken() != null;
+        }
+        return false;
     }
 }

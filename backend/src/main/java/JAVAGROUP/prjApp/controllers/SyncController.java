@@ -22,32 +22,32 @@ public class SyncController {
     }
 
     /**
-     * POST /api/sync/{idNhom}/jira
-     * Kích hoạt đồng bộ dữ liệu từ Jira về DB
+     * POST /api/sync/{groupId}/jira
+     * Trigger Jira synchronization
      */
-    @PostMapping("/{idNhom}/jira")
-    public ResponseEntity<Map<String, String>> dongBoJira(@PathVariable UUID idNhom) {
-        syncService.dongBoJira(idNhom);
-        return ResponseEntity.ok(Map.of("message", "Đồng bộ Jira thành công"));
+    @PostMapping("/{groupId}/jira")
+    public ResponseEntity<Map<String, String>> syncJira(@PathVariable UUID groupId) {
+        syncService.syncJira(groupId);
+        return ResponseEntity.ok(Map.of("message", "Jira sync successful"));
     }
 
     /**
-     * POST /api/sync/{idNhom}/github
-     * Kích hoạt đồng bộ commits từ GitHub về DB
+     * POST /api/sync/{groupId}/github
+     * Trigger GitHub synchronization
      */
-    @PostMapping("/{idNhom}/github")
-    public ResponseEntity<Map<String, String>> dongBoGithub(@PathVariable UUID idNhom) {
-        syncService.dongBoGithub(idNhom);
-        return ResponseEntity.ok(Map.of("message", "Đồng bộ GitHub thành công"));
+    @PostMapping("/{groupId}/github")
+    public ResponseEntity<Map<String, String>> syncGithub(@PathVariable UUID groupId) {
+        syncService.syncGithub(groupId);
+        return ResponseEntity.ok(Map.of("message", "GitHub sync successful"));
     }
 
     /**
      * POST /api/sync/mapping
-     * Mapping các commit với nhiệm vụ dựa trên commit message
+     * Map commits to tasks based on messages
      */
     @PostMapping("/mapping")
-    public ResponseEntity<Map<String, String>> mappingTaskCommit() {
-        syncService.mappingTaskCommit();
-        return ResponseEntity.ok(Map.of("message", "Mapping commit–task thành công"));
+    public ResponseEntity<Map<String, String>> mapTasksToCommits() {
+        syncService.mapTasksToCommits();
+        return ResponseEntity.ok(Map.of("message", "Commit-task mapping successful"));
     }
 }

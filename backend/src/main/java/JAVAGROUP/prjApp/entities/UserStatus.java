@@ -1,6 +1,6 @@
 package JAVAGROUP.prjApp.entities;
 
-public enum TrangThaiUser {
+public enum UserStatus {
     ACTIVE,
     INACTIVE,
     BANNED,

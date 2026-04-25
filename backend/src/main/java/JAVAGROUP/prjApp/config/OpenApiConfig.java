@@ -16,16 +16,16 @@ public class OpenApiConfig {
         final String securitySchemeName = "bearerAuth";
         return new OpenAPI()
                 .info(new Info()
-                        .title("API Quản lý Đồ án Sinh viên")
+                        .title("Student Project Management API")
                         .version("1.0")
-                        .description("Tài liệu API cho hệ thống hỗ trợ quản lý yêu cầu và dự án thông qua Jira và GitHub."))
+                        .description("API Documentation for project management system integrated with Jira and GitHub."))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,
-                                new SecurityScheme()
-                                        .name(securitySchemeName)
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")));
+                                 new SecurityScheme()
+                                         .name(securitySchemeName)
+                                         .type(SecurityScheme.Type.HTTP)
+                                         .scheme("bearer")
+                                         .bearerFormat("JWT")));
     }
 }

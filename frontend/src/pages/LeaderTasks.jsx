@@ -33,19 +33,19 @@ const LeaderTasks = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [groupId, setGroupId] = useState(null);
 
-  const fetchTasks = async (nhomId) => {
+  const fetchTasks = async (groupId) => {
     try {
-      const res = await taskService.getByGroup(nhomId);
+      const res = await taskService.getByGroup(groupId);
       setTasks(res.data || []);
     } catch (err) {
       console.error('Lỗi tải danh sách nhiệm vụ:', err);
     }
   };
 
-  const fetchMembers = async (nhomId) => {
+  const fetchMembers = async (groupId) => {
     try {
-      const res = await groupService.getDetails(nhomId);
-      setMembers(res.data.thanhViens || []);
+      const res = await groupService.getDetails(groupId);
+      setMembers(res.data.members || []);
     } catch (err) {
       console.error('Lỗi tải danh sách thành viên:', err);
     }
@@ -54,16 +54,16 @@ const LeaderTasks = () => {
   const initLeaderData = useCallback(async () => {
     try {
       setLoading(true);
-      const nhomId = user.idNhom;
-      if (!nhomId) {
+      const targetGroupId = user.groupId;
+      if (!targetGroupId) {
         showToast('Bạn chưa được phân vào nhóm nào.', 'warning');
         setLoading(false);
         return;
       }
-      setGroupId(nhomId);
+      setGroupId(targetGroupId);
       await Promise.all([
-        fetchTasks(nhomId),
-        fetchMembers(nhomId)
+        fetchTasks(targetGroupId),
+        fetchMembers(targetGroupId)
       ]);
     } catch (err) {
       console.error('Lỗi khởi tạo dữ liệu nhóm:', err);
@@ -95,11 +95,11 @@ const LeaderTasks = () => {
     }
   };
 
-  const handleAssignTask = async (sinhVienId) => {
-    if (!selectedTask || !sinhVienId) return;
+  const handleAssignTask = async (studentId) => {
+    if (!selectedTask || !studentId) return;
     try {
       showToast('Đang thực hiện phân công...', 'info');
-      await taskService.assign(selectedTask.idNhiemVu, sinhVienId);
+      await taskService.assign(selectedTask.taskId, studentId);
       await fetchTasks(groupId);
       setShowAssignModal(false);
       showToast('Đã phân công nhiệm vụ thành công!', 'success');
@@ -110,7 +110,7 @@ const LeaderTasks = () => {
   };
 
   const renderTaskColumn = (status, title, color) => {
-    const filteredTasks = tasks.filter(t => t.trangThai === status);
+    const filteredTasks = tasks.filter(t => t.status === status);
     return (
       <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '600px', background: 'rgba(15, 23, 42, 0.3)' }}>
         <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -128,7 +128,7 @@ const LeaderTasks = () => {
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Trống</p>
             </div>
           ) : filteredTasks.map(task => (
-            <div key={task.idNhiemVu} className="task-card" style={{ 
+            <div key={task.taskId} className="task-card" style={{ 
               padding: '1.25rem', 
               background: 'rgba(255,255,255,0.02)', 
               border: '1px solid var(--glass-border)', 
@@ -137,14 +137,14 @@ const LeaderTasks = () => {
               transition: 'all 0.3s ease'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>{task.idYeuCau || 'JIRA'}</span>
+                <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>{task.jiraKey || 'JIRA'}</span>
                 {task.commitCount > 0 && (
                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--success)', fontSize: '0.7rem', fontWeight: 'bold' }}>
                       <GitBranch size={12} /> {task.commitCount}
                    </div>
                 )}
               </div>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: '700', marginBottom: '1rem', lineHeight: '1.5' }}>{task.tieuDe}</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: '700', marginBottom: '1rem', lineHeight: '1.5' }}>{task.taskName}</h4>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                 <div 
@@ -155,11 +155,11 @@ const LeaderTasks = () => {
                     setShowAssignModal(true);
                   }}
                 >
-                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: task.tenSinhVien ? 'var(--primary)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 'bold' }}>
-                    {task.tenSinhVien ? task.tenSinhVien.charAt(0) : <UserPlus size={12} />}
+                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: task.studentFullName ? 'var(--primary)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 'bold' }}>
+                    {task.studentFullName ? task.studentFullName.charAt(0) : <UserPlus size={12} />}
                   </div>
-                  <span style={{ fontSize: '0.75rem', color: task.tenSinhVien ? 'var(--text-secondary)' : 'var(--warning)', fontWeight: '600' }}>
-                    {task.tenSinhVien || 'Chưa phân công'}
+                  <span style={{ fontSize: '0.75rem', color: task.studentFullName ? 'var(--text-secondary)' : 'var(--warning)', fontWeight: '600' }}>
+                    {task.studentFullName || 'Chưa phân công'}
                   </span>
                 </div>
               </div>
@@ -212,15 +212,15 @@ const LeaderTasks = () => {
             
             <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Nhiệm vụ:</p>
-               <p style={{ fontWeight: '700', lineHeight: '1.5' }}>{selectedTask?.tieuDe}</p>
+               <p style={{ fontWeight: '700', lineHeight: '1.5' }}>{selectedTask?.taskName}</p>
             </div>
 
             <p style={{ fontSize: '0.85rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--text-secondary)' }}>Chọn thành viên đảm nhiệm:</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                {members.map(m => (
                  <div 
-                  key={m.idSinhVien}
-                  onClick={() => handleAssignTask(m.idSinhVien)}
+                  key={m.studentId}
+                  onClick={() => handleAssignTask(m.studentId)}
                   className="table-row-hover"
                   style={{ 
                     padding: '1rem', 
@@ -230,19 +230,19 @@ const LeaderTasks = () => {
                     justifyContent: 'space-between', 
                     cursor: 'pointer',
                     border: '1px solid var(--glass-border)',
-                    background: selectedTask?.idSinhVien === m.idSinhVien ? 'rgba(99, 102, 241, 0.1)' : 'transparent'
+                    background: selectedTask?.studentId === m.studentId ? 'rgba(99, 102, 241, 0.1)' : 'transparent'
                   }}
                  >
                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                       <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem' }}>
-                        {m.hoTen.charAt(0)}
+                        {m.fullName.charAt(0)}
                       </div>
                       <div>
-                        <p style={{ fontWeight: '700', fontSize: '0.9rem' }}>{m.hoTen}</p>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.maSv}</p>
+                        <p style={{ fontWeight: '700', fontSize: '0.9rem' }}>{m.fullName}</p>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.studentCode}</p>
                       </div>
                    </div>
-                   {selectedTask?.idSinhVien === m.idSinhVien && <Check size={18} color="var(--success)" />}
+                   {selectedTask?.studentId === m.studentId && <Check size={18} color="var(--success)" />}
                  </div>
                ))}
             </div>
