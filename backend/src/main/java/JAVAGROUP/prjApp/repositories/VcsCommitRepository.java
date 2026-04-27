@@ -13,4 +13,7 @@ import java.util.UUID;
 public interface VcsCommitRepository extends JpaRepository<VcsCommit, String> {
     @Query("SELECT c FROM VcsCommit c JOIN FETCH c.requirement r WHERE r.projectGroup.groupId = :groupId")
     List<VcsCommit> findByRequirement_ProjectGroup_GroupId(@Param("groupId") UUID groupId);
+
+    List<VcsCommit> findByRequirementIsNull();
 }
+

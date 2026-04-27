@@ -52,11 +52,7 @@ public class ReportService {
     }
 
     public ProgressDTO getProjectProgress(UUID groupId) {
-        List<Task> tasks = taskRepository.findAll().stream()
-                .filter(task -> task.getRequirement() != null
-                        && task.getRequirement().getProjectGroup() != null
-                        && groupId.equals(task.getRequirement().getProjectGroup().getGroupId()))
-                .collect(Collectors.toList());
+        List<Task> tasks = taskRepository.findByRequirement_ProjectGroup_GroupId(groupId);
 
         int total = tasks.size();
         long done = tasks.stream().filter(task -> "DONE".equalsIgnoreCase(task.getStatus())).count();
@@ -65,11 +61,7 @@ public class ReportService {
     }
 
     public GitStatsDTO getGithubStats(UUID groupId) {
-        List<VcsCommit> commits = vcsCommitRepository.findAll().stream()
-                .filter(c -> c.getRequirement() != null
-                        && c.getRequirement().getProjectGroup() != null
-                        && groupId.equals(c.getRequirement().getProjectGroup().getGroupId()))
-                .collect(Collectors.toList());
+        List<VcsCommit> commits = vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId);
 
         Map<String, Integer> commitsByStudent = new HashMap<>();
         Map<String, Set<LocalDate>> commitDaysByStudent = new HashMap<>();
@@ -78,7 +70,7 @@ public class ReportService {
         for (VcsCommit c : commits) {
             if (c.getStudent() != null) {
                 String name = c.getStudent().getFullName();
-                commitsByStudent.merge(name, 1, Integer::sum);
+                commitsByStudent.merge(name, 1, (oldVal, newVal) -> oldVal + newVal);
                 
                 if (c.getCommitTime() != null) {
                     LocalDate date = c.getCommitTime().toLocalDate();
@@ -111,12 +103,8 @@ public class ReportService {
     }
 
     public List<Map<String, Object>> getProgressHistory(UUID groupId) {
-        List<Task> tasks = taskRepository.findAll().stream()
-                .filter(task -> task.getRequirement() != null
-                        && task.getRequirement().getProjectGroup() != null
-                        && groupId.equals(task.getRequirement().getProjectGroup().getGroupId())
-                        && "DONE".equalsIgnoreCase(task.getStatus())
-                        && task.getUpdatedAt() != null)
+        List<Task> tasks = taskRepository.findByRequirement_ProjectGroup_GroupId(groupId).stream()
+                .filter(task -> "DONE".equalsIgnoreCase(task.getStatus()) && task.getUpdatedAt() != null)
                 .sorted(Comparator.comparing(Task::getUpdatedAt))
                 .collect(Collectors.toList());
 
@@ -161,10 +149,7 @@ public class ReportService {
     }
 
     public List<CommitDTO> getGroupCommitDetails(UUID groupId) {
-        return vcsCommitRepository.findAll().stream()
-                .filter(c -> c.getRequirement() != null
-                        && c.getRequirement().getProjectGroup() != null
-                        && groupId.equals(c.getRequirement().getProjectGroup().getGroupId()))
+        return vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId).stream()
                 .sorted(Comparator.comparing(VcsCommit::getCommitTime).reversed())
                 .map(c -> {
                     CommitDTO dto = new CommitDTO();

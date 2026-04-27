@@ -84,7 +84,7 @@ public class TaskController {
      * Assign task to student
      */
     @PatchMapping("/{id}/assign")
-    @PreAuthorize("hasRole('SINH_VIEN') or hasRole('GIANG_VIEN')")
+    @PreAuthorize("hasRole('STUDENT') or hasRole('TEACHER')")
     public ResponseEntity<Map<String, String>> assignTask(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body) {

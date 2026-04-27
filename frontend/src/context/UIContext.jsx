@@ -4,7 +4,24 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 const UIContext = createContext();
 
 export const UIProvider = ({ children }) => {
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved ? saved === 'dark' : true;
+  });
+
   const [toasts, setToasts] = useState([]);
+
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode(prev => {
+      const next = !prev;
+      localStorage.setItem('theme', next ? 'dark' : 'light');
+      return next;
+    });
+  }, []);
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   const showToast = useCallback((message, type = 'success') => {
     const id = Date.now();
@@ -15,7 +32,7 @@ export const UIProvider = ({ children }) => {
   }, []);
 
   return (
-    <UIContext.Provider value={{ showToast }}>
+    <UIContext.Provider value={{ showToast, darkMode, toggleDarkMode }}>
       {children}
       {/* Toast Container */}
       <div style={{

@@ -114,7 +114,7 @@ public class SyncService {
 
     @Transactional
     public void mapTasksToCommits() {
-        List<VcsCommit> commits = vcsCommitRepository.findAll();
+        List<VcsCommit> commits = vcsCommitRepository.findByRequirementIsNull();
         Pattern taskPattern = Pattern.compile("([A-Z]+-\\d+)");
         Pattern donePattern = Pattern.compile("(?i)(done|base|fix|fixed|close|closed)\\s+([A-Z]+-\\d+)");
 

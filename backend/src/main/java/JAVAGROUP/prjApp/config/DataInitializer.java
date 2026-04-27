@@ -12,8 +12,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Configuration
 public class DataInitializer implements CommandLineRunner {
+    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
+
 
     private final UserRepository userRepository;
     private final AdminRepository adminRepository;
@@ -72,7 +77,7 @@ public class DataInitializer implements CommandLineRunner {
         teacher.setEmail("teacher@prj.com");
         teacher.setStatus(UserStatus.ACTIVE);
         teacher.setRoleCode(UserRole.TEACHER);
-        teacher.setDepartment("Công nghệ thông tin");
+        teacher.setDepartment("Kỹ thuật Giao thông");
         teacher = teacherRepository.save(teacher);
 
         // 3. Seed Students
@@ -134,6 +139,6 @@ public class DataInitializer implements CommandLineRunner {
             groupMemberRepository.save(regularMember);
         }
         
-        System.out.println(">>> Hệ thống đã cập nhật/khởi tạo tài khoản test (admin/teacher/leader/member) thành công!");
+        logger.info(">>> Hệ thống đã cập nhật/khởi tạo tài khoản test (admin/teacher/leader/member) thành công!");
     }
 }

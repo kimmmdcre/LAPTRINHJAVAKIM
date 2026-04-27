@@ -1,6 +1,5 @@
 package javagroup.prjapp.security;
 
-import javagroup.prjapp.enums.GroupRole;
 import javagroup.prjapp.enums.UserRole;
 
 import javagroup.prjapp.entities.User;
@@ -24,7 +23,8 @@ public class UserPrincipal implements UserDetails {
     private UUID groupId;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserPrincipal(UUID id, String username, String passwordHash, String fullName, String email, UserRole roleCode,
+    public UserPrincipal(UUID id, String username, String passwordHash, String fullName, String email,
+            UserRole roleCode,
             String groupRole, UUID groupId, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;

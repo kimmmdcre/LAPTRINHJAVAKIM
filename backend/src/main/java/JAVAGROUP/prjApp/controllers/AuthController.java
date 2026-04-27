@@ -1,7 +1,5 @@
 package javagroup.prjapp.controllers;
 
-import javagroup.prjapp.enums.GroupRole;
-
 import javagroup.prjapp.services.AuthService;
 import javagroup.prjapp.security.UserPrincipal;
 
@@ -31,35 +29,29 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
-        try {
-            String username = body.get("username");
-            String password = body.get("password");
-            
-            String token = authService.login(username, password);
-            
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("token", token);
-            response.put("type", "Bearer");
-            response.put("message", "Login successful");
-            
-            response.put("id", principal.getId());
-            response.put("username", principal.getUsername());
-            response.put("fullName", principal.getFullName());
-            response.put("email", principal.getEmail());
-            response.put("roleCode", principal.getRoleCode().name());
-            response.put("role", principal.getRoleCode().name()); 
-            response.put("groupRole", principal.getGroupRole());
-            response.put("groupId", principal.getGroupId());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> errorRes = new HashMap<>();
-            errorRes.put("message", "Login failed: " + e.getMessage());
-            return ResponseEntity.status(401).body(errorRes);
-        }
+        String username = body.get("username");
+        String password = body.get("password");
+
+        String token = authService.login(username, password);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("type", "Bearer");
+        response.put("message", "Login successful");
+
+        response.put("id", principal.getId());
+        response.put("username", principal.getUsername());
+        response.put("fullName", principal.getFullName());
+        response.put("email", principal.getEmail());
+        response.put("roleCode", principal.getRoleCode().name());
+        response.put("role", principal.getRoleCode().name());
+        response.put("groupRole", principal.getGroupRole());
+        response.put("groupId", principal.getGroupId());
+
+        return ResponseEntity.ok(response);
     }
 
     /**

@@ -102,7 +102,7 @@ const Dashboard = () => {
   const renderAdminWidgets = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div style={{ padding: '12px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
+        <div style={{ padding: '12px', background: 'rgba(0, 122, 255, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
           <Users size={32} />
         </div>
         <div>
@@ -111,7 +111,7 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div style={{ padding: '12px', background: 'rgba(139, 92, 246, 0.1)', color: 'var(--accent)', borderRadius: '14px' }}>
+        <div style={{ padding: '12px', background: 'rgba(88, 86, 214, 0.1)', color: 'var(--accent)', borderRadius: '14px' }}>
           <LayoutGrid size={32} />
         </div>
         <div>
@@ -120,7 +120,7 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div style={{ padding: '12px', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', borderRadius: '14px' }}>
+        <div style={{ padding: '12px', background: 'rgba(52, 199, 89, 0.1)', color: 'var(--success)', borderRadius: '14px' }}>
           <Activity size={32} />
         </div>
         <div>
@@ -134,7 +134,7 @@ const Dashboard = () => {
   const renderLecturerWidgets = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div style={{ padding: '12px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
+        <div style={{ padding: '12px', background: 'rgba(0, 122, 255, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
           <Trophy size={32} />
         </div>
         <div>
@@ -143,7 +143,7 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div style={{ padding: '12px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)', borderRadius: '14px' }}>
+        <div style={{ padding: '12px', background: 'rgba(255, 149, 0, 0.1)', color: 'var(--warning)', borderRadius: '14px' }}>
           <Zap size={32} />
         </div>
         <div>
@@ -157,7 +157,7 @@ const Dashboard = () => {
   const renderStudentWidgets = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div style={{ padding: '12px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
+        <div style={{ padding: '12px', background: 'rgba(0, 122, 255, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
           <Clock size={32} />
         </div>
         <div>
@@ -166,7 +166,7 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div style={{ padding: '12px', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', borderRadius: '14px' }}>
+        <div style={{ padding: '12px', background: 'rgba(52, 199, 89, 0.1)', color: 'var(--success)', borderRadius: '14px' }}>
           <CheckSquare size={32} />
         </div>
         <div>
@@ -188,7 +188,7 @@ const Dashboard = () => {
 
   if (loading) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px', gap: '1rem' }}>
-      <div className="animate-spin" style={{ width: '40px', height: '40px', border: '4px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+      <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
       <p style={{ color: 'var(--text-secondary)' }}>Đang tổng hợp thông tin cá nhân...</p>
     </div>
   );
@@ -257,7 +257,7 @@ const Dashboard = () => {
             ))}
 
             {role === 'STUDENT' && stats.studentTasks.doing > 0 && (
-              <div className="table-row-hover" style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', background: 'rgba(99, 102, 241, 0.05)' }}>
+              <div className="table-row-hover" style={{ padding: '1.5rem', border: '1px solid rgba(0, 122, 255, 0.3)', borderRadius: '16px', display: 'flex', alignItems: 'center', background: 'rgba(0, 122, 255, 0.05)' }}>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ fontWeight: '800', color: 'var(--primary)', marginBottom: '0.25rem' }}>Đang thực hiện nhiệm vụ</h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Bạn có {stats.studentTasks.doing} nhiệm vụ chưa hoàn thành. Hãy tập trung xử lý nhé!</p>

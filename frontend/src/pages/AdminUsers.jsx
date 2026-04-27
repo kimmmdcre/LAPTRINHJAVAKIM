@@ -336,7 +336,7 @@ const AdminUsers = () => {
                   required
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="student@university.edu.vn"
+                  placeholder="student@ut.edu.vn"
                 />
               </div>
 

@@ -15,6 +15,7 @@ import {
   AlertCircle,
   GitBranch as GitIcon
 } from 'lucide-react';
+import uthLogo from '../assets/logo.png';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -50,106 +51,84 @@ const LoginPage = () => {
       padding: '1.5rem',
       position: 'relative',
       overflow: 'hidden',
-      background: '#0a0a0f'
+      background: 'var(--background)'
     }}>
-      {/* Background Image with Overlay */}
+      {/* Background with Apple-style soft gradients */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: 'url("/assets/login-bg.png")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        filter: 'blur(30px) brightness(0.6)',
-        transform: 'scale(1.1)',
+        background: 'radial-gradient(circle at 20% 30%, rgba(0, 122, 255, 0.15) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(88, 86, 214, 0.1) 0%, transparent 40%)',
         zIndex: 0
       }}></div>
       
-      {/* Dynamic Gradient Overlay */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'radial-gradient(circle at center, transparent 0%, rgba(10, 10, 15, 0.8) 100%)',
-        zIndex: 1
-      }}></div>
-
-      {/* Floating Decorative Elements */}
-      <div style={{ position: 'absolute', top: '10%', left: '10%', opacity: 0.2, zIndex: 1 }} className="animate-pulse">
-        <Cpu size={120} color="var(--primary)" />
-      </div>
-      <div style={{ position: 'absolute', bottom: '15%', right: '12%', opacity: 0.15, zIndex: 1 }} className="animate-pulse">
-        <Globe size={180} color="var(--accent)" />
-      </div>
-
-      {/* Main Login Card */}
-      <div className="glass-card animate-scale-in" style={{
+      {/* Main Login Card - iOS 18 "Sheet" Style */}
+      <div className="glass-card animate-slide-up" style={{
         width: '100%',
-        maxWidth: '480px',
-        padding: '3.5rem',
+        maxWidth: '420px',
+        padding: '3rem 2.5rem',
         textAlign: 'center',
         position: 'relative',
         zIndex: 10,
-        background: 'rgba(15, 23, 42, 0.4)',
-        backdropFilter: 'blur(40px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 50px 100px -20px rgba(0, 0, 0, 0.6), 0 0 50px rgba(99, 102, 241, 0.1)'
+        boxShadow: '0 30px 60px rgba(0, 0, 0, 0.5)',
+        border: '0.5px solid rgba(255, 255, 255, 0.1)'
       }}>
-        {/* Logo Hub */}
+        {/* Logo Hub - Clean iOS App Icon Look */}
         <div style={{
-          width: '84px',
-          height: '84px',
-          borderRadius: '24px',
-          background: 'linear-gradient(135deg, var(--primary), var(--accent))',
-          margin: '0 auto 2.5rem',
+          width: '80px',
+          height: '80px',
+          borderRadius: '18px',
+          background: '#fff',
+          margin: '0 auto 2rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 0 30px var(--primary-glow)',
-          transform: 'rotate(-5deg)',
-          position: 'relative'
+          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+          position: 'relative',
+          overflow: 'hidden'
         }} className="animate-float">
-          <ShieldCheck color="white" size={42} />
-          <div style={{ position: 'absolute', top: '-5px', right: '-5px', width: '24px', height: '24px', borderRadius: '50%', background: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-            <Zap size={14} fill="currentColor" />
+          <img src={uthLogo} alt="UTH Logo" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+          <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '22px', height: '22px', borderRadius: '50%', background: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', zIndex: 2 }}>
+            <Zap size={12} fill="currentColor" />
           </div>
         </div>
 
-        <h1 style={{ fontSize: '2.5rem', fontWeight: '900', marginBottom: '0.75rem', letterSpacing: '-0.04em', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          JiraGit System
+        <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '0.5rem', letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+          JiraGit
         </h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem', fontSize: '1rem', fontWeight: '500' }}>
-          Cổng điều phối dự án thông minh
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '2.5rem', fontSize: '0.95rem', fontWeight: '500' }}>
+          Đăng nhập để bắt đầu phiên làm việc
         </p>
 
         {error && (
-          <div className="glass-card animate-slide-up" style={{
-            padding: '1rem',
-            marginBottom: '2rem',
-            background: 'rgba(239, 68, 68, 0.1)',
-            borderColor: 'rgba(239, 68, 68, 0.3)',
-            color: '#fca5a5',
-            fontSize: '0.875rem',
+          <div className="animate-slide-up" style={{
+            padding: '0.75rem 1rem',
+            marginBottom: '1.5rem',
+            background: 'rgba(255, 59, 48, 0.15)',
+            borderRadius: '12px',
+            color: '#FF453A',
+            fontSize: '0.85rem',
             fontWeight: '600',
             textAlign: 'left',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
-            borderLeft: '4px solid var(--danger)'
+            border: '0.5px solid rgba(255, 59, 48, 0.3)'
           }}>
-            <AlertCircle size={20} />
+            <AlertCircle size={18} />
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
           <div className="input-group">
-            <label className="input-label" style={{ color: 'rgba(255,255,255,0.6)', fontWeight: '700' }}>Tên đăng nhập hệ thống</label>
+            <label className="input-label">Tài khoản</label>
             <div style={{ position: 'relative' }}>
-              <User size={19} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.7 }} />
+              <User size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="text"
                 className="input-field"
-                style={{ paddingLeft: '48px', height: '56px', background: 'rgba(255,255,255,0.03)', fontSize: '1rem' }}
-                placeholder="Nhập username của bạn..."
+                style={{ paddingLeft: '48px' }}
+                placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -157,23 +136,15 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <div className="input-group" style={{ marginBottom: '2.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-               <label className="input-label" style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontWeight: '700' }}>Mật khẩu bảo mật</label>
-               <span 
-                 style={{ fontSize: '0.75rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: '600' }}
-                 onClick={() => alert("Vui lòng liên hệ Admin hệ thống (admin@prj.com) để được cấp lại mật khẩu!")}
-               >
-                 Quên mật khẩu?
-               </span>
-            </div>
+          <div className="input-group" style={{ marginBottom: '2rem' }}>
+            <label className="input-label">Mật khẩu</label>
             <div style={{ position: 'relative' }}>
-              <Lock size={19} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.7 }} />
+              <Lock size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 className="input-field"
-                style={{ paddingLeft: '48px', paddingRight: '52px', height: '56px', background: 'rgba(255,255,255,0.03)', fontSize: '1rem' }}
-                placeholder="••••••••"
+                style={{ paddingLeft: '48px', paddingRight: '48px' }}
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -183,75 +154,55 @@ const LoginPage = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
           <button
             type="submit"
-            className="btn btn-primary btn-hover"
+            className="btn btn-primary"
             style={{ 
                 width: '100%', 
-                height: '58px', 
-                fontSize: '1.1rem', 
-                fontWeight: '800', 
-                letterSpacing: '0.02em', 
-                boxShadow: '0 15px 30px rgba(99, 102, 241, 0.3)',
-                position: 'relative',
-                overflow: 'hidden'
+                height: '52px', 
+                fontSize: '1rem', 
+                fontWeight: '700'
             }}
             disabled={isLoading}
           >
             {isLoading ? (
-              <div className="animate-spin" style={{ width: '24px', height: '24px', border: '3px solid white', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+              <div className="animate-spin" style={{ width: '20px', height: '20px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
-                Khởi động Workspace
-                <ArrowRight size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                Tiếp tục
+                <ArrowRight size={18} />
               </div>
             )}
           </button>
         </form>
 
         <div style={{ 
-          marginTop: '3.5rem', 
-          paddingTop: '2rem', 
-          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+          marginTop: '2.5rem', 
+          paddingTop: '1.5rem', 
+          borderTop: '0.5px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '1.25rem'
+          gap: '1rem'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', color: 'var(--text-muted)' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '700' }}>
-                <GitIcon size={18} />
-                GitHub
-             </div>
-             <div style={{ width: '1px', height: '16px', background: 'rgba(255, 255, 255, 0.1)', alignSelf: 'center' }}></div>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '700' }}>
-                <span style={{ color: 'var(--primary)' }}>Jira</span>
-                Connector
-             </div>
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.2)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-             © 2024 Advanced Project System
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600', letterSpacing: '0.05em' }}>
+             © 2024 UTH - CÔNG NGHỆ THÔNG TIN
           </p>
         </div>
       </div>
 
       <style>{`
         @keyframes float {
-          0% { transform: translateY(0px) rotate(-5deg); }
-          50% { transform: translateY(-10px) rotate(-5deg); }
-          100% { transform: translateY(0px) rotate(-5deg); }
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+          100% { transform: translateY(0px); }
         }
         .animate-float {
           animation: float 4s ease-in-out infinite;
-        }
-        .input-field:focus {
-           background: rgba(255,255,255,0.06) !important;
-           border-color: var(--primary) !important;
-           box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
         }
       `}</style>
     </div>

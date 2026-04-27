@@ -32,29 +32,29 @@ const Layout = () => {
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          padding: '0.5rem 0',
-          borderBottom: '1px solid var(--glass-border)'
+          padding: '0.5rem 0'
         }}>
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.03em' }}>
-              Trung tâm Điều hành
-            </h1>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Chào mừng trở lại, {user?.hoTen}
+            <p style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+              Workspace Control
             </p>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+              Trình quản lý Dự án
+            </h1>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div className="glass-card" style={{ 
-              padding: '0.6rem 1.2rem', 
-              fontSize: '0.75rem', 
-              fontWeight: 'bold',
+              padding: '0.6rem 1.25rem', 
+              fontSize: '0.8rem', 
+              fontWeight: '700',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              color: 'var(--primary)'
+              gap: '0.6rem',
+              borderRadius: '20px',
+              border: '0.5px solid var(--glass-border)'
             }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
-              Hệ thống Sẵn sàng
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)' }}></div>
+              <span style={{ opacity: 0.9 }}>Online</span>
             </div>
           </div>
         </header>

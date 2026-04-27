@@ -96,7 +96,7 @@ public class ReportController {
      * Export summary report as CSV
      */
     @GetMapping("/{groupId}/export")
-    @PreAuthorize("hasRole('GIANG_VIEN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<Resource> exportSummaryReport(@PathVariable UUID groupId) {
         Resource file = reportService.exportSummaryReport(groupId);
         return ResponseEntity.ok()
@@ -111,7 +111,7 @@ public class ReportController {
      * Export summary report as Docx
      */
     @GetMapping("/{groupId}/export/docx")
-    @PreAuthorize("hasRole('GIANG_VIEN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<Resource> exportDocxReport(@PathVariable UUID groupId) throws java.io.IOException {
         Resource file = reportService.exportDocxReport(groupId);
         return ResponseEntity.ok()
@@ -125,7 +125,7 @@ public class ReportController {
      * Export summary report as PDF
      */
     @GetMapping("/{groupId}/export/pdf")
-    @PreAuthorize("hasRole('GIANG_VIEN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<Resource> exportPdfReport(@PathVariable UUID groupId) {
         Resource file = reportService.exportPdfReport(groupId);
         return ResponseEntity.ok()
@@ -139,7 +139,7 @@ public class ReportController {
      * Export SRS document as Docx
      */
     @GetMapping("/{groupId}/export/srs")
-    @PreAuthorize("hasRole('SINH_VIEN') or hasRole('GIANG_VIEN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('STUDENT') or hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<Resource> exportSrsReport(@PathVariable UUID groupId) throws java.io.IOException {
         Resource file = reportService.exportSrsReport(groupId);
         return ResponseEntity.ok()
