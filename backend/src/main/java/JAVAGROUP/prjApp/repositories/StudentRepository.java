@@ -1,6 +1,6 @@
-package JAVAGROUP.prjApp.repositories;
+package javagroup.prjapp.repositories;
 
-import JAVAGROUP.prjApp.entities.Student;
+import javagroup.prjapp.entities.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

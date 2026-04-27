@@ -1,7 +1,9 @@
-package JAVAGROUP.prjApp.controllers;
+package javagroup.prjapp.controllers;
 
-import JAVAGROUP.prjApp.services.AuthService;
-import JAVAGROUP.prjApp.security.UserPrincipal;
+import javagroup.prjapp.enums.GroupRole;
+
+import javagroup.prjapp.services.AuthService;
+import javagroup.prjapp.security.UserPrincipal;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

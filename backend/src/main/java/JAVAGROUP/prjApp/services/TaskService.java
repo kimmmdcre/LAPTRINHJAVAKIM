@@ -1,18 +1,19 @@
-package JAVAGROUP.prjApp.services;
+package javagroup.prjapp.services;
 
-import JAVAGROUP.prjApp.dtos.TaskDTO;
-import JAVAGROUP.prjApp.dtos.RequirementDTO;
-import JAVAGROUP.prjApp.dtos.CommitDTO;
-import JAVAGROUP.prjApp.entities.Task;
-import JAVAGROUP.prjApp.entities.Student;
-import JAVAGROUP.prjApp.repositories.TaskRepository;
-import JAVAGROUP.prjApp.repositories.StudentRepository;
-import JAVAGROUP.prjApp.repositories.RequirementRepository;
-import JAVAGROUP.prjApp.repositories.GroupMemberRepository;
-import JAVAGROUP.prjApp.repositories.VcsCommitRepository;
-import JAVAGROUP.prjApp.entities.GroupMember;
-import JAVAGROUP.prjApp.entities.GroupRole;
-import JAVAGROUP.prjApp.entities.GroupMemberId;
+import javagroup.prjapp.enums.GroupRole;
+
+import javagroup.prjapp.dtos.TaskDTO;
+import javagroup.prjapp.dtos.RequirementDTO;
+import javagroup.prjapp.dtos.CommitDTO;
+import javagroup.prjapp.entities.Task;
+import javagroup.prjapp.entities.Student;
+import javagroup.prjapp.repositories.TaskRepository;
+import javagroup.prjapp.repositories.StudentRepository;
+import javagroup.prjapp.repositories.RequirementRepository;
+import javagroup.prjapp.repositories.GroupMemberRepository;
+import javagroup.prjapp.repositories.VcsCommitRepository;
+import javagroup.prjapp.entities.GroupMember;
+import javagroup.prjapp.entities.GroupMemberId;
 
 import org.springframework.stereotype.Service;
 

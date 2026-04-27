@@ -1,6 +1,8 @@
-package JAVAGROUP.prjApp.security;
+package javagroup.prjapp.security;
 
-import JAVAGROUP.prjApp.entities.User;
+import javagroup.prjapp.enums.GroupRole;
+
+import javagroup.prjapp.entities.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -41,7 +43,7 @@ public class UserPrincipal implements UserDetails {
         String groupRole = null;
         UUID groupId = null;
 
-        if (user instanceof JAVAGROUP.prjApp.entities.Student sv) {
+        if (user instanceof javagroup.prjapp.entities.Student sv) {
             if (sv.getGroupMembers() != null && !sv.getGroupMembers().isEmpty()) {
                 var gm = sv.getGroupMembers().get(0);
                 groupRole = gm.getRole().name();

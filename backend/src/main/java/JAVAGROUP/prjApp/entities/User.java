@@ -1,4 +1,6 @@
-package JAVAGROUP.prjApp.entities;
+package javagroup.prjapp.entities;
+
+import javagroup.prjapp.enums.UserStatus;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

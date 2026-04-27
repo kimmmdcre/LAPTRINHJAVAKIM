@@ -1,8 +1,8 @@
-package JAVAGROUP.prjApp.adapter;
+package javagroup.prjapp.adapter;
 
 import java.util.List;
 
-import JAVAGROUP.prjApp.dtos.CommitDTO;
+import javagroup.prjapp.dtos.CommitDTO;
 
 public interface IGitHubClient {
     List<CommitDTO> getCommits(String repo, String accessToken, String sinceDate);

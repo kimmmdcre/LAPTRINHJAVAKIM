@@ -1,7 +1,7 @@
-package JAVAGROUP.prjApp.repositories;
+package javagroup.prjapp.repositories;
 
-import JAVAGROUP.prjApp.entities.GroupMember;
-import JAVAGROUP.prjApp.entities.GroupMemberId;
+import javagroup.prjapp.entities.GroupMember;
+import javagroup.prjapp.entities.GroupMemberId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

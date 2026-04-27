@@ -8,10 +8,10 @@
 		<version>3.2.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>JAVAGROUP</groupId>
-	<artifactId>prjApp</artifactId>
+	<groupId>javagroup</groupId>
+	<artifactId>prjapp</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>prjApp</name>
+	<name>prjapp</name>
 	<description>Student Project Management System</description>
 	<properties>
 		<java.version>21</java.version>

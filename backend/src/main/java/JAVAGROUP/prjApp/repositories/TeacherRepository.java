@@ -1,6 +1,6 @@
-package JAVAGROUP.prjApp.repositories;
+package javagroup.prjapp.repositories;
 
-import JAVAGROUP.prjApp.entities.Teacher;
+import javagroup.prjapp.entities.Teacher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

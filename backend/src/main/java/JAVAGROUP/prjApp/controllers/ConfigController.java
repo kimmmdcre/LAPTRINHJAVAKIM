@@ -1,8 +1,8 @@
-package JAVAGROUP.prjApp.controllers;
+package javagroup.prjapp.controllers;
 
-import JAVAGROUP.prjApp.dtos.ConfigDTO;
-import JAVAGROUP.prjApp.entities.IntegrationConfig;
-import JAVAGROUP.prjApp.services.ConfigService;
+import javagroup.prjapp.dtos.ConfigDTO;
+import javagroup.prjapp.entities.IntegrationConfig;
+import javagroup.prjapp.services.ConfigService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

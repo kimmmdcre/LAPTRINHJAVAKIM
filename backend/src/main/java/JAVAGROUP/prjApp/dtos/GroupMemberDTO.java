@@ -1,10 +1,11 @@
-package JAVAGROUP.prjApp.dtos;
+package javagroup.prjapp.dtos;
+
+import javagroup.prjapp.enums.GroupRole;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.UUID;
-import JAVAGROUP.prjApp.entities.GroupRole;
 
 @Data
 @NoArgsConstructor

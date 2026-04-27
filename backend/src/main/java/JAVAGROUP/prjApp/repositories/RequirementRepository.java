@@ -1,7 +1,7 @@
-package JAVAGROUP.prjApp.repositories;
+package javagroup.prjapp.repositories;
 
-import JAVAGROUP.prjApp.entities.Requirement;
-import JAVAGROUP.prjApp.entities.Group;
+import javagroup.prjapp.entities.Requirement;
+import javagroup.prjapp.entities.Group;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,8 +1,8 @@
-package JAVAGROUP.prjApp.services;
+package javagroup.prjapp.services;
 
-import JAVAGROUP.prjApp.entities.BlacklistedToken;
-import JAVAGROUP.prjApp.repositories.BlacklistedTokenRepository;
-import JAVAGROUP.prjApp.security.JwtTokenProvider;
+import javagroup.prjapp.entities.BlacklistedToken;
+import javagroup.prjapp.repositories.BlacklistedTokenRepository;
+import javagroup.prjapp.security.JwtTokenProvider;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

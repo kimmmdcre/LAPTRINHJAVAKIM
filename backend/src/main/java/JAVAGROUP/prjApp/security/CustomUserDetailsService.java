@@ -1,7 +1,7 @@
-package JAVAGROUP.prjApp.security;
+package javagroup.prjapp.security;
 
-import JAVAGROUP.prjApp.entities.User;
-import JAVAGROUP.prjApp.repositories.UserRepository;
+import javagroup.prjapp.entities.User;
+import javagroup.prjapp.repositories.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

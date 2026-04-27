@@ -1,10 +1,10 @@
-package JAVAGROUP.prjApp.controllers;
+package javagroup.prjapp.controllers;
 
-import JAVAGROUP.prjApp.dtos.ContributionDTO;
-import JAVAGROUP.prjApp.dtos.GitStatsDTO;
-import JAVAGROUP.prjApp.dtos.ProgressDTO;
-import JAVAGROUP.prjApp.dtos.CommitDTO;
-import JAVAGROUP.prjApp.services.ReportService;
+import javagroup.prjapp.dtos.ContributionDTO;
+import javagroup.prjapp.dtos.GitStatsDTO;
+import javagroup.prjapp.dtos.ProgressDTO;
+import javagroup.prjapp.dtos.CommitDTO;
+import javagroup.prjapp.services.ReportService;
 
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;

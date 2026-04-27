@@ -1,4 +1,4 @@
-package JAVAGROUP.prjApp.security;
+package javagroup.prjapp.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

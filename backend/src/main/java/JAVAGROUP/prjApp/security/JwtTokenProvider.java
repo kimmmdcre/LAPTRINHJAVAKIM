@@ -1,4 +1,4 @@
-package JAVAGROUP.prjApp.security;
+package javagroup.prjapp.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

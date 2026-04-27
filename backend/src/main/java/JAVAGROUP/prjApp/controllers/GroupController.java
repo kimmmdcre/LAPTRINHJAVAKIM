@@ -1,9 +1,9 @@
-package JAVAGROUP.prjApp.controllers;
+package javagroup.prjapp.controllers;
 
-import JAVAGROUP.prjApp.dtos.GroupDTO;
-import JAVAGROUP.prjApp.dtos.GroupMemberDTO;
-import JAVAGROUP.prjApp.entities.Group;
-import JAVAGROUP.prjApp.services.GroupService;
+import javagroup.prjapp.dtos.GroupDTO;
+import javagroup.prjapp.dtos.GroupMemberDTO;
+import javagroup.prjapp.entities.Group;
+import javagroup.prjapp.services.GroupService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

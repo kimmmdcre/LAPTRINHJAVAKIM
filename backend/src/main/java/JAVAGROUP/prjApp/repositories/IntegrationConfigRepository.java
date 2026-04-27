@@ -1,9 +1,9 @@
-package JAVAGROUP.prjApp.repositories;
+package javagroup.prjapp.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import JAVAGROUP.prjApp.entities.IntegrationConfig;
+import javagroup.prjapp.entities.IntegrationConfig;
 
 import java.util.List;
 import java.util.UUID;

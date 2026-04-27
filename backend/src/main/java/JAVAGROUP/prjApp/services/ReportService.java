@@ -1,17 +1,17 @@
-package JAVAGROUP.prjApp.services;
+package javagroup.prjapp.services;
 
-import JAVAGROUP.prjApp.dtos.ContributionDTO;
-import JAVAGROUP.prjApp.dtos.GitStatsDTO;
-import JAVAGROUP.prjApp.dtos.ProgressDTO;
-import JAVAGROUP.prjApp.dtos.CommitDTO;
-import JAVAGROUP.prjApp.entities.VcsCommit;
-import JAVAGROUP.prjApp.entities.Task;
-import JAVAGROUP.prjApp.entities.Student;
-import JAVAGROUP.prjApp.entities.Requirement;
-import JAVAGROUP.prjApp.repositories.VcsCommitRepository;
-import JAVAGROUP.prjApp.repositories.TaskRepository;
-import JAVAGROUP.prjApp.repositories.GroupMemberRepository;
-import JAVAGROUP.prjApp.repositories.RequirementRepository;
+import javagroup.prjapp.dtos.ContributionDTO;
+import javagroup.prjapp.dtos.GitStatsDTO;
+import javagroup.prjapp.dtos.ProgressDTO;
+import javagroup.prjapp.dtos.CommitDTO;
+import javagroup.prjapp.entities.VcsCommit;
+import javagroup.prjapp.entities.Task;
+import javagroup.prjapp.entities.Student;
+import javagroup.prjapp.entities.Requirement;
+import javagroup.prjapp.repositories.VcsCommitRepository;
+import javagroup.prjapp.repositories.TaskRepository;
+import javagroup.prjapp.repositories.GroupMemberRepository;
+import javagroup.prjapp.repositories.RequirementRepository;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;

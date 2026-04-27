@@ -1,13 +1,14 @@
-package JAVAGROUP.prjApp.services;
+package javagroup.prjapp.services;
 
-import JAVAGROUP.prjApp.dtos.UserDTO;
-import JAVAGROUP.prjApp.entities.Teacher;
-import JAVAGROUP.prjApp.entities.User;
-import JAVAGROUP.prjApp.entities.Admin;
-import JAVAGROUP.prjApp.entities.Student;
-import JAVAGROUP.prjApp.entities.UserStatus;
-import JAVAGROUP.prjApp.repositories.UserRepository;
-import JAVAGROUP.prjApp.repositories.StudentRepository;
+import javagroup.prjapp.enums.UserStatus;
+
+import javagroup.prjapp.dtos.UserDTO;
+import javagroup.prjapp.entities.Teacher;
+import javagroup.prjapp.entities.User;
+import javagroup.prjapp.entities.Admin;
+import javagroup.prjapp.entities.Student;
+import javagroup.prjapp.repositories.UserRepository;
+import javagroup.prjapp.repositories.StudentRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

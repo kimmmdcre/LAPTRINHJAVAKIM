@@ -1,9 +1,11 @@
-package JAVAGROUP.prjApp.services;
+package javagroup.prjapp.services;
 
-import JAVAGROUP.prjApp.dtos.GroupDTO;
-import JAVAGROUP.prjApp.dtos.GroupMemberDTO;
-import JAVAGROUP.prjApp.entities.*;
-import JAVAGROUP.prjApp.repositories.*;
+import javagroup.prjapp.enums.GroupRole;
+
+import javagroup.prjapp.dtos.GroupDTO;
+import javagroup.prjapp.dtos.GroupMemberDTO;
+import javagroup.prjapp.entities.*;
+import javagroup.prjapp.repositories.*;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,10 +1,10 @@
-package JAVAGROUP.prjApp.services;
+package javagroup.prjapp.services;
 
-import JAVAGROUP.prjApp.dtos.ConfigDTO;
-import JAVAGROUP.prjApp.entities.IntegrationConfig;
-import JAVAGROUP.prjApp.entities.Group;
-import JAVAGROUP.prjApp.repositories.IntegrationConfigRepository;
-import JAVAGROUP.prjApp.repositories.GroupRepository;
+import javagroup.prjapp.dtos.ConfigDTO;
+import javagroup.prjapp.entities.IntegrationConfig;
+import javagroup.prjapp.entities.Group;
+import javagroup.prjapp.repositories.IntegrationConfigRepository;
+import javagroup.prjapp.repositories.GroupRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
