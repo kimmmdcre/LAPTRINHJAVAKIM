@@ -31,7 +31,7 @@ const AdminUsers = () => {
     username: '',
     fullName: '',
     email: '',
-    roleCode: 'SINH_VIEN',
+    roleCode: 'STUDENT',
     password: '',
     confirmPassword: ''
   });
@@ -87,7 +87,7 @@ const AdminUsers = () => {
   const closeModal = () => {
     setShowAddModal(false);
     setEditingId(null);
-    setFormData({ username: '', fullName: '', email: '', roleCode: 'SINH_VIEN', password: '', confirmPassword: '' });
+    setFormData({ username: '', fullName: '', email: '', roleCode: 'STUDENT', password: '', confirmPassword: '' });
   };
 
   const handleDelete = async (id) => {
@@ -106,7 +106,7 @@ const AdminUsers = () => {
   const getRoleIcon = (role) => {
     switch (role) {
       case 'ADMIN': return <ShieldAlert size={14} />;
-      case 'GIANG_VIEN': return <GraduationCap size={14} />;
+      case 'TEACHER': return <GraduationCap size={14} />;
       default: return <User size={14} />;
     }
   };
@@ -114,7 +114,7 @@ const AdminUsers = () => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'ADMIN': return { bg: 'rgba(239, 68, 68, 0.1)', text: 'var(--danger)', border: 'rgba(239, 68, 68, 0.2)' };
-      case 'GIANG_VIEN': return { bg: 'rgba(99, 102, 241, 0.1)', text: 'var(--primary)', border: 'rgba(99, 102, 241, 0.2)' };
+      case 'TEACHER': return { bg: 'rgba(99, 102, 241, 0.1)', text: 'var(--primary)', border: 'rgba(99, 102, 241, 0.2)' };
       default: return { bg: 'rgba(16, 185, 129, 0.1)', text: 'var(--success)', border: 'rgba(16, 185, 129, 0.2)' };
     }
   };
@@ -192,7 +192,7 @@ const AdminUsers = () => {
                           border: '1px solid var(--glass-border)',
                           color: 'var(--text-secondary)'
                         }}>
-                          {u.roleCode === 'GIANG_VIEN' ? <GraduationCap size={20} /> : <User size={20} />}
+                          {u.roleCode === 'TEACHER' ? <GraduationCap size={20} /> : <User size={20} />}
                         </div>
                         <div>
                           <p style={{ fontWeight: '700', fontSize: '0.95rem' }}>
@@ -235,7 +235,7 @@ const AdminUsers = () => {
                               username: u.username || '',
                               fullName: u.fullName || '',
                               email: u.email || '',
-                              roleCode: u.roleCode || 'SINH_VIEN',
+                              roleCode: u.roleCode || 'STUDENT',
                               password: '',
                               confirmPassword: ''
                             });
@@ -321,8 +321,8 @@ const AdminUsers = () => {
                     value={formData.roleCode}
                     onChange={e => setFormData({ ...formData, roleCode: e.target.value })}
                   >
-                    <option value="SINH_VIEN">Sinh viên</option>
-                    <option value="GIANG_VIEN">Giảng viên</option>
+                    <option value="STUDENT">Sinh viên</option>
+                    <option value="TEACHER">Giảng viên</option>
                     <option value="ADMIN">Quản trị viên</option>
                   </select>
                 </div>

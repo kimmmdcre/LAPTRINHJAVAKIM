@@ -59,10 +59,10 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/groups/**").hasAnyRole("ADMIN", "GIANG_VIEN", "SINH_VIEN")
-                        .requestMatchers("/api/config/**").hasAnyRole("ADMIN", "GIANG_VIEN", "SINH_VIEN")
-                        .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "GIANG_VIEN", "SINH_VIEN")
-                        .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "GIANG_VIEN", "SINH_VIEN")
+                        .requestMatchers("/api/groups/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
+                        .requestMatchers("/api/config/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
+                        .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
+                        .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
                         .anyRequest().authenticated());
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

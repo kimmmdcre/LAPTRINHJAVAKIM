@@ -57,7 +57,7 @@ const ContributionTracking = () => {
           ]);
           setContributions(contribRes.data || []);
           setHistory(historyRes.data || []);
-        } else if (user.role === 'ADMIN' || user.role === 'GIANG_VIEN') {
+        } else if (user.role === 'ADMIN' || user.role === 'TEACHER') {
           showToast('Vui lòng chọn một nhóm từ danh sách Lớp học để xem báo cáo đóng góp.', 'info');
         }
       }

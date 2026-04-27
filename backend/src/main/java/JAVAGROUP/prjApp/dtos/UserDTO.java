@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+import javagroup.prjapp.enums.UserRole;
 
 @Data
 @NoArgsConstructor
@@ -18,6 +19,6 @@ public class UserDTO {
     private String fullName;
     private String email;
     private UserStatus status;
-    private String roleCode;
+    private UserRole roleCode;
     private String password;
 }

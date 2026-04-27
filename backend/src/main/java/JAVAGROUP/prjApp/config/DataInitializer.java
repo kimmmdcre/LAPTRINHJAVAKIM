@@ -2,6 +2,7 @@ package javagroup.prjapp.config;
 
 import javagroup.prjapp.enums.UserStatus;
 import javagroup.prjapp.enums.GroupRole;
+import javagroup.prjapp.enums.UserRole;
 
 import javagroup.prjapp.entities.*;
 import javagroup.prjapp.repositories.*;
@@ -54,7 +55,7 @@ public class DataInitializer implements CommandLineRunner {
         admin.setFullName("Admin Hệ Thống");
         admin.setEmail("admin@prj.com");
         admin.setStatus(UserStatus.ACTIVE);
-        admin.setRoleCode("ADMIN");
+        admin.setRoleCode(UserRole.ADMIN);
         admin.setAdminLevel("SUPER_ADMIN");
         adminRepository.save(admin);
 
@@ -70,7 +71,7 @@ public class DataInitializer implements CommandLineRunner {
         teacher.setFullName("Giảng Viên Hướng Dẫn");
         teacher.setEmail("teacher@prj.com");
         teacher.setStatus(UserStatus.ACTIVE);
-        teacher.setRoleCode("GIANG_VIEN");
+        teacher.setRoleCode(UserRole.TEACHER);
         teacher.setDepartment("Công nghệ thông tin");
         teacher = teacherRepository.save(teacher);
 
@@ -86,7 +87,7 @@ public class DataInitializer implements CommandLineRunner {
         leader.setFullName("Sinh Viên Trưởng Nhóm");
         leader.setEmail("leader@prj.com");
         leader.setStatus(UserStatus.ACTIVE);
-        leader.setRoleCode("SINH_VIEN");
+        leader.setRoleCode(UserRole.STUDENT);
         leader.setClassName("K65-CNTT");
         leader = studentRepository.save(leader);
 
@@ -101,7 +102,7 @@ public class DataInitializer implements CommandLineRunner {
         member.setFullName("Sinh Viên Thành Viên");
         member.setEmail("member@prj.com");
         member.setStatus(UserStatus.ACTIVE);
-        member.setRoleCode("SINH_VIEN");
+        member.setRoleCode(UserRole.STUDENT);
         member.setClassName("K65-CNTT");
         member = studentRepository.save(member);
 

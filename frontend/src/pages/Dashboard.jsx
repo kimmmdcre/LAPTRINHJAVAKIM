@@ -48,7 +48,7 @@ const Dashboard = () => {
             progress: Math.floor(Math.random() * 40) + 60 
           }))
         }));
-      } else if (role === 'GIANG_VIEN') {
+      } else if (role === 'TEACHER') {
         const res = await groupService.getByTeacher(user.id);
         const myGroups = res.data;
         setStats(prev => ({
@@ -56,7 +56,7 @@ const Dashboard = () => {
           totalGroups: myGroups.length,
           myGroups: myGroups
         }));
-      } else if (role === 'SINH_VIEN') {
+      } else if (role === 'STUDENT') {
         const myTasksRes = await taskService.getMine(user.id);
         
         if (user.groupId) {
@@ -212,8 +212,8 @@ const Dashboard = () => {
       </div>
 
       {role === 'ADMIN' && renderAdminWidgets()}
-      {role === 'GIANG_VIEN' && renderLecturerWidgets()}
-      {role === 'SINH_VIEN' && renderStudentWidgets()}
+      {role === 'TEACHER' && renderLecturerWidgets()}
+      {role === 'STUDENT' && renderStudentWidgets()}
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
         {/* Main Section */}
@@ -243,7 +243,7 @@ const Dashboard = () => {
               </div>
             ))}
 
-            {role === 'GIANG_VIEN' && stats.myGroups.map((g, i) => (
+            {role === 'TEACHER' && stats.myGroups.map((g, i) => (
               <div key={i} onClick={() => navigate(`/teacher/reports?groupId=${g.groupId}`)} className="table-row-hover" style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '8px' }}><LayoutGrid size={20} /></div>
@@ -256,7 +256,7 @@ const Dashboard = () => {
               </div>
             ))}
 
-            {role === 'SINH_VIEN' && stats.studentTasks.doing > 0 && (
+            {role === 'STUDENT' && stats.studentTasks.doing > 0 && (
               <div className="table-row-hover" style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', background: 'rgba(99, 102, 241, 0.05)' }}>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ fontWeight: '800', color: 'var(--primary)', marginBottom: '0.25rem' }}>Đang thực hiện nhiệm vụ</h4>
@@ -266,7 +266,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            {role === 'SINH_VIEN' && stats.studentTasks.doing === 0 && (
+            {role === 'STUDENT' && stats.studentTasks.doing === 0 && (
               <div style={{ padding: '3rem', textAlign: 'center', border: '1px dashed var(--glass-border)', borderRadius: '12px' }}>
                 <CheckSquare size={40} color="var(--success)" style={{ opacity: 0.2, margin: '0 auto 1rem' }} />
                 <p style={{ color: 'var(--text-muted)' }}>Bạn đã hoàn thành mọi nhiệm vụ hiện tại. Xuất sắc!</p>
@@ -293,7 +293,7 @@ const Dashboard = () => {
                   </button>
                 </>
               )}
-              {role === 'GIANG_VIEN' && (
+              {role === 'TEACHER' && (
                 <>
                   <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/teacher/classes')}>
                     <LayoutGrid size={16} /> Danh sách Nhóm
@@ -303,7 +303,7 @@ const Dashboard = () => {
                   </button>
                 </>
               )}
-              {role === 'SINH_VIEN' && (
+              {role === 'STUDENT' && (
                 <>
                   <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/member/tasks')}>
                     <CheckSquare size={16} /> Nhiệm vụ Jira

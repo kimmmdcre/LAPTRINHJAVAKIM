@@ -1,6 +1,7 @@
 package javagroup.prjapp.services;
 
 import javagroup.prjapp.enums.UserStatus;
+import javagroup.prjapp.enums.UserRole;
 
 import javagroup.prjapp.dtos.UserDTO;
 import javagroup.prjapp.entities.Teacher;
@@ -39,14 +40,14 @@ public class UserService {
      */
     public void createAccount(UserDTO dto) {
         User user;
-        String role = dto.getRoleCode();
+        UserRole role = dto.getRoleCode();
         
-        if ("ADMIN".equals(role)) {
+        if (UserRole.ADMIN.equals(role)) {
             Admin admin = new Admin();
             admin.setAdminCode("AD_" + dto.getUsername());
             admin.setAdminLevel("1");
             user = admin;
-        } else if ("GIANG_VIEN".equals(role)) {
+        } else if (UserRole.TEACHER.equals(role)) {
             Teacher teacher = new Teacher();
             teacher.setTeacherCode("GV_" + dto.getUsername());
             teacher.setDepartment("Information Technology");
@@ -82,7 +83,7 @@ public class UserService {
     /**
      * Update role (roleCode) for user.
      */
-    public void assignRole(UUID id, String role) {
+    public void assignRole(UUID id, UserRole role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User does not exist: " + id));
         user.setRoleCode(role);
@@ -121,7 +122,7 @@ public class UserService {
      */
     public List<UserDTO> getAllTeachers() {
         return userRepository.findAll().stream()
-                .filter(user -> "GIANG_VIEN".equals(user.getRoleCode()))
+                .filter(user -> UserRole.TEACHER.equals(user.getRoleCode()))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }

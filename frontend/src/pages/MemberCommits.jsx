@@ -41,7 +41,7 @@ const MemberCommits = () => {
         const allCommits = Array.isArray(res.data) ? res.data : [];
         
         // Nếu là Sinh viên và không phải đang xem theo URL cụ thể, lọc commit của chính mình
-        if (user.role === 'SINH_VIEN' && !groupIdFromUrl) {
+        if (user.role === 'STUDENT' && !groupIdFromUrl) {
           const myCommits = allCommits.filter(c => 
             c.authorEmail === user.email || 
             c.authorName === user.fullName ||

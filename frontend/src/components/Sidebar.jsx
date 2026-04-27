@@ -33,13 +33,13 @@ const Sidebar = () => {
       links.push({ icon: <Settings size={20} />, label: 'Cấu hình Jira/Git', path: '/admin/config' });
     } 
     
-    if (role === 'GIANG_VIEN' || role === 'ADMIN') {
+    if (role === 'TEACHER' || role === 'ADMIN') {
       links.push({ isHeader: true, label: 'GIÁM SÁT' });
       links.push({ icon: <Database size={20} />, label: 'Lớp học', path: '/teacher/classes' });
       links.push({ icon: <BarChart3 size={20} />, label: 'Báo cáo Tổng quát', path: '/teacher/reports' });
     }
 
-    if (role === 'SINH_VIEN') {
+    if (role === 'STUDENT') {
       links.push({ isHeader: true, label: 'CÔNG VIỆC' });
       links.push({ icon: <CheckSquare size={20} />, label: 'Nhiệm vụ Jira', path: '/member/tasks' });
       links.push({ icon: <GitCommit size={20} />, label: 'Lịch sử Commits', path: '/member/commits' });

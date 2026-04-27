@@ -49,7 +49,7 @@ const PersonalProfile = () => {
       setLoading(true);
       
       // 1. Fetch group info if student
-      if (user?.role === 'SINH_VIEN') {
+      if (user?.role === 'STUDENT') {
         const targetGroupId = user.groupId;
         if (targetGroupId) {
           try {

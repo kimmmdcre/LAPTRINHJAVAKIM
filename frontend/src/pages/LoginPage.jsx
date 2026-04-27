@@ -114,7 +114,7 @@ const LoginPage = () => {
         </div>
 
         <h1 style={{ fontSize: '2.5rem', fontWeight: '900', marginBottom: '0.75rem', letterSpacing: '-0.04em', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          JiraGit NEXUS
+          JiraGit System
         </h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem', fontSize: '1rem', fontWeight: '500' }}>
           Cổng điều phối dự án thông minh
@@ -160,7 +160,12 @@ const LoginPage = () => {
           <div className="input-group" style={{ marginBottom: '2.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                <label className="input-label" style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontWeight: '700' }}>Mật khẩu bảo mật</label>
-               <span style={{ fontSize: '0.75rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: '600' }}>Quên mật khẩu?</span>
+               <span 
+                 style={{ fontSize: '0.75rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: '600' }}
+                 onClick={() => alert("Vui lòng liên hệ Admin hệ thống (admin@prj.com) để được cấp lại mật khẩu!")}
+               >
+                 Quên mật khẩu?
+               </span>
             </div>
             <div style={{ position: 'relative' }}>
               <Lock size={19} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.7 }} />

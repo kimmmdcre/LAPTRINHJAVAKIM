@@ -1,6 +1,7 @@
 package javagroup.prjapp.entities;
 
 import javagroup.prjapp.enums.UserStatus;
+import javagroup.prjapp.enums.UserRole;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,7 @@ public abstract class User {
     @Column(name = "status", nullable = false)
     private UserStatus status;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role_code")
-    private String roleCode;
+    private UserRole roleCode;
 }

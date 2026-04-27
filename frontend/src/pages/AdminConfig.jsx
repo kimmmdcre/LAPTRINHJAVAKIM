@@ -88,8 +88,8 @@ const AdminConfig = () => {
 
       const rawGroups = Array.isArray(res.data) ? res.data : [];
       
-      const filteredGroups = user?.role === 'SINH_VIEN' 
-        ? rawGroups.filter(g => g && g.groupId === user.groupId)
+      const filteredGroups = user?.role === 'STUDENT' 
+        ? rawGroups.filter(g => g.members?.some(m => m.studentId === user.id))
         : rawGroups;
         
       setGroups(filteredGroups);

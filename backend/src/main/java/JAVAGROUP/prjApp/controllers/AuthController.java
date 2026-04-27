@@ -49,8 +49,8 @@ public class AuthController {
             response.put("username", principal.getUsername());
             response.put("fullName", principal.getFullName());
             response.put("email", principal.getEmail());
-            response.put("roleCode", principal.getRoleCode());
-            response.put("role", principal.getRoleCode()); 
+            response.put("roleCode", principal.getRoleCode().name());
+            response.put("role", principal.getRoleCode().name()); 
             response.put("groupRole", principal.getGroupRole());
             response.put("groupId", principal.getGroupId());
             

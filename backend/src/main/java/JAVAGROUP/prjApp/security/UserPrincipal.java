@@ -1,6 +1,7 @@
 package javagroup.prjapp.security;
 
 import javagroup.prjapp.enums.GroupRole;
+import javagroup.prjapp.enums.UserRole;
 
 import javagroup.prjapp.entities.User;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,12 +19,12 @@ public class UserPrincipal implements UserDetails {
     private String passwordHash;
     private String fullName;
     private String email;
-    private String roleCode;
+    private UserRole roleCode;
     private String groupRole; // LEADER, MEMBER
     private UUID groupId;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserPrincipal(UUID id, String username, String passwordHash, String fullName, String email, String roleCode,
+    public UserPrincipal(UUID id, String username, String passwordHash, String fullName, String email, UserRole roleCode,
             String groupRole, UUID groupId, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
@@ -38,7 +39,7 @@ public class UserPrincipal implements UserDetails {
 
     public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + user.getRoleCode()));
+                new SimpleGrantedAuthority("ROLE_" + user.getRoleCode().name()));
 
         String groupRole = null;
         UUID groupId = null;
@@ -90,7 +91,7 @@ public class UserPrincipal implements UserDetails {
         return email;
     }
 
-    public String getRoleCode() {
+    public UserRole getRoleCode() {
         return roleCode;
     }
 

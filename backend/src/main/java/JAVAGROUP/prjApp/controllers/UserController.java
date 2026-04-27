@@ -1,6 +1,7 @@
 package javagroup.prjapp.controllers;
 
 import javagroup.prjapp.dtos.UserDTO;
+import javagroup.prjapp.enums.UserRole;
 import javagroup.prjapp.services.UserService;
 
 import org.springframework.http.ResponseEntity;
@@ -88,7 +89,7 @@ public class UserController {
     public ResponseEntity<Map<String, String>> assignRole(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body) {
-        userService.assignRole(id, body.get("role"));
+        userService.assignRole(id, UserRole.valueOf(body.get("role")));
         return ResponseEntity.ok(Map.of("message", "Role updated successfully"));
     }
 }
