@@ -1,6 +1,6 @@
-package javagroup.prjapp.dtos;
+package javagroup.prjApp.dtos;
 
-import javagroup.prjapp.enums.UserStatus;
+import javagroup.prjApp.enums.UserStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-import javagroup.prjapp.enums.UserRole;
+import javagroup.prjApp.enums.UserRole;
 
 @Data
 @NoArgsConstructor

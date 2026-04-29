@@ -1,12 +1,12 @@
-package javagroup.prjapp.controllers;
+package javagroup.prjApp.controllers;
 
-import javagroup.prjapp.dtos.TaskDTO;
-import javagroup.prjapp.dtos.RequirementDTO;
-import javagroup.prjapp.dtos.CommitDTO;
-import javagroup.prjapp.services.SyncService;
-import javagroup.prjapp.services.TaskService;
+import javagroup.prjApp.dtos.TaskDTO;
+import javagroup.prjApp.dtos.RequirementDTO;
+import javagroup.prjApp.dtos.CommitDTO;
+import javagroup.prjApp.services.SyncService;
+import javagroup.prjApp.services.TaskService;
 
-import javagroup.prjapp.security.UserPrincipal;
+import javagroup.prjApp.security.UserPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.ResponseEntity;

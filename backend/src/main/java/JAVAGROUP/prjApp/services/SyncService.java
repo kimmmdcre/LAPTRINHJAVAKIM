@@ -1,11 +1,11 @@
-package javagroup.prjapp.services;
+package javagroup.prjApp.services;
 
-import javagroup.prjapp.adapter.IGitHubClient;
-import javagroup.prjapp.adapter.IJiraClient;
-import javagroup.prjapp.dtos.CommitDTO;
-import javagroup.prjapp.dtos.RequirementDTO;
-import javagroup.prjapp.entities.*;
-import javagroup.prjapp.repositories.*;
+import javagroup.prjApp.adapter.IGitHubClient;
+import javagroup.prjApp.adapter.IJiraClient;
+import javagroup.prjApp.dtos.CommitDTO;
+import javagroup.prjApp.dtos.RequirementDTO;
+import javagroup.prjApp.entities.*;
+import javagroup.prjApp.repositories.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

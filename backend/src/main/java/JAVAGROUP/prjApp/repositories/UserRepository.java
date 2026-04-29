@@ -1,7 +1,7 @@
-package javagroup.prjapp.repositories;
+package javagroup.prjApp.repositories;
 
-import javagroup.prjapp.entities.User;
-import javagroup.prjapp.enums.UserRole;
+import javagroup.prjApp.entities.User;
+import javagroup.prjApp.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

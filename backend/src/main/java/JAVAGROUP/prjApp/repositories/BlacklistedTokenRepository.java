@@ -1,6 +1,6 @@
-package javagroup.prjapp.repositories;
+package javagroup.prjApp.repositories;
 
-import javagroup.prjapp.entities.BlacklistedToken;
+import javagroup.prjApp.entities.BlacklistedToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

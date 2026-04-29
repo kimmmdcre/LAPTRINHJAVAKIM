@@ -1,6 +1,6 @@
-package javagroup.prjapp.entities;
+package javagroup.prjApp.entities;
 
-import javagroup.prjapp.enums.GroupRole;
+import javagroup.prjApp.enums.GroupRole;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

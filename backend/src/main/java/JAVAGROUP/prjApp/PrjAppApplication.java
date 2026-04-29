@@ -1,4 +1,4 @@
-package javagroup.prjapp;
+package javagroup.prjApp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

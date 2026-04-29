@@ -1,6 +1,6 @@
-package javagroup.prjapp.dtos;
+package javagroup.prjApp.dtos;
 
-import javagroup.prjapp.enums.GroupRole;
+import javagroup.prjApp.enums.GroupRole;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

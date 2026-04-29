@@ -1,10 +1,10 @@
-package javagroup.prjapp.controllers;
+package javagroup.prjApp.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javagroup.prjapp.services.SyncService;
+import javagroup.prjApp.services.SyncService;
 
 import java.util.Map;
 import java.util.UUID;

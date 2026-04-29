@@ -1,4 +1,4 @@
-package javagroup.prjapp.dtos;
+package javagroup.prjApp.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

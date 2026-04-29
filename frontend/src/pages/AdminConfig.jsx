@@ -108,7 +108,7 @@ const AdminConfig = () => {
     } finally {
       if (isMounted.current) setLoading(false);
     }
-  }, [location.state?.groupId, user?.groupId, user?.role, fetchCurrentConfig, showToast]);
+  }, [location.state?.groupId, user?.groupId, user?.role, user?.id, fetchCurrentConfig, showToast]);
 
   // Fetch stats separately to avoid blocking main UI
   useEffect(() => {

@@ -1,4 +1,4 @@
-package javagroup.prjapp.entities;
+package javagroup.prjApp.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

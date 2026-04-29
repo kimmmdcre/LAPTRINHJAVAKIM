@@ -1,6 +1,6 @@
-package javagroup.prjapp.security;
+package javagroup.prjApp.security;
 
-import javagroup.prjapp.repositories.BlacklistedTokenRepository;
+import javagroup.prjApp.repositories.BlacklistedTokenRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package javagroup.prjapp.enums;
+package javagroup.prjApp.enums;
 
 public enum UserStatus {
     ACTIVE,

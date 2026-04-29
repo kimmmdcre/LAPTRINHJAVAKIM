@@ -1,11 +1,11 @@
-package javagroup.prjapp.config;
+package javagroup.prjApp.config;
 
-import javagroup.prjapp.enums.UserStatus;
-import javagroup.prjapp.enums.GroupRole;
-import javagroup.prjapp.enums.UserRole;
+import javagroup.prjApp.enums.UserStatus;
+import javagroup.prjApp.enums.GroupRole;
+import javagroup.prjApp.enums.UserRole;
 
-import javagroup.prjapp.entities.*;
-import javagroup.prjapp.repositories.*;
+import javagroup.prjApp.entities.*;
+import javagroup.prjApp.repositories.*;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
