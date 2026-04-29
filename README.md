@@ -11,43 +11,21 @@
 
 ## 🏗️ Kiến Trúc Hệ Thống
 
-Hệ thống được thiết kế theo mô hình **Multi-Tier Architecture** (Kiến trúc đa tầng) giúp tách biệt các mối quan tâm (Separation of Concerns) và đảm bảo tính mở rộng cao.
+Dự án áp dụng mô hình kiến trúc **Clean Architecture** tiên tiến với sự phân chia theo tính năng nghiệp vụ (Feature-based) để tối đa hóa khả năng mở rộng và bảo trì.
 
-### 1. Tầng Giao Diện (Presentation Tier)
+### 1. Kiến trúc Backend (Package-by-Feature)
+Thay vì chia theo tầng kỹ thuật (Controller, Service, Repository), backend Spring Boot được cấu trúc theo các **Feature Modules**:
+- **Core (`core/*`)**: Chứa các cấu hình lõi (Security, Global Exceptions, Filters) dùng chung cho toàn dự án.
+- **Features (`features/*`)**: Mỗi domain nghiệp vụ (VD: `auth`, `users`, `tasks`, `groups`, `reports`) là một module độc lập. Mọi Controller, Service, Entity, DTO, Repository của nghiệp vụ đó đều nằm gọn trong thư mục tương ứng.
+- **Tầng Bảo mật & Xác thực**: Sử dụng Spring Security 6 với JWT (Stateless) và RBAC (Role-Based Access Control).
+- **Tích hợp ngoại vi (Adapter Pattern)**: Các class giao tiếp API với Jira/GitHub được gói gọn trong thư mục `adapters/` của feature `tasks`.
 
-Được xây dựng bằng **React 19**, đóng vai trò là lớp giao tiếp trực tiếp với người dùng:
+### 2. Kiến trúc Frontend (Feature-Sliced Design)
+Frontend React 19 sử dụng mô hình FSD (Feature-Sliced Design) chia rạch ròi các ranh giới:
+- **`app/`**: Chứa entry points (`main.jsx`, `App.jsx`) và css toàn cục.
+- **`shared/`**: Các UI components cơ bản, contexts, và helper functions dùng chung (ví dụ: `api.js`, `Sidebar.jsx`, `AuthContext`).
+- **`features/`**: Nơi chứa logic cốt lõi. Mỗi tính năng (`auth`, `dashboard`, `tasks`,...) đều đóng gói riêng các `pages` và `components` của nó.
 
-- **Components Layer**: Hệ thống thành phần UI tái sử dụng cao, thiết kế theo phong cách hiện đại, tối giản.
-- **State Management**: Sử dụng React Context để quản lý trạng thái phiên đăng nhập (Auth) và các cài đặt giao diện (UI) toàn cục.
-- **Integration Layer**: Giao tiếp với Backend thông qua các API Client (Axios) được đóng gói chặt chẽ, hỗ trợ xử lý lỗi tập trung.
-
-### 2. Tầng Bảo Mật & Xác Thực (Security Layer)
-
-Lớp bảo vệ nằm giữa Frontend và Backend, sử dụng **Spring Security 6**:
-
-- **JWT Authentication**: Cơ chế xác thực không trạng thái (Stateless), sử dụng JSON Web Token để đảm bảo tính an toàn cho mọi yêu cầu API.
-- **RBAC (Role-Based Access Control)**: Phân quyền truy cập dựa trên vai trò người dùng (`ADMIN`, `TEACHER`, `STUDENT`), đảm bảo mỗi đối tượng chỉ có thể thực hiện các hành động trong phạm vi quyền hạn của mình.
-
-### 3. Tầng Xử Lý Nghiệp Vụ (Business Logic Tier)
-
-Trái tim của hệ thống, được xây dựng bằng **Spring Boot 3.2.5**:
-
-- **REST Controllers**: Tiếp nhận yêu cầu từ Frontend, điều phối dữ liệu và trả về kết quả theo định dạng JSON chuẩn.
-- **Service Layer**: Nơi chứa toàn bộ logic nghiệp vụ (tính toán tiến độ, tạo báo cáo, mapping nhiệm vụ giữa Jira và Git).
-- **Domain Entities**: Mô hình hóa các thực thể thực tế (User, Group, Commit, Requirement) vào cấu trúc lập trình hướng đối tượng.
-
-### 4. Tầng Tích Hợp Ngoại Vi (Integration Layer - Adapter Pattern)
-
-Đây là kiến trúc đặc biệt giúp hệ thống kết nối với các nền tảng bên thứ ba:
-
-- **Jira Adapter**: Chịu trách nhiệm gọi API Jira Cloud, trích xuất dữ liệu Issue và chuyển đổi về định dạng chuẩn của hệ thống.
-- **GitHub Adapter**: Giao tiếp với GitHub API để lấy lịch sử Commit và thông tin đóng góp của thành viên.
-- **Extensibility**: Thiết kế theo `Interface` cho phép dễ dàng tích hợp thêm các nền tảng khác như GitLab, Bitbucket hoặc Trello mà không cần thay đổi code lõi của dịch vụ.
-
-### 5. Tầng Dữ Liệu (Data Persistence Tier)
-
-- **SQL Server**: Hệ quản trị cơ sở dữ liệu quan hệ mạnh mẽ, lưu trữ toàn bộ dữ liệu người dùng, cấu hình dự án và kết quả đồng bộ.
-- **Spring Data JPA**: Sử dụng cơ chế ORM (Object-Relational Mapping) để tự động hóa việc truy vấn và thao tác dữ liệu, giúp mã nguồn sạch hơn và giảm thiểu lỗi SQL.
 
 ---
 
