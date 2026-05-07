@@ -13,18 +13,22 @@
 
 Dự án áp dụng mô hình kiến trúc **Clean Architecture** tiên tiến với sự phân chia theo tính năng nghiệp vụ (Feature-based) để tối đa hóa khả năng mở rộng và bảo trì.
 
-### 1. Kiến trúc Backend (Package-by-Feature)
-Thay vì chia theo tầng kỹ thuật (Controller, Service, Repository), backend Spring Boot được cấu trúc theo các **Feature Modules**:
-- **Core (`core/*`)**: Chứa các cấu hình lõi (Security, Global Exceptions, Filters) dùng chung cho toàn dự án.
-- **Features (`features/*`)**: Mỗi domain nghiệp vụ (VD: `auth`, `users`, `tasks`, `groups`, `reports`) là một module độc lập. Mọi Controller, Service, Entity, DTO, Repository của nghiệp vụ đó đều nằm gọn trong thư mục tương ứng.
-- **Tầng Bảo mật & Xác thực**: Sử dụng Spring Security 6 với JWT (Stateless) và RBAC (Role-Based Access Control).
-- **Tích hợp ngoại vi (Adapter Pattern)**: Các class giao tiếp API với Jira/GitHub được gói gọn trong thư mục `adapters/` của feature `tasks`.
+### 1. Kiến trúc Backend (Package-by-Layer)
+Thay vì chia theo Feature Modules, backend Spring Boot được cấu trúc theo chuẩn phân lớp truyền thống (Layered Architecture):
+- **Controllers (`controllers/*`)**: Tiếp nhận request từ frontend và điều hướng.
+- **Services (`services/*`)**: Xử lý logic nghiệp vụ, sử dụng Interface và Implementation (`impl/`) rõ ràng.
+- **Repositories (`repositories/*`)**: Giao tiếp trực tiếp với cơ sở dữ liệu qua Spring Data JPA.
+- **Entities & DTOs (`entities/*`, `dtos/*`)**: Quản lý object mapper và data transfer.
+- **Core/Utils (`config/*`, `exceptions/*`, `utils/*`)**: Cấu hình bảo mật JWT, xử lý lỗi toàn cục và các Helper/Adapter tích hợp Jira/GitHub.
 
-### 2. Kiến trúc Frontend (Feature-Sliced Design)
-Frontend React 19 sử dụng mô hình FSD (Feature-Sliced Design) chia rạch ròi các ranh giới:
-- **`app/`**: Chứa entry points (`main.jsx`, `App.jsx`) và css toàn cục.
-- **`shared/`**: Các UI components cơ bản, contexts, và helper functions dùng chung (ví dụ: `api.js`, `Sidebar.jsx`, `AuthContext`).
-- **`features/`**: Nơi chứa logic cốt lõi. Mỗi tính năng (`auth`, `dashboard`, `tasks`,...) đều đóng gói riêng các `pages` và `components` của nó.
+### 2. Kiến trúc Frontend (Layered Architecture)
+Frontend React 19 cũng đã được tối ưu hóa theo mô hình phân lớp (Layered Architecture) để đồng nhất với Backend:
+- **`pages/`**: Chứa toàn bộ các giao diện màn hình (Login, Dashboard, AdminGroups,...).
+- **`components/`**: Các UI component tái sử dụng nhiều lần (Layout, Sidebar,...).
+- **`services/`**: Quản lý các cấu hình và hàm gọi API giao tiếp với Backend (`api.js`).
+- **`contexts/`**: Quản lý state toàn cục qua React Context (AuthContext, UIContext).
+- **`assets/` & `styles/`**: Chứa tài nguyên tĩnh (hình ảnh, logo) và các file CSS.
+- **Root (`main.jsx`, `App.jsx`)**: Điểm khởi chạy chính của toàn bộ ứng dụng React.
 
 
 ---
@@ -63,7 +67,7 @@ Hệ thống sử dụng **Spring Security 6** kết hợp **JWT** để phân q
 | Thành phần | Công nghệ sử dụng |
 | :--- | :--- |
 | **Backend** | Spring Boot 3.2.5, Java 21, Spring Security, JWT |
-| **Database** | SQL Server (MSSQL) |
+| **Database** | Hỗ trợ MySQL và SQL Server (MSSQL) |
 | **Adapters** | WebClient (Reactive HTTP) cho Jira/GitHub API |
 | **Reporting** | Apache POI (Word), OpenPDF (PDF), OpenCSV |
 | **Frontend** | React 19, Vite, Vanilla CSS |
@@ -81,12 +85,26 @@ Hệ thống sử dụng **Spring Security 6** kết hợp **JWT** để phân q
 
 ### 2. Thiết lập Database
 
-Tạo cơ sở dữ liệu có tên `prjAppDB` và cập nhật thông tin trong `backend/src/main/resources/application.properties`:
+Dự án hỗ trợ linh hoạt cả **MySQL** và **SQL Server**. Tạo cơ sở dữ liệu có tên `prjAppDB` và cập nhật thông tin trong `backend/src/main/resources/application.properties` tùy theo Database bạn dùng:
 
+**👉 Tùy chọn 1: Sử dụng MySQL (Hiện tại)**
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/prjAppDB?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+spring.datasource.username=root
+spring.datasource.password=Toan20032006@
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+```
+
+**👉 Tùy chọn 2: Sử dụng SQL Server**
 ```properties
 spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=prjAppDB;encrypt=true;trustServerCertificate=true;
-spring.datasource.username=YOUR_USERNAME
+spring.datasource.username=sa
 spring.datasource.password=YOUR_PASSWORD
+spring.datasource.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+spring.jpa.database-platform=org.hibernate.dialect.SQLServerDialect
 ```
 
 ### 3. Chạy ứng dụng
