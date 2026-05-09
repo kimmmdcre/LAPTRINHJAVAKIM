@@ -13,15 +13,18 @@
 ## 🌟 Tính Năng Đặc Sắc
 
 ### 🔄 Đồng Bộ Hóa Đa Nền Tảng
+
 - **Jira Cloud Sync**: Tự động kéo Issues, Tasks và Sub-tasks. Theo dõi trạng thái hoàn thành theo thời gian thực.
 - **GitHub Commit Tracker**: Quét lịch sử commit, tự động liên kết mã nguồn với nhiệm vụ thông qua Issue Key (ví dụ: `PROJ-1`).
 - **Data Mapping**: Thuật toán thông minh giúp đối soát khối lượng công việc thực tế so với kế hoạch trên Jira.
 
 ### 📄 Tự Động Hóa Tài Liệu (Report Studio)
+
 - **SRS Generator**: Kết xuất tài liệu Đặc tả yêu cầu phần mềm (Word) chuyên nghiệp chỉ trong vài giây.
 - **Multi-format Export**: Hỗ trợ xuất báo cáo tổng kết, bảng đóng góp thành viên dưới dạng **PDF**, **DOCX**, và **CSV**.
 
 ### 📊 Dashboard Phân Tích Chuyên Sâu
+
 - Biểu đồ trực quan về tiến độ nhóm và hiệu suất cá nhân.
 - Hệ thống đánh giá năng lực dựa trên XP (điểm tích lũy từ Commit và Task hoàn thành).
 
@@ -43,11 +46,13 @@
 ## 🚦 Hướng Dẫn Cài Đặt Nhanh
 
 ### 1. Yêu cầu hệ thống
+
 - **JDK 21** trở lên (Khuyến nghị Temurin hoặc Oracle JDK).
 - **Node.js v18+**.
 - **Cơ sở dữ liệu**: MySQL 8.0+ hoặc SQL Server 2019+.
 
 ### 2. Cấu hình Database
+
 Tạo cơ sở dữ liệu `prjAppDB`. Cấu hình trong `backend/src/main/resources/application.properties`:
 
 ```properties
@@ -62,12 +67,14 @@ spring.datasource.password=YOUR_PASSWORD
 ### 3. Khởi chạy hệ thống
 
 **Khởi động Backend:**
+
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
 
 **Khởi động Frontend:**
+
 ```bash
 cd frontend
 npm install
@@ -84,11 +91,14 @@ Hệ thống đã cấu hình sẵn bộ dữ liệu mẫu (Data Seed). Mật kh
 | :--- | :--- | :--- |
 | **Quản trị viên** | `admin` | `admin` |
 | **Giảng viên** | `teacher` | `teacher` |
+| **Nhóm trưởng** | `leader` | `leader` |
+| **Thành viên** | `member` | `member` |
 | **Sinh viên** | `student1` | `student1` |
 
 ---
 
 ## 📂 Cấu Trúc Thư Mục
+
 ```text
 LAPTRINHJAVAKIM/
 ├── backend/            # Spring Boot Project

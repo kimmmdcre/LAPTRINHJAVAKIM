@@ -9,8 +9,6 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import javagroup.prjApp.entities.Requirement;
-import javagroup.prjApp.entities.Teacher;
 
 @Entity
 @Table(name = "project_groups")
