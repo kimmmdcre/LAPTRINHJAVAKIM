@@ -38,4 +38,10 @@ public class VcsCommit {
 
     @Column(name = "commit_time")
     private LocalDateTime commitTime;
+
+    @Column(name = "author_email")
+    private String authorEmail;
+
+    @Column(name = "author_name")
+    private String authorName;
 }

@@ -12,17 +12,20 @@ import {
   AlertCircle, 
   Activity,
   CheckCircle2,
-  Calendar
+  Calendar,
+  ArrowLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const SprintProgress = () => {
   const { id: urlGroupId } = useParams();
   const { user } = useAuth();
   const { showToast } = useUI();
   const location = useLocation();
+  const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
-  const paramNhomId = queryParams.get('nhomId');
-  const activeGroupId = urlGroupId || paramNhomId;
+  const paramGroupId = queryParams.get('groupId');
+  const activeGroupId = urlGroupId || paramGroupId;
   
   const [groupId, setGroupId] = useState(activeGroupId);
   const [loading, setLoading] = useState(true);
@@ -35,12 +38,7 @@ const SprintProgress = () => {
       let targetGroupId = activeGroupId;
 
       if (!targetGroupId) {
-        // Find current user's group if not provided via URL
-        const groupsRes = await groupService.getAll();
-        const myGroup = groupsRes.data.find(g => 
-          g.thanhViens?.some(m => m.idSinhVien === user.id)
-        );
-        if (myGroup) targetGroupId = myGroup.idNhom;
+        targetGroupId = user.groupId;
       }
 
       if (targetGroupId) {
@@ -67,8 +65,8 @@ const SprintProgress = () => {
   }, [user, initProgressData]);
 
   const pieData = progressSummary ? [
-    { name: 'Hoàn thành', value: progressSummary.nhiemVuHoanThanh, color: 'var(--success)' },
-    { name: 'Chưa xong', value: progressSummary.tongSoNhiemVu - progressSummary.nhiemVuHoanThanh, color: 'rgba(255,255,255,0.05)' },
+    { name: 'Hoàn thành', value: progressSummary.completedTasks, color: 'var(--success)' },
+    { name: 'Chưa xong', value: progressSummary.totalTasks - progressSummary.completedTasks, color: 'rgba(255,255,255,0.05)' },
   ] : [];
 
   if (loading) return (
@@ -79,11 +77,21 @@ const SprintProgress = () => {
   );
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Tiến độ Dự án (Sprint Status)</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Trực quan hóa khối lượng công việc và vận tốc (Velocity) của nhóm</p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            className="glass-button" 
+            style={{ padding: '0.75rem', borderRadius: '12px' }}
+            title="Quay lại"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Tiến độ Dự án (Sprint)</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Theo dõi vận tốc và khả năng hoàn thành mục tiêu dự án theo thời gian thực</p>
+          </div>
         </div>
         {!activeGroupId && (
           <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', padding: '0.6rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -124,24 +132,24 @@ const SprintProgress = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.05} vertical={false} />
-                  <XAxis dataKey="ngay" stroke="var(--text-hidden)" hide />
+                  <XAxis dataKey="date" stroke="var(--text-hidden)" hide />
                   <YAxis stroke="var(--text-muted)" fontSize={11} axisLine={false} tickLine={false} />
                   <Tooltip 
                     contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
                     itemStyle={{ color: 'white', fontWeight: 'bold' }}
                   />
-                  <Area type="monotone" dataKey="hoanThanh" stroke="var(--primary)" fillOpacity={1} fill="url(#colorSprint)" strokeWidth={4} />
+                  <Area type="monotone" dataKey="completed" stroke="var(--primary)" fillOpacity={1} fill="url(#colorSprint)" strokeWidth={4} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
             <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '2rem' }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Calendar size={14} color="var(--text-muted)" />
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Bắt đầu: {historyData[0]?.ngay || 'N/A'}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Bắt đầu: {historyData[0]?.date || 'N/A'}</span>
                </div>
                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <CheckCircle2 size={14} color="var(--success)" />
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Hiện tại: {progressSummary?.nhiemVuHoanThanh} Nhiệm vụ</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Hiện tại: {progressSummary?.completedTasks} Nhiệm vụ</span>
                </div>
             </div>
           </div>
@@ -174,7 +182,7 @@ const SprintProgress = () => {
                   </PieChart>
                 </ResponsiveContainer>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '2rem', fontWeight: '900', color: 'white' }}>{(progressSummary?.phanTramTienDo || 0).toFixed(0)}%</div>
+                  <div style={{ fontSize: '2rem', fontWeight: '900', color: 'white' }}>{(progressSummary?.progressPercentage || 0).toFixed(0)}%</div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Done</div>
                 </div>
               </div>
@@ -182,11 +190,11 @@ const SprintProgress = () => {
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Tổng số nhiệm vụ</span>
-                  <span style={{ fontWeight: '800', color: 'white' }}>{progressSummary?.tongSoNhiemVu}</span>
+                  <span style={{ fontWeight: '800', color: 'white' }}>{progressSummary?.totalTasks}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.1)' }}>
                   <span style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: '600' }}>Đã hoàn thành</span>
-                  <span style={{ fontWeight: '800', color: 'var(--success)' }}>{progressSummary?.nhiemVuHoanThanh}</span>
+                  <span style={{ fontWeight: '800', color: 'var(--success)' }}>{progressSummary?.completedTasks}</span>
                 </div>
               </div>
             </div>

@@ -262,18 +262,38 @@ const AdminGroups = () => {
                 <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', color: 'var(--primary)' }}>
                   <FolderOpen size={20} />
                 </div>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button className="btn-hover" title="Cấu hình" onClick={() => navigate('/admin/config', { state: { groupId: group.groupId } })} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}>
-                    <Settings size={16} />
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button 
+                    className="glass-button" 
+                    title="Cấu hình kết nối" 
+                    onClick={() => navigate('/admin/config', { state: { groupId: group.groupId } })} 
+                    style={{ padding: '10px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'var(--text-muted)', display: 'flex', transition: 'all 0.2s' }}
+                  >
+                    <Settings size={20} />
                   </button>
-                  <button className="btn-hover" title="Lịch sử Commit" onClick={() => navigate(`/member/commits?groupId=${group.groupId}`)} style={{ background: 'none', border: 'none', color: 'var(--primary)' }}>
-                    <GitCommit size={16} />
+                  <button 
+                    className="glass-button" 
+                    title="Lịch sử Commit" 
+                    onClick={() => navigate(`/member/commits?groupId=${group.groupId}`)} 
+                    style={{ padding: '10px', borderRadius: '12px', background: 'rgba(0, 122, 255, 0.1)', border: '1px solid rgba(0, 122, 255, 0.2)', color: 'var(--primary)', display: 'flex', transition: 'all 0.2s' }}
+                  >
+                    <GitCommit size={20} />
                   </button>
-                  <button className="btn-hover" title="Phân tích" onClick={() => navigate(`/project/heatmap?groupId=${group.groupId}`)} style={{ background: 'none', border: 'none', color: 'var(--accent)' }}>
-                    <Activity size={16} />
+                  <button 
+                    className="glass-button" 
+                    title="Giám sát & Phân tích" 
+                    onClick={() => navigate(`/project/heatmap?groupId=${group.groupId}`)} 
+                    style={{ padding: '10px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)', color: 'var(--accent)', display: 'flex', transition: 'all 0.2s' }}
+                  >
+                    <Activity size={20} />
                   </button>
-                  <button className="btn-hover" title="Xóa nhóm" onClick={() => handleDeleteGroup(group.groupId)} style={{ background: 'none', border: 'none', color: 'var(--danger)' }}>
-                    <Trash2 size={16} />
+                  <button 
+                    className="glass-button" 
+                    title="Xóa nhóm" 
+                    onClick={() => handleDeleteGroup(group.groupId)} 
+                    style={{ padding: '10px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger)', display: 'flex', transition: 'all 0.2s' }}
+                  >
+                    <Trash2 size={20} />
                   </button>
                 </div>
               </div>

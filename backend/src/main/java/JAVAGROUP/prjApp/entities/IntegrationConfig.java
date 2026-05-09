@@ -27,7 +27,8 @@ public class IntegrationConfig {
     @Column(name = "url")
     private String url;
 
-    @Column(name = "api_token", columnDefinition = "NVARCHAR(MAX)")
+    @Lob
+    @Column(name = "api_token")
     private String apiToken;
 
     @Column(name = "email")

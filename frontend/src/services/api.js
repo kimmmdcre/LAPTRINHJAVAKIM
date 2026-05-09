@@ -24,6 +24,7 @@ export const userService = {
   update: (id, data) => api.put(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
   getUnassigned: () => api.get('/users?status=UNASSIGNED'),
+  assignRole: (id, role) => api.patch(`/users/${id}/role`, { role }),
 };
 
 export const groupService = {
@@ -56,7 +57,7 @@ export const reportService = {
   getDetailedCommits: (groupId) => api.get(`/reports/${groupId}/commits/detailed`),
   getContributions: (groupId) => api.get(`/reports/${groupId}/contributions`),
   getPersonalHistory: (studentId) => api.get(`/reports/personal/${studentId}/history`),
-  exportCsv: (groupId) => api.get(`/reports/${groupId}/export`, { responseType: 'blob' }),
+  exportCsv: (groupId) => api.get(`/reports/${groupId}/export/csv`, { responseType: 'blob' }),
   exportDocx: (groupId) => api.get(`/reports/${groupId}/export/docx`, { responseType: 'blob' }),
   exportPdf: (groupId) => api.get(`/reports/${groupId}/export/pdf`, { responseType: 'blob' }),
   exportSRS: (groupId) => api.get(`/reports/${groupId}/export/srs`, { responseType: 'blob' }),
@@ -66,6 +67,10 @@ export const configService = {
   saveConfig: (data) => api.post('/configs', data),
   getConfig: (groupId) => api.get(`/configs?groupId=${groupId}`),
   testConnection: (data) => api.post('/configs/test', data),
+};
+
+export const authService = {
+  changePassword: (data) => api.post('/auth/change-password', data),
 };
 
 export default api;

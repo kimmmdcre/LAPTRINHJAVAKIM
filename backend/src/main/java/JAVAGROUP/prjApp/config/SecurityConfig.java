@@ -60,7 +60,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/groups/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
-                        .requestMatchers("/api/config/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
+                        .requestMatchers("/api/configs/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
+                        .requestMatchers("/api/sync/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
                         .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "TEACHER", "STUDENT")
                         .anyRequest().authenticated());

@@ -37,7 +37,7 @@ public class ConfigController {
      * Save/Update configuration
      */
     @PostMapping
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<Map<String, String>> saveConfig(@RequestBody ConfigDTO dto) {
         configService.saveConfig(dto);
         return ResponseEntity.ok(Map.of("message", "Configuration saved successfully"));
@@ -48,7 +48,7 @@ public class ConfigController {
      * Remove configuration
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<Map<String, String>> removeConfig(@PathVariable UUID id) {
         configService.removeConfig(id);
         return ResponseEntity.ok(Map.of("message", "Configuration removed successfully"));

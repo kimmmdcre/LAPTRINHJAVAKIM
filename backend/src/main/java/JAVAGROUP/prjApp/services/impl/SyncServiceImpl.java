@@ -1,33 +1,18 @@
 package javagroup.prjApp.services.impl;
 
 import javagroup.prjApp.services.SyncService;
-
 import javagroup.prjApp.utils.adapters.IGitHubClient;
 import javagroup.prjApp.utils.adapters.IJiraClient;
 import javagroup.prjApp.dtos.CommitDTO;
 import javagroup.prjApp.dtos.RequirementDTO;
-import javagroup.prjApp.entities.Admin;
-import javagroup.prjApp.entities.BlacklistedToken;
 import javagroup.prjApp.entities.Group;
-import javagroup.prjApp.entities.GroupMember;
-import javagroup.prjApp.entities.GroupMemberId;
 import javagroup.prjApp.entities.IntegrationConfig;
 import javagroup.prjApp.entities.Requirement;
-import javagroup.prjApp.entities.Student;
-import javagroup.prjApp.entities.Task;
-import javagroup.prjApp.entities.Teacher;
-import javagroup.prjApp.entities.User;
 import javagroup.prjApp.entities.VcsCommit;
-import javagroup.prjApp.repositories.AdminRepository;
-import javagroup.prjApp.repositories.BlacklistedTokenRepository;
-import javagroup.prjApp.repositories.GroupMemberRepository;
 import javagroup.prjApp.repositories.GroupRepository;
 import javagroup.prjApp.repositories.IntegrationConfigRepository;
 import javagroup.prjApp.repositories.RequirementRepository;
 import javagroup.prjApp.repositories.StudentRepository;
-import javagroup.prjApp.repositories.TaskRepository;
-import javagroup.prjApp.repositories.TeacherRepository;
-import javagroup.prjApp.repositories.UserRepository;
 import javagroup.prjApp.repositories.VcsCommitRepository;
 
 import org.slf4j.Logger;
@@ -43,7 +28,7 @@ import java.util.regex.Pattern;
 @Service
 public class SyncServiceImpl implements SyncService {
 
-    private static final Logger log = LoggerFactory.getLogger(SyncService.class);
+    private static final Logger log = LoggerFactory.getLogger(SyncServiceImpl.class);
 
     private final IJiraClient jiraClient;
     private final IGitHubClient gitHubClient;
@@ -67,6 +52,7 @@ public class SyncServiceImpl implements SyncService {
         this.studentRepository = studentRepository;
     }
 
+    @Override
     @Transactional
     public void syncJira(UUID groupId) {
         Group group = groupRepository.findById(groupId)
@@ -105,6 +91,7 @@ public class SyncServiceImpl implements SyncService {
         }
     }
 
+    @Override
     @Transactional
     public void syncGithub(UUID groupId) {
         List<IntegrationConfig> configs = integrationConfigRepository.findByGroupId(groupId);
@@ -115,19 +102,32 @@ public class SyncServiceImpl implements SyncService {
         try {
             List<CommitDTO> commits = gitHubClient.getCommits(ghConf.getRepoUrl(), ghConf.getApiToken(), null);
             for (CommitDTO dto : commits) {
-                if (!vcsCommitRepository.existsById(dto.getSha())) {
-                    VcsCommit commit = new VcsCommit();
-                    commit.setSha(dto.getSha());
-                    commit.setMessage(dto.getMessage());
-                    commit.setCommitTime(dto.getCommitTime());
-                    
-                    if (dto.getAuthorEmail() != null) {
-                        studentRepository.findByEmail(dto.getAuthorEmail())
-                                .ifPresent(commit::setStudent);
+                vcsCommitRepository.findById(dto.getSha()).ifPresentOrElse(
+                    existing -> {
+                        existing.setAuthorEmail(dto.getAuthorEmail());
+                        existing.setAuthorName(dto.getAuthorName());
+                        
+                        if (existing.getStudent() == null && dto.getAuthorEmail() != null) {
+                            studentRepository.findByEmail(dto.getAuthorEmail())
+                                    .ifPresent(existing::setStudent);
+                        }
+                        vcsCommitRepository.save(existing);
+                    },
+                    () -> {
+                        VcsCommit commit = new VcsCommit();
+                        commit.setSha(dto.getSha());
+                        commit.setMessage(dto.getMessage());
+                        commit.setCommitTime(dto.getCommitTime());
+                        commit.setAuthorEmail(dto.getAuthorEmail());
+                        commit.setAuthorName(dto.getAuthorName());
+                        
+                        if (dto.getAuthorEmail() != null) {
+                            studentRepository.findByEmail(dto.getAuthorEmail())
+                                    .ifPresent(commit::setStudent);
+                        }
+                        vcsCommitRepository.save(commit);
                     }
-                    
-                    vcsCommitRepository.save(commit);
-                }
+                );
             }
         } catch (Exception e) {
             log.error("Error syncing GitHub for group {}: {}", groupId, e.getMessage());
@@ -135,6 +135,7 @@ public class SyncServiceImpl implements SyncService {
         }
     }
 
+    @Override
     @Transactional
     public void mapTasksToCommits() {
         List<VcsCommit> commits = vcsCommitRepository.findByRequirementIsNull();
@@ -155,10 +156,7 @@ public class SyncServiceImpl implements SyncService {
                     if (doneMatcher.find()) {
                         req.setStatus("DONE");
                         requirementRepository.save(req);
-                        log.info("Automatically updated status of Requirement {} to DONE", jiraKey);
                     }
-                    
-                    log.info("Linked commit {} with requirement {}", commit.getSha(), jiraKey);
                 });
             }
         }

@@ -14,12 +14,15 @@ import {
   Activity,
   Layers,
   ArrowRight,
-  Info
+  Info,
+  ArrowLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const MemberCommits = () => {
   const { user } = useAuth();
   const { showToast } = useUI();
+  const navigate = useNavigate();
   const [commits, setCommits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,11 +86,21 @@ const MemberCommits = () => {
   );
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Lịch sử Đóng góp (Commits)</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Dữ liệu được đồng bộ từ Repository: <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{groupInfo?.groupName}</span></p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            className="glass-button" 
+            style={{ padding: '0.75rem', borderRadius: '12px' }}
+            title="Quay lại"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Lịch sử Đóng góp (Commits)</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Dữ liệu được đồng bộ từ Repository: <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{groupInfo?.groupName}</span></p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
            <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', border: 'none' }}>

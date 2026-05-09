@@ -41,15 +41,13 @@ function App() {
             <Route path="/teacher/classes" element={<TeacherClasses />} />
             <Route path="/teacher/reports" element={<TeacherReports />} />
             
-            {/* Member & Leader Routes */}
+            {/* Member Routes */}
             <Route path="/member/tasks" element={<MemberTasks />} />
             <Route path="/member/commits" element={<MemberCommits />} />
-            <Route path="/leader/tasks" element={<LeaderTasks />} />
             
             <Route path="/project/sprint" element={<SprintProgress />} />
             <Route path="/project/heatmap" element={<ContributionTracking />} />
             
-            <Route path="/reports/generate" element={<ReportGenerator />} />
             <Route path="/profile" element={<PersonalProfile />} />
             
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -8,7 +8,6 @@ import lombok.Setter;
 
 import java.util.List;
 import java.util.UUID;
-import javagroup.prjApp.entities.Group;
 
 @Entity
 @Table(name = "requirements")
@@ -26,10 +25,11 @@ public class Requirement {
     @Column(name = "jira_key")
     private String jiraKey;
 
-    @Column(name = "title", nullable = false, columnDefinition = "NVARCHAR(500)")
+    @Column(name = "title", nullable = false, length = 500)
     private String title;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Lob
+    @Column(name = "description")
     private String description;
 
     @Column(name = "status")
@@ -41,4 +41,12 @@ public class Requirement {
 
     @OneToMany(mappedBy = "requirement", cascade = CascadeType.ALL)
     private List<Task> tasks;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
 }

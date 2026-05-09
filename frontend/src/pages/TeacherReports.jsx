@@ -16,6 +16,7 @@ import {
   Activity, 
   ArrowLeft,
   FileDown,
+  FileText,
   Award,
   Zap,
   CheckCircle2
@@ -32,7 +33,7 @@ const TeacherReports = () => {
   const [loading, setLoading] = useState(true);
   const [progressSummary, setProgressSummary] = useState(null);
   const [historyData, setHistoryData] = useState([]);
-  const [gitStats, setGitStats] = useState([]);
+  const [gitStats, setGitStats] = useState({ chartData: [], totalCommits: 0 });
   const [contributions, setContributions] = useState([]);
 
   const fetchReportData = useCallback(async () => {
@@ -49,14 +50,35 @@ const TeacherReports = () => {
       setGroupInfo(infoRes.data);
       setProgressSummary(progressRes.data);
       setHistoryData(historyRes.data);
-      setContributions(contribRes.data);
       
-      const commitMap = gitRes.data?.commitsByStudent || {};
+      // Sort contributions by completed tasks (primary) and commit count (secondary)
+      const sortedContributions = (contribRes.data || []).sort((a, b) => {
+        if (b.completedTaskCount !== a.completedTaskCount) {
+          return b.completedTaskCount - a.completedTaskCount;
+        }
+        return (b.commitCount || 0) - (a.commitCount || 0);
+      });
+      setContributions(sortedContributions);
+      
+      const gitData = gitRes.data || {};
+      const commitMap = gitData.commitsByStudent || {};
       const formattedGitData = Object.keys(commitMap).map(key => ({
         username: key,
         commits: commitMap[key]
       }));
-      setGitStats(formattedGitData);
+
+      // Calculate Smart Effort Score
+      const progressWeight = (progressRes.data.progressPercentage || 0) * 0.7;
+      const freqValues = Object.values(gitData.frequencyIndex || {});
+      const avgFreq = freqValues.length > 0 ? (freqValues.reduce((a, b) => a + b, 0) / freqValues.length) : 0;
+      const frequencyWeight = (avgFreq * 100) * 0.3;
+      const smartScore = ((progressWeight + frequencyWeight) / 10).toFixed(1);
+
+      setGitStats({
+        chartData: formattedGitData,
+        totalCommits: gitData.totalCommits || 0,
+        effortScore: smartScore
+      });
     } catch (err) {
       console.error('Lỗi tải báo cáo:', err);
       showToast('Có lỗi khi trích xuất dữ liệu báo cáo.', 'danger');
@@ -74,14 +96,16 @@ const TeacherReports = () => {
   const handleExport = async (format) => {
     try {
       showToast(`Đang khởi tạo tệp ${format.toUpperCase()}...`, 'info');
-      const res = format === 'pdf' 
-        ? await reportService.exportPdf(groupId) 
-        : await reportService.exportDocx(groupId);
+      let res;
+      if (format === 'pdf') res = await reportService.exportPdf(groupId);
+      else if (format === 'docx') res = await reportService.exportDocx(groupId);
+      else if (format === 'srs') res = await reportService.exportSRS(groupId);
       
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Bao-cao-nhom-${groupInfo?.groupName}.${format}`);
+      const fileName = format === 'srs' ? `SRS-Nhom-${groupInfo?.groupName}.docx` : `Bao-cao-nhom-${groupInfo?.groupName}.${format}`;
+      link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -116,14 +140,24 @@ const TeacherReports = () => {
     <div className="animate-fade-in">
       {/* Header Section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
-        <div>
-           <button onClick={() => navigate('/teacher/classes')} style={{ background: 'none', border: 'none', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', marginBottom: '1rem' }}>
-             <ArrowLeft size={16} /> Quay lại Lớp học
-           </button>
-           <h2 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Phân tích Dự án: {groupInfo?.groupName}</h2>
-           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>Đề tài: <span style={{ color: 'white', fontWeight: '600' }}>{groupInfo?.projectTopic || 'Chưa cập nhật'}</span></p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+          <button 
+            onClick={() => navigate('/teacher/classes')} 
+            className="glass-button" 
+            style={{ padding: '0.75rem', borderRadius: '12px' }}
+            title="Quay lại Lớp học"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+             <h2 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em', marginBottom: '0.5rem' }}>Phân tích Dự án: {groupInfo?.groupName}</h2>
+             <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>Đề tài: <span style={{ color: 'white', fontWeight: '600' }}>{groupInfo?.projectTopic || 'Chưa cập nhật'}</span></p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
+           <button className="btn btn-outline" onClick={() => handleExport('srs')}>
+             <FileText size={18} /> Xuất SRS
+           </button>
            <button className="btn btn-outline" onClick={() => handleExport('docx')}>
              <FileDown size={18} /> Microsoft Word
            </button>
@@ -137,9 +171,9 @@ const TeacherReports = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
         {[
           { label: 'Tiến độ hoàn thành', value: `${progressSummary?.progressPercentage || 0}%`, sub: `${progressSummary?.completedTasks}/${progressSummary?.totalTasks} Nhiệm vụ`, icon: TrendingUp, color: 'var(--success)' },
-          { label: 'Tổng số Commits', value: gitStats.reduce((acc, curr) => acc + curr.commits, 0), sub: 'Dữ liệu từ GitHub', icon: GitCommit, color: 'var(--accent)' },
-          { label: 'Thành viên nhóm', value: groupInfo?.memberCount || '5', sub: 'Đang hoạt động', icon: Users, color: 'var(--primary)' },
-          { label: 'Điểm nỗ lực trung bình', value: '8.5', sub: 'Dựa trên Task/Commit', icon: Award, color: 'var(--warning)' },
+          { label: 'Tổng số Commits', value: gitStats.totalCommits, sub: 'Dữ liệu từ GitHub', icon: GitCommit, color: 'var(--accent)' },
+          { label: 'Thành viên nhóm', value: groupInfo?.members?.length || '0', sub: 'Đang hoạt động', icon: Users, color: 'var(--primary)' },
+          { label: 'Điểm nỗ lực trung bình', value: `${gitStats.effortScore || '0.0'}/10`, sub: 'Dựa trên Task & Commit', icon: Award, color: 'var(--warning)' },
         ].map((stat, i) => (
           <div key={i} className="glass-card" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
@@ -156,7 +190,6 @@ const TeacherReports = () => {
 
       {/* Main Charts Row */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-        {/* Progress History (Burn-down-ish) */}
         <div className="glass-card" style={{ padding: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -187,7 +220,6 @@ const TeacherReports = () => {
           </div>
         </div>
 
-        {/* Source Code Contributions */}
         <div className="glass-card" style={{ padding: '2rem' }}>
           <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
              <GitCommit size={20} color="var(--accent)" />
@@ -195,7 +227,7 @@ const TeacherReports = () => {
           </h3>
           <div style={{ height: '350px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={gitStats} layout="vertical">
+              <BarChart data={gitStats.chartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                 <XAxis type="number" hide />
                 <YAxis dataKey="username" type="category" stroke="var(--text-muted)" fontSize={11} width={100} axisLine={false} tickLine={false} />
@@ -204,7 +236,7 @@ const TeacherReports = () => {
                   contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--surface-border)', borderRadius: '12px' }}
                 />
                 <Bar dataKey="commits" radius={[0, 6, 6, 0]} barSize={24}>
-                  {gitStats.map((entry, index) => (
+                  {gitStats.chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'var(--primary)' : 'var(--accent)'} fillOpacity={0.8} />
                   ))}
                 </Bar>
@@ -214,7 +246,6 @@ const TeacherReports = () => {
         </div>
       </div>
 
-      {/* Member Contribution Table */}
       <div className="glass-card" style={{ padding: '2rem' }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
            <Zap size={20} color="var(--warning)" />
@@ -233,38 +264,47 @@ const TeacherReports = () => {
               </tr>
             </thead>
             <tbody>
-              {contributions.length > 0 ? contributions.map((m, i) => (
-                <tr key={i} className="table-row-hover">
-                  <td style={{ fontWeight: '800', textAlign: 'center', color: i < 3 ? 'var(--warning)' : 'var(--text-muted)' }}>#{i + 1}</td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                       <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '0.8rem' }}>
-                         {m.studentFullName?.[0]}
-                       </div>
-                       <div>
-                         <p style={{ fontWeight: '700' }}>{m.studentFullName}</p>
-                         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.studentId?.toString().substring(0, 8)}</p>
-                       </div>
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'center', fontWeight: '700' }}>{m.completedTasks}</td>
-                  <td style={{ textAlign: 'center', fontWeight: '700', color: 'var(--accent)' }}>{m.commitCount}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'center' }}>
-                      <div style={{ width: '100px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-                        <div style={{ width: `${Math.min((m.completedTasks || 0) * 20, 100)}%`, height: '100%', background: 'var(--primary)' }}></div>
-                      </div>
-                      <span style={{ fontSize: '0.8rem', fontWeight: '800' }}>{m.completedTasks || 0} tasks</span>
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '20px', background: m.completedTasks > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: m.completedTasks > 0 ? 'var(--success)' : 'var(--danger)', fontSize: '0.7rem', fontWeight: '900' }}>
-                       {m.completedTasks > 0 ? <CheckCircle2 size={12} /> : <Zap size={12} />}
-                       {m.completedTasks > 0 ? 'ACTIVE' : 'INACTIVE'}
-                    </div>
-                  </td>
-                </tr>
-              )) : (
+              {contributions.length > 0 ? (
+                contributions.map((m, i) => {
+                  const totalCompleted = contributions.reduce((acc, curr) => acc + (curr.completedTaskCount || 0), 0);
+                  const contribPercent = totalCompleted > 0 ? Math.round(((m.completedTaskCount || 0) / totalCompleted) * 100) : 0;
+                  
+                  return (
+                    <tr key={i} className="table-row-hover">
+                      <td style={{ fontWeight: '800', textAlign: 'center', color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'var(--text-muted)' }}>
+                        {i === 0 ? <Award size={20} /> : `#${i + 1}`}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                           <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '0.8rem' }}>
+                             {m.studentName?.[0]}
+                           </div>
+                           <div>
+                             <p style={{ fontWeight: '700' }}>{m.studentName}</p>
+                             <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.studentId?.toString().substring(0, 8)}</p>
+                           </div>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'center', fontWeight: '700' }}>{m.completedTaskCount}</td>
+                      <td style={{ textAlign: 'center', fontWeight: '700', color: 'var(--accent)' }}>{m.commitCount}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'center' }}>
+                          <div style={{ width: '100px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+                            <div style={{ width: `${contribPercent}%`, height: '100%', background: i === 0 ? 'var(--warning)' : 'var(--primary)' }}></div>
+                          </div>
+                          <span style={{ fontSize: '0.8rem', fontWeight: '800' }}>{contribPercent}%</span>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '20px', background: m.completedTaskCount > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: m.completedTaskCount > 0 ? 'var(--success)' : 'var(--danger)', fontSize: '0.7rem', fontWeight: '900' }}>
+                           {m.completedTaskCount > 0 ? <CheckCircle2 size={12} /> : <Zap size={12} />}
+                           {m.completedTaskCount > 0 ? 'ACTIVE' : 'INACTIVE'}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
                 <tr>
                   <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Chưa có dữ liệu đóng góp thực tế.</td>
                 </tr>

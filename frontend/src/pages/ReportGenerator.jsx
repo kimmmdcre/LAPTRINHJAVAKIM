@@ -65,19 +65,19 @@ const ReportGenerator = () => {
 
       switch (type) {
         case 'csv':
-          res = await reportService.exportCsv(groupInfo.idNhom);
+          res = await reportService.exportCsv(groupInfo.groupId);
           filename = `bao-cao-nhom-${groupInfo.groupName}.csv`;
           break;
         case 'srs':
-          res = await reportService.exportSRS(groupInfo.idNhom);
+          res = await reportService.exportSRS(groupInfo.groupId);
           filename = `SRS-nhom-${groupInfo.groupName}.docx`;
           break;
         case 'docx':
-          res = await reportService.exportDocx(groupInfo.idNhom);
+          res = await reportService.exportDocx(groupInfo.groupId);
           break;
         case 'pdf':
         default:
-          res = await reportService.exportPdf(groupInfo.idNhom);
+          res = await reportService.exportPdf(groupInfo.groupId);
           break;
       }
 

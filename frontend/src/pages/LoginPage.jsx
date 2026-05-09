@@ -121,14 +121,14 @@ const LoginPage = () => {
 
         <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
           <div className="input-group">
-            <label className="input-label">Tài khoản</label>
+            <label className="input-label">Tài khoản hoặc Email</label>
             <div style={{ position: 'relative' }}>
               <User size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="text"
                 className="input-field"
                 style={{ paddingLeft: '48px' }}
-                placeholder="Username"
+                placeholder="Username or Email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -190,7 +190,7 @@ const LoginPage = () => {
           gap: '1rem'
         }}>
           <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600', letterSpacing: '0.05em' }}>
-             © 2024 UTH - CÔNG NGHỆ THÔNG TIN
+             © 2026 UTH - CÔNG NGHỆ THÔNG TIN
           </p>
         </div>
       </div>

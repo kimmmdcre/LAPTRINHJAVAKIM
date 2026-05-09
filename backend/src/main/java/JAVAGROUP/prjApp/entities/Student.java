@@ -6,7 +6,6 @@ import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import javagroup.prjApp.entities.GroupMember;
 
 @Entity
 @Table(name = "students")

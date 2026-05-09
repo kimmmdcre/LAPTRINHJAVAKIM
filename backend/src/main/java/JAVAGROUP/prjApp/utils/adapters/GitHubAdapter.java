@@ -2,12 +2,12 @@ package javagroup.prjApp.utils.adapters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import javagroup.prjApp.dtos.CommitDTO;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -47,18 +47,31 @@ public class GitHubAdapter implements IGitHubClient {
             }
             log.info("--------------------------------------------------");
  
-            List<Map<String, Object>> rawCommits = webClient.get()
+            Object responseBody = webClient.get()
                     .uri(uri)
                     .header("Authorization", "token " + accessToken)
                     .header("Accept", "application/vnd.github+json")
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                    .onStatus(status -> status.isError(), response -> 
+                        response.bodyToMono(Map.class).flatMap(errorBody -> {
+                            String msg = (String) errorBody.get("message");
+                            return Mono.error(new RuntimeException("GitHub API Error: " + (msg != null ? msg : "Unknown error")));
+                        })
+                    )
+                    .bodyToMono(Object.class)
                     .block();
 
-            log.info("GitHub response: found {} commits", rawCommits != null ? rawCommits.size() : 0);
+            if (!(responseBody instanceof List)) {
+                log.error("GitHub API returned an object instead of a list: {}", responseBody);
+                throw new RuntimeException("GitHub API returned unexpected data format. Please check your repository URL.");
+            }
+            
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> rawCommits = (List<Map<String, Object>>) responseBody;
+
+            log.info("GitHub response: found {} commits", rawCommits.size());
 
             List<CommitDTO> result = new ArrayList<>();
-            if (rawCommits == null) return result;
 
             for (Map<String, Object> raw : rawCommits) {
                 String sha = (String) raw.get("sha");
@@ -128,15 +141,14 @@ public class GitHubAdapter implements IGitHubClient {
         }
     }
 
-    private String parseRepoPath(String input) {
+    String parseRepoPath(String input) {
         if (input == null || input.isEmpty()) return "";
-        String path = input.replace("https://github.com/", "").replace("http://github.com/", "");
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-        if (path.endsWith(".git")) {
-            path = path.substring(0, path.length() - 4);
-        }
+        // Remove fragment/anchor and then remove all whitespace
+        String path = input.split("#")[0].replaceAll("\\s+", "");
+        // Remove protocol and domain (case-insensitive)
+        path = path.replaceAll("(?i)^(https?://)?(www\\.)?github\\.com/", "");
+        // Remove trailing slash and .git suffix (case-insensitive)
+        path = path.replaceAll("/$", "").replaceAll("(?i)\\.git$", "");
         return path;
     }
 }

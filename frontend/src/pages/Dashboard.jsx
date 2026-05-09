@@ -39,22 +39,44 @@ const Dashboard = () => {
           userService.getAll(),
           groupService.getAll()
         ]);
+        
+        const rawGroups = groupsRes.data || [];
+        const top5 = rawGroups.slice(0, 5);
+        
+        // Fetch real progress for these groups
+        const progressPromises = top5.map(g => 
+          reportService.getProgress(g.groupId).catch(() => ({ data: { progressPercentage: 0 } }))
+        );
+        const progressResults = await Promise.all(progressPromises);
+
         setStats(prev => ({
           ...prev,
           totalUsers: usersRes.data.length,
-          totalGroups: groupsRes.data.length,
-          topPerformers: groupsRes.data.slice(0, 5).map(g => ({ 
+          totalGroups: rawGroups.length,
+          topPerformers: top5.map((g, i) => ({ 
             name: g.groupName, 
-            progress: Math.floor(Math.random() * 40) + 60 
+            progress: progressResults[i].data.progressPercentage || 0
           }))
         }));
       } else if (role === 'TEACHER') {
         const res = await groupService.getByTeacher(user.id);
-        const myGroups = res.data;
+        const myGroups = res.data || [];
+        
+        // Fetch real progress for each group
+        const progressPromises = myGroups.map(g => 
+          reportService.getProgress(g.groupId).catch(() => ({ data: { progressPercentage: 0 } }))
+        );
+        const progressResults = await Promise.all(progressPromises);
+
+        const enrichedGroups = myGroups.map((g, i) => ({
+          ...g,
+          progress: progressResults[i].data.progressPercentage || 0
+        }));
+
         setStats(prev => ({
           ...prev,
-          totalGroups: myGroups.length,
-          myGroups: myGroups
+          totalGroups: enrichedGroups.length,
+          myGroups: enrichedGroups
         }));
       } else if (role === 'STUDENT') {
         const myTasksRes = await taskService.getMine(user.id);
@@ -148,7 +170,11 @@ const Dashboard = () => {
         </div>
         <div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Cần đánh giá</p>
-          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>{stats.myGroups.some(g => (g.progress || 0) > 80) ? '2 nhóm' : 'Sẵn sàng'}</h3>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: '800' }}>
+            {stats.myGroups.filter(g => (g.progress || 0) >= 80).length > 0 
+              ? `${stats.myGroups.filter(g => (g.progress || 0) >= 80).length} nhóm` 
+              : 'Sẵn sàng'}
+          </h3>
         </div>
       </div>
     </div>
@@ -223,7 +249,13 @@ const Dashboard = () => {
               <Zap size={20} color="var(--warning)" />
               Hoạt động quan trọng
             </h3>
-            <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Xem tất cả</button>
+            <button 
+              className="btn btn-outline" 
+              style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+              onClick={() => navigate(role === 'STUDENT' ? '/member/tasks' : '/teacher/classes')}
+            >
+              Xem tất cả
+            </button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -252,7 +284,13 @@ const Dashboard = () => {
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{g.projectTopic || 'Chưa cập nhật đề tài'}</p>
                   </div>
                 </div>
-                <ArrowRight size={18} color="var(--text-muted)" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontWeight: '800', color: 'var(--success)', fontSize: '1.1rem' }}>{g.progress}%</p>
+                    <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700' }}>Tiến độ</p>
+                  </div>
+                  <ArrowRight size={18} color="var(--text-muted)" />
+                </div>
               </div>
             ))}
 
@@ -277,44 +315,7 @@ const Dashboard = () => {
 
         {/* Quick Actions / Sidebar Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <h4 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '1.25rem' }}>Lối tắt nhanh</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {role === 'ADMIN' && (
-                <>
-                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/admin/users')}>
-                    <Users size={16} /> Quản lý Nhân sự
-                  </button>
-                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/admin/groups')}>
-                    <LayoutGrid size={16} /> Thiết lập Nhóm
-                  </button>
-                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/admin/config')}>
-                    <Settings size={16} /> Cấu hình Jira/Git
-                  </button>
-                </>
-              )}
-              {role === 'TEACHER' && (
-                <>
-                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/teacher/classes')}>
-                    <LayoutGrid size={16} /> Danh sách Nhóm
-                  </button>
-                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/teacher/reports')}>
-                    <Activity size={16} /> Phân tích Tiến độ
-                  </button>
-                </>
-              )}
-              {role === 'STUDENT' && (
-                <>
-                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/member/tasks')}>
-                    <CheckSquare size={16} /> Nhiệm vụ Jira
-                  </button>
-                  <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => navigate('/member/commits')}>
-                    <FileText size={16} /> Lịch sử Commits
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+
 
           <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))' }}>
             <h4 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '0.75rem' }}>Thông báo mới</h4>

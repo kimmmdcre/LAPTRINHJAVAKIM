@@ -8,7 +8,6 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import javagroup.prjApp.entities.Student;
 
 @Entity
 @Table(name = "tasks")
@@ -23,10 +22,11 @@ public class Task {
     @Column(name = "task_id", updatable = false, nullable = false)
     private UUID taskId;
 
-    @Column(name = "task_name", nullable = false, columnDefinition = "NVARCHAR(500)")
+    @Column(name = "task_name", nullable = false, length = 500)
     private String taskName;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Lob
+    @Column(name = "description")
     private String description;
 
     @Column(name = "status")

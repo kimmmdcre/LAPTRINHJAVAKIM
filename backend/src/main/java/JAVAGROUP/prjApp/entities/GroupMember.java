@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import javagroup.prjApp.entities.Student;
 
 @Entity
 @Table(name = "group_members")

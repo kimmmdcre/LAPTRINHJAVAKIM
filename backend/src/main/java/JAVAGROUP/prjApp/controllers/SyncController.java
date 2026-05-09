@@ -12,7 +12,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/sync")
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
 public class SyncController {
 
     private final SyncService syncService;

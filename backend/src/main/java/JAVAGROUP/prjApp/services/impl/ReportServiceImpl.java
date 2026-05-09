@@ -53,15 +53,17 @@ public class ReportServiceImpl implements ReportService {
         this.requirementRepository = requirementRepository;
     }
 
+    @Override
     public ProgressDTO getProjectProgress(UUID groupId) {
-        List<Task> tasks = taskRepository.findByRequirement_ProjectGroup_GroupId(groupId);
+        List<Requirement> requirements = requirementRepository.findByProjectGroup_GroupId(groupId);
 
-        int total = tasks.size();
-        long done = tasks.stream().filter(task -> "DONE".equalsIgnoreCase(task.getStatus())).count();
+        int total = requirements.size();
+        long done = requirements.stream().filter(req -> "DONE".equalsIgnoreCase(req.getStatus())).count();
         double percent = total == 0 ? 0.0 : (double) done / total * 100;
         return new ProgressDTO(groupId, total, (int) done, percent);
     }
 
+    @Override
     public GitStatsDTO getGithubStats(UUID groupId) {
         List<VcsCommit> commits = vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId);
 
@@ -70,8 +72,14 @@ public class ReportServiceImpl implements ReportService {
         Map<String, Double> totalQualityScore = new HashMap<>();
 
         for (VcsCommit c : commits) {
+            String name = null;
             if (c.getStudent() != null) {
-                String name = c.getStudent().getFullName();
+                name = c.getStudent().getFullName();
+            } else if (c.getAuthorName() != null) {
+                name = c.getAuthorName() + " (GitHub)";
+            }
+
+            if (name != null) {
                 commitsByStudent.merge(name, 1, (oldVal, newVal) -> oldVal + newVal);
                 
                 if (c.getCommitTime() != null) {
@@ -85,7 +93,7 @@ public class ReportServiceImpl implements ReportService {
                     if (c.getMessage().length() > 20) score += 0.4;
                     if (c.getMessage().matches(".*[A-Z]+-\\d+.*")) score += 0.6;
                 }
-                totalQualityScore.merge(name, score, Double::sum);
+                totalQualityScore.merge(name, Double.valueOf(score), (v1, v2) -> Double.valueOf(v1.doubleValue() + v2.doubleValue()));
             }
         }
 
@@ -104,17 +112,23 @@ public class ReportServiceImpl implements ReportService {
         return new GitStatsDTO(groupId, commits.size(), commitsByStudent, frequencyIndex, qualityIndex);
     }
 
+    @Override
     public List<Map<String, Object>> getProgressHistory(UUID groupId) {
-        List<Task> tasks = taskRepository.findByRequirement_ProjectGroup_GroupId(groupId).stream()
-                .filter(task -> "DONE".equalsIgnoreCase(task.getStatus()) && task.getUpdatedAt() != null)
-                .sorted(Comparator.comparing(Task::getUpdatedAt))
+        List<Requirement> reqs = requirementRepository.findByProjectGroup_GroupId(groupId).stream()
+                .filter(req -> "DONE".equalsIgnoreCase(req.getStatus()))
+                .sorted((a, b) -> {
+                    java.time.LocalDateTime t1 = a.getUpdatedAt() != null ? a.getUpdatedAt() : (a.getCreatedAt() != null ? a.getCreatedAt() : java.time.LocalDateTime.now());
+                    java.time.LocalDateTime t2 = b.getUpdatedAt() != null ? b.getUpdatedAt() : (b.getCreatedAt() != null ? b.getCreatedAt() : java.time.LocalDateTime.now());
+                    return t1.compareTo(t2);
+                })
                 .collect(Collectors.toList());
 
         Map<String, Integer> completionsByDay = new LinkedHashMap<>();
         int currentTotal = 0;
         
-        for (Task task : tasks) {
-            String date = task.getUpdatedAt().toLocalDate().toString();
+        for (Requirement req : reqs) {
+            java.time.LocalDateTime ts = req.getUpdatedAt() != null ? req.getUpdatedAt() : (req.getCreatedAt() != null ? req.getCreatedAt() : java.time.LocalDateTime.now());
+            String date = ts.toLocalDate().toString();
             currentTotal++;
             completionsByDay.put(date, currentTotal); 
         }
@@ -129,6 +143,7 @@ public class ReportServiceImpl implements ReportService {
         return data;
     }
 
+    @Override
     public List<Map<String, Object>> getPersonalCommitHistory(UUID studentId) {
         List<VcsCommit> commits = vcsCommitRepository.findAll().stream()
                 .filter(c -> c.getStudent() != null && studentId.equals(c.getStudent().getId()) && c.getCommitTime() != null)
@@ -138,6 +153,7 @@ public class ReportServiceImpl implements ReportService {
         return toHistoryData(commits);
     }
 
+    @Override
     public List<Map<String, Object>> getGroupCommitHistory(UUID groupId) {
         List<VcsCommit> commits = vcsCommitRepository.findAll().stream()
                 .filter(c -> c.getRequirement() != null
@@ -150,6 +166,7 @@ public class ReportServiceImpl implements ReportService {
         return toHistoryData(commits);
     }
 
+    @Override
     public List<CommitDTO> getGroupCommitDetails(UUID groupId) {
         return vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId).stream()
                 .sorted(Comparator.comparing(VcsCommit::getCommitTime).reversed())
@@ -161,6 +178,9 @@ public class ReportServiceImpl implements ReportService {
                     if (c.getStudent() != null) {
                         dto.setAuthorName(c.getStudent().getFullName());
                         dto.setAuthorEmail(c.getStudent().getEmail());
+                    } else if (c.getAuthorName() != null) {
+                        dto.setAuthorName(c.getAuthorName() + " (GitHub)");
+                        dto.setAuthorEmail(c.getAuthorEmail());
                     } else {
                         dto.setAuthorName("Unknown");
                     }
@@ -190,6 +210,7 @@ public class ReportServiceImpl implements ReportService {
         return data;
     }
 
+    @Override
     public List<ContributionDTO> getPersonalContributions(UUID groupId) {
         return groupMemberRepository.findById_GroupId(groupId).stream()
                 .map(gm -> {
@@ -197,7 +218,7 @@ public class ReportServiceImpl implements ReportService {
                     List<Task> tasks = taskRepository.findByStudent_Id(student.getId());
                     long doneTasks = tasks.stream()
                             .filter(task -> "DONE".equalsIgnoreCase(task.getStatus())).count();
-                    long commitCount = vcsCommitRepository.findAll().stream()
+                    long commitCount = vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId).stream()
                             .filter(c -> c.getStudent() != null && student.getId().equals(c.getStudent().getId()))
                             .count();
                     return new ContributionDTO(student.getId(), student.getFullName(), (int) doneTasks, (int) commitCount);
@@ -205,6 +226,7 @@ public class ReportServiceImpl implements ReportService {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public Resource exportSummaryReport(UUID groupId) {
         ProgressDTO progress = getProjectProgress(groupId);
         List<ContributionDTO> contributions = getPersonalContributions(groupId);
@@ -225,6 +247,7 @@ public class ReportServiceImpl implements ReportService {
         return new ByteArrayResource(sb.toString().getBytes(StandardCharsets.UTF_8));
     }
 
+    @Override
     public Resource exportDocxReport(UUID groupId) throws IOException {
         ProgressDTO progress = getProjectProgress(groupId);
         List<ContributionDTO> contributions = getPersonalContributions(groupId);
@@ -260,6 +283,7 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    @Override
     public Resource exportPdfReport(UUID groupId) {
         ProgressDTO progress = getProjectProgress(groupId);
         List<ContributionDTO> contributions = getPersonalContributions(groupId);
@@ -296,6 +320,7 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    @Override
     public Resource exportSrsReport(UUID groupId) throws IOException {
         List<Requirement> requirements = requirementRepository.findByProjectGroup_GroupId(groupId);
 

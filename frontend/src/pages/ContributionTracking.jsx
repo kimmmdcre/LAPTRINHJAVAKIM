@@ -14,12 +14,15 @@ import {
   Users, 
   Award,
   ChevronRight,
-  Info
+  Info,
+  ArrowLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ContributionTracking = () => {
   const { user } = useAuth();
   const { showToast } = useUI();
+  const navigate = useNavigate();
   const [contributions, setContributions] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,11 +94,21 @@ const ContributionTracking = () => {
   );
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Báo cáo Đóng góp & Analytics</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Phân tích sâu hiệu năng lập trình và tần suất hoàn thành mục tiêu</p>
+    <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            className="glass-button" 
+            style={{ padding: '0.75rem', borderRadius: '12px' }}
+            title="Quay lại"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Báo cáo Đóng góp & Analytics</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Phân tích chuyên sâu về tần suất commit và chất lượng mã nguồn của từng thành viên</p>
+          </div>
         </div>
         <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', padding: '0.6rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '800' }}>
            Group: {groupInfo?.groupName || 'N/A'}
@@ -220,28 +233,49 @@ const ContributionTracking = () => {
 
         {/* Contribution Insights */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-           <div className="glass-card" style={{ padding: '2rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))' }}>
+            <div className="glass-card" style={{ padding: '2rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))' }}>
               <h3 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                  <Award size={18} color="var(--warning)" />
                  Insight & Phần thưởng
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {contributions.slice(0, 1).map((top, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                       <div style={{ width: '40px', height: '40px', background: 'var(--warning)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
-                          <Zap size={20} fill="black" />
-                       </div>
-                       <div>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOP CONTRIBUTOR</p>
-                          <p style={{ fontWeight: '800' }}>{top.studentName}</p>
-                       </div>
-                    </div>
-                  ))}
-                 <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--warning)' }}>
-                    Mức độ đồng đều của nhóm đang đạt <strong>tốt</strong>. 80% nhiệm vụ đã được mapping với commit tương ứng.
-                 </div>
+                  {contributions.length > 0 ? (
+                    (() => {
+                      const sorted = [...contributions].sort((a, b) => b.commitCount - a.commitCount);
+                      const top = sorted[0];
+                      const totalCommits = contributions.reduce((sum, c) => sum + c.commitCount, 0);
+                      const mappingRate = history.length > 0 ? Math.min(100, Math.round((totalCommits / (groupInfo?.memberCount || 5) * 10))) : 0;
+                      
+                      return (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ width: '40px', height: '40px', background: 'var(--warning)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
+                                <Zap size={20} fill="black" />
+                            </div>
+                            <div>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOP CONTRIBUTOR</p>
+                                <p style={{ fontWeight: '800' }}>{top.commitCount > 0 ? top.studentName : 'Đang chờ bứt phá...'}</p>
+                            </div>
+                          </div>
+                          
+                          <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--warning)' }}>
+                             {totalCommits > 0 ? (
+                               <span>
+                                 Mức độ hoạt động của nhóm đang ở mức <strong>{totalCommits > 10 ? 'Sôi nổi' : 'Ổn định'}</strong>. 
+                                 Dự án đã ghi nhận {totalCommits} đóng góp từ các thành viên.
+                               </span>
+                             ) : (
+                               <span>Hãy bắt đầu commit để hệ thống phân tích insight cho nhóm của bạn.</span>
+                             )}
+                          </div>
+                        </>
+                      );
+                    })()
+                  ) : (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Chưa có dữ liệu đóng góp.</p>
+                  )}
               </div>
-           </div>
+            </div>
 
            <div className="glass-card" style={{ padding: '1.5rem' }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '1rem' }}>Mẹo tối ưu Analytics</h4>

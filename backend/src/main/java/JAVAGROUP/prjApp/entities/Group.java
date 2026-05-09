@@ -25,10 +25,10 @@ public class Group {
     @Column(name = "group_id", updatable = false, nullable = false)
     private UUID groupId;
 
-    @Column(name = "group_name", nullable = false, columnDefinition = "NVARCHAR(255)")
+    @Column(name = "group_name", nullable = false)
     private String groupName;
 
-    @Column(name = "project_topic", columnDefinition = "NVARCHAR(500)")
+    @Column(name = "project_topic", length = 500)
     private String projectTopic;
 
     @ManyToOne

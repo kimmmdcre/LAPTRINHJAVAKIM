@@ -92,10 +92,10 @@ public class ReportController {
     }
 
     /**
-     * GET /api/reports/{groupId}/export
+     * GET /api/reports/{groupId}/export/csv
      * Export summary report as CSV
      */
-    @GetMapping("/{groupId}/export")
+    @GetMapping("/{groupId}/export/csv")
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<Resource> exportSummaryReport(@PathVariable UUID groupId) {
         Resource file = reportService.exportSummaryReport(groupId);

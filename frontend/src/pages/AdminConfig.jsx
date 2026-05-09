@@ -20,9 +20,10 @@ import {
   Cpu,
   ChevronRight,
   Wifi,
-  WifiOff
+  WifiOff,
+  ArrowLeft
 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const AdminConfig = () => {
   const location = useLocation();
@@ -39,6 +40,7 @@ const AdminConfig = () => {
 
   const { user } = useAuth();
   const { showToast } = useUI();
+  const navigate = useNavigate();
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -81,7 +83,7 @@ const AdminConfig = () => {
 
   const fetchGroups = useCallback(async () => {
     try {
-      setLoading(true);
+      // Chỉ hiện loading nếu chưa có gì
       setError(null);
       const res = await groupService.getAll();
       if (!isMounted.current) return;
@@ -95,20 +97,27 @@ const AdminConfig = () => {
       setGroups(filteredGroups);
 
       if (filteredGroups.length > 0) {
-        const targetId = location.state?.groupId || user?.groupId || filteredGroups[0]?.groupId;
-        if (targetId) {
-          setActiveGroupId(targetId);
-          fetchCurrentConfig(targetId);
-        }
+        // Sử dụng một hàm local để tránh phụ thuộc vào activeGroupId trong dependency array
+        setActiveGroupId(prevId => {
+          const targetId = prevId || location.state?.groupId || user?.groupId || filteredGroups[0]?.groupId;
+          if (targetId) {
+            fetchCurrentConfig(targetId);
+          }
+          return targetId;
+        });
       }
     } catch (err) {
       console.error('Groups Fetch Error:', err);
       setError('Không thể kết nối đến hệ thống máy chủ. Vui lòng kiểm tra lại đường truyền.');
-      showToast('Không thể kết nối đến danh sách nhóm.', 'danger');
     } finally {
       if (isMounted.current) setLoading(false);
     }
-  }, [location.state?.groupId, user?.groupId, user?.role, user?.id, fetchCurrentConfig, showToast]);
+  }, [location.state?.groupId, user?.groupId, user?.role, user?.id, fetchCurrentConfig]);
+
+  const handleRefresh = async () => {
+    await fetchGroups();
+    showToast('Đã làm mới trạng thái hệ thống!', 'success');
+  };
 
   // Fetch stats separately to avoid blocking main UI
   useEffect(() => {
@@ -252,11 +261,21 @@ const AdminConfig = () => {
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Trung tâm Kết nối & Tích hợp</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Quản lý luồng dữ liệu Jira Cloud và GitHub Source Control</p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            className="glass-button" 
+            style={{ padding: '0.75rem', borderRadius: '12px' }}
+            title="Quay lại"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Trung tâm Kết nối & Tích hợp</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Quản lý luồng dữ liệu Jira Cloud và GitHub Source Control</p>
+          </div>
         </div>
-        <button className="btn btn-outline" onClick={fetchGroups}>
+        <button className="btn btn-outline" onClick={handleRefresh}>
           <RefreshCw size={18} /> Làm mới trạng thái
         </button>
       </div>
@@ -374,23 +393,23 @@ const AdminConfig = () => {
                   </div>
                 </div>
 
-                <div style={{ marginTop: 'auto', paddingTop: '2.5rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr', gap: '1rem', marginBottom: '1rem' }}>
-                    <button className="btn btn-outline" style={{ justifyContent: 'center' }} onClick={() => handleTest('Jira')}>
-                      Test Ping
+                <div style={{ marginTop: 'auto', paddingTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <button className="glass-button" style={{ justifyContent: 'center', padding: '0.75rem' }} onClick={() => handleTest('Jira')}>
+                      <Wifi size={18} /> Test Ping
                     </button>
-                    <button className="btn btn-primary" style={{ justifyContent: 'center' }} onClick={handleSaveJira} disabled={isSaving}>
-                      <Save size={18} /> Lưu Cấu hình Jira
+                    <button className="glass-button" style={{ justifyContent: 'center', padding: '0.75rem', background: 'rgba(99, 102, 241, 0.2)', border: '1px solid var(--primary)' }} onClick={handleSaveJira} disabled={isSaving}>
+                      <Save size={18} color="var(--primary)" /> <span style={{ color: 'var(--primary)', fontWeight: '800' }}>Lưu Jira</span>
                     </button>
                   </div>
                   <button
-                    className="btn btn-outline"
-                    style={{ width: '100%', justifyContent: 'center', background: 'rgba(99, 102, 241, 0.03)', borderStyle: 'dashed' }}
+                    className="glass-button"
+                    style={{ width: '100%', justifyContent: 'center', padding: '1rem', borderStyle: 'dashed', background: 'rgba(99, 102, 241, 0.05)' }}
                     onClick={() => handleSync('jira')}
                     disabled={syncing.jira}
                   >
-                    {syncing.jira ? <RefreshCw size={18} className="animate-spin" /> : <RefreshCw size={18} />}
-                    Fetch & Synchronize Tasks
+                    {syncing.jira ? <RefreshCw size={20} className="animate-spin" /> : <RefreshCw size={20} color="var(--primary)" />}
+                    <span style={{ marginLeft: '0.5rem', fontWeight: '800' }}>FETCH JIRA TASKS</span>
                   </button>
                 </div>
               </div>
@@ -422,23 +441,23 @@ const AdminConfig = () => {
                   </div>
                 </div>
 
-                <div style={{ marginTop: 'auto', paddingTop: '2.5rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2.5fr', gap: '1rem', marginBottom: '1rem' }}>
-                    <button className="btn btn-outline" style={{ justifyContent: 'center' }} onClick={() => handleTest('GitHub')}>
-                      Ping Git
+                <div style={{ marginTop: 'auto', paddingTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <button className="glass-button" style={{ justifyContent: 'center', padding: '0.75rem' }} onClick={() => handleTest('GitHub')}>
+                      <Wifi size={18} /> Test Ping
                     </button>
-                    <button className="btn btn-primary" style={{ justifyContent: 'center', background: 'linear-gradient(135deg, #24292f, #444d56)' }} onClick={handleSaveGithub} disabled={isSaving}>
-                      <Save size={18} /> Lưu Cấu hình Git
+                    <button className="glass-button" style={{ justifyContent: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid white' }} onClick={handleSaveGithub} disabled={isSaving}>
+                      <Save size={18} /> <span style={{ fontWeight: '800' }}>Lưu Git</span>
                     </button>
                   </div>
                   <button
-                    className="btn btn-outline"
-                    style={{ width: '100%', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', borderStyle: 'dashed' }}
+                    className="glass-button"
+                    style={{ width: '100%', justifyContent: 'center', padding: '1rem', borderStyle: 'dashed', background: 'rgba(255,255,255,0.05)' }}
                     onClick={() => handleSync('github')}
                     disabled={syncing.github}
                   >
-                    {syncing.github ? <RefreshCw size={18} className="animate-spin" /> : <RefreshCw size={18} />}
-                    Fetch & Map Commit History
+                    {syncing.github ? <RefreshCw size={20} className="animate-spin" /> : <RefreshCw size={20} color="var(--secondary)" />}
+                    <span style={{ marginLeft: '0.5rem', fontWeight: '800' }}>FETCH GITHUB COMMITS</span>
                   </button>
                 </div>
               </div>

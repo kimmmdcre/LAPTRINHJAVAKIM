@@ -38,7 +38,6 @@ const Sidebar = () => {
     if (role === 'TEACHER' || role === 'ADMIN') {
       links.push({ isHeader: true, label: 'GIÁM SÁT' });
       links.push({ icon: <Database size={20} />, label: 'Lớp học', path: '/teacher/classes' });
-      links.push({ icon: <BarChart3 size={20} />, label: 'Báo cáo Tổng quát', path: '/teacher/reports' });
     }
 
     if (role === 'STUDENT') {
@@ -46,15 +45,10 @@ const Sidebar = () => {
       links.push({ icon: <CheckSquare size={20} />, label: 'Nhiệm vụ Jira', path: '/member/tasks' });
       links.push({ icon: <GitCommit size={20} />, label: 'Lịch sử Commits', path: '/member/commits' });
       
-      if (user?.groupRole === 'LEADER') {
-        links.push({ icon: <Layers size={20} />, label: 'Quản lý Nhóm (Leader)', path: '/leader/tasks' });
-        links.push({ icon: <Settings size={20} />, label: 'Cấu hình Dự án', path: '/admin/config' });
-      }
+      // Học sinh vẫn cần xem tiến độ nhóm mình
+      links.push({ isHeader: true, label: 'PHÂN TÍCH' });
+      links.push({ icon: <Activity size={20} />, label: 'Tiến độ Sprint', path: '/project/sprint' });
     }
-
-    links.push({ isHeader: true, label: 'PHÂN TÍCH' });
-    links.push({ icon: <Activity size={20} />, label: 'Tiến độ Sprint', path: '/project/sprint' });
-    links.push({ icon: <FileText size={20} />, label: 'Xuất Báo cáo', path: '/reports/generate' });
 
     return links;
   };
@@ -175,8 +169,8 @@ const Sidebar = () => {
             <UserCircle size={20} color="var(--text-secondary)" />
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <p style={{ fontSize: '0.85rem', fontWeight: '700', whiteSpace: 'nowrap', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>{user?.hoTen || 'Người dùng'}</p>
-            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role || 'Vai trò'}</p>
+            <p style={{ fontSize: '0.85rem', fontWeight: '700', whiteSpace: 'nowrap', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>{user?.fullName || 'Người dùng'}</p>
+            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{user?.role?.replace('ROLE_', '')}</p>
           </div>
         </div>
         <button 

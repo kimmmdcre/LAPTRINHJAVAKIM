@@ -1,10 +1,8 @@
 package javagroup.prjApp.services.impl;
 
 import javagroup.prjApp.services.UserService;
-
 import javagroup.prjApp.utils.enums.UserStatus;
 import javagroup.prjApp.utils.enums.UserRole;
-
 import javagroup.prjApp.dtos.UserDTO;
 import javagroup.prjApp.entities.Teacher;
 import javagroup.prjApp.entities.User;
@@ -37,9 +35,7 @@ public class UserServiceImpl implements UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    /**
-     * Create new user account from DTO.
-     */
+    @Override
     public void createAccount(UserDTO dto) {
         User user;
         UserRole role = dto.getRoleCode();
@@ -72,9 +68,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    /**
-     * Delete account by ID.
-     */
+    @Override
     public void deleteAccount(UUID id) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("User does not exist: " + id);
@@ -82,9 +76,7 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
-    /**
-     * Update role (roleCode) for user.
-     */
+    @Override
     public void assignRole(UUID id, UserRole role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User does not exist: " + id));
@@ -92,9 +84,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    /**
-     * Update user information.
-     */
+    @Override
     public void updateAccount(UUID id, UserDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User does not exist: " + id));
@@ -110,18 +100,14 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    /**
-     * Get list of all users.
-     */
+    @Override
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get list of only teachers.
-     */
+    @Override
     public List<UserDTO> getAllTeachers() {
         return userRepository.findAll().stream()
                 .filter(user -> UserRole.TEACHER.equals(user.getRoleCode()))
@@ -129,22 +115,42 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get list of unassigned students.
-     */
+    @Override
     public List<UserDTO> getUnassignedStudents() {
         List<Student> allStudents = studentRepository.findAll();
-        
         return allStudents.stream()
                 .filter(student -> student.getGroupMembers() == null || student.getGroupMembers().isEmpty())
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Convert User Entity to UserDTO.
-     */
-    public UserDTO toDTO(User user) {
+    @Override
+    public UserDTO getUserProfile(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        return toDTO(user);
+    }
+
+    @Override
+    public void updateUserProfile(String username, UserDTO userDTO) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        user.setFullName(userDTO.getFullName());
+        user.setEmail(userDTO.getEmail());
+        userRepository.save(user);
+    }
+
+    @Override
+    public UUID getGroupIdByStudent(UUID studentId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        if (student.getGroupMembers() != null && !student.getGroupMembers().isEmpty()) {
+            return student.getGroupMembers().get(0).getProjectGroup().getGroupId();
+        }
+        return null;
+    }
+
+    private UserDTO toDTO(User user) {
         return new UserDTO(
                 user.getId(),
                 user.getUsername(),

@@ -64,4 +64,21 @@ public class AuthController {
         authService.logout(token);
         return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
+
+    /**
+     * POST /api/auth/change-password
+     * Body: { "currentPassword": "...", "newPassword": "..." }
+     */
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, String>> changePassword(@RequestBody Map<String, String> body) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+        
+        String currentPassword = body.get("currentPassword");
+        String newPassword = body.get("newPassword");
+        
+        authService.changePassword(principal.getUsername(), currentPassword, newPassword);
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+    }
 }
