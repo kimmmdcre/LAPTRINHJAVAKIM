@@ -1,4 +1,4 @@
-package javagroup.prjApp.utils.adapters;
+package javagroup.prjApp.adapters;
 
 import java.util.List;
 

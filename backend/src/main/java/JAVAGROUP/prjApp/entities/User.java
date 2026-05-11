@@ -1,7 +1,7 @@
 package javagroup.prjApp.entities;
 
-import javagroup.prjApp.utils.enums.UserStatus;
-import javagroup.prjApp.utils.enums.UserRole;
+import javagroup.prjApp.enums.UserStatus;
+import javagroup.prjApp.enums.UserRole;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

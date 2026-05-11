@@ -1,7 +1,7 @@
 package javagroup.prjApp.services;
 
 import javagroup.prjApp.dtos.UserDTO;
-import javagroup.prjApp.utils.enums.UserRole;
+import javagroup.prjApp.enums.UserRole;
 import java.util.List;
 import java.util.UUID;
 

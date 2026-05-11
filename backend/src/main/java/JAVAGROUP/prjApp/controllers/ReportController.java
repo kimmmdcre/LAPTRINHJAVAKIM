@@ -115,7 +115,8 @@ public class ReportController {
     public ResponseEntity<Resource> exportDocxReport(@PathVariable UUID groupId) throws java.io.IOException {
         Resource file = reportService.exportDocxReport(groupId);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .contentType(MediaType
+                        .parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report-" + groupId + ".docx\"")
                 .body(file);
     }
@@ -143,7 +144,8 @@ public class ReportController {
     public ResponseEntity<Resource> exportSrsReport(@PathVariable UUID groupId) throws java.io.IOException {
         Resource file = reportService.exportSrsReport(groupId);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .contentType(MediaType
+                        .parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"SRS-" + groupId + ".docx\"")
                 .body(file);
     }

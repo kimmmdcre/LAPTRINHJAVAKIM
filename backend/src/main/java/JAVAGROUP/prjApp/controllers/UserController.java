@@ -1,7 +1,7 @@
 package javagroup.prjApp.controllers;
 
 import javagroup.prjApp.dtos.UserDTO;
-import javagroup.prjApp.utils.enums.UserRole;
+import javagroup.prjApp.enums.UserRole;
 import javagroup.prjApp.services.UserService;
 
 import org.springframework.http.ResponseEntity;

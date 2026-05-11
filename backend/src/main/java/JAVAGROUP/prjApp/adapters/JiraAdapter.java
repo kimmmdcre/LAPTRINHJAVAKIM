@@ -1,4 +1,4 @@
-package javagroup.prjApp.utils.adapters;
+package javagroup.prjApp.adapters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,18 +31,19 @@ public class JiraAdapter implements IJiraClient {
         try {
             String auth = email + ":" + accessToken;
             String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
- 
+
             Map<String, Object> body = new HashMap<>();
             body.put("jql", "project='" + projectKey + "'");
             body.put("fields", List.of("summary", "status", "description"));
- 
+
             Map<String, Object> response = webClient.post()
                     .uri(url + "/rest/api/3/search/jql")
                     .header("Authorization", "Basic " + encodedAuth)
                     .header("Accept", "application/json")
                     .bodyValue(body)
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                    })
                     .block();
 
             List<RequirementDTO> result = new ArrayList<>();
@@ -60,12 +61,12 @@ public class JiraAdapter implements IJiraClient {
 
             for (Map<String, Object> issue : issues) {
                 try {
-                    String key = (String) issue.get("key"); 
+                    String key = (String) issue.get("key");
                     @SuppressWarnings("unchecked")
                     Map<String, Object> fields = (Map<String, Object>) issue.get("fields");
-                    
+
                     String title = fields != null ? (String) fields.get("summary") : "No Title";
-                    
+
                     String description = "";
                     Object rawDesc = fields != null ? fields.get("description") : null;
                     if (rawDesc instanceof String) {
@@ -80,13 +81,13 @@ public class JiraAdapter implements IJiraClient {
                         Map<String, Object> statusMap = (Map<String, Object>) fields.get("status");
                         status = statusMap.get("name").toString();
                     }
-                    
+
                     RequirementDTO dto = new RequirementDTO();
                     dto.setJiraKey(key);
                     dto.setTitle(title);
                     dto.setDescription(description);
                     dto.setStatus(status);
-                    
+
                     result.add(dto);
                 } catch (Exception e) {
                     log.warn("Skipping a task due to format error: {}", e.getMessage());

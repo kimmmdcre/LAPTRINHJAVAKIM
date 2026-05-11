@@ -1,6 +1,6 @@
-package javagroup.prjApp.config;
+package javagroup.prjApp.security.user;
 
-import javagroup.prjApp.utils.enums.UserRole;
+import javagroup.prjApp.enums.UserRole;
 
 import javagroup.prjApp.entities.User;
 import org.springframework.security.core.GrantedAuthority;

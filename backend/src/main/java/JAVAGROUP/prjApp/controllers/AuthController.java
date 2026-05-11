@@ -1,7 +1,7 @@
 package javagroup.prjApp.controllers;
 
+import javagroup.prjApp.security.user.UserPrincipal;
 import javagroup.prjApp.services.AuthService;
-import javagroup.prjApp.config.UserPrincipal;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -74,10 +74,10 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> changePassword(@RequestBody Map<String, String> body) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
-        
+
         String currentPassword = body.get("currentPassword");
         String newPassword = body.get("newPassword");
-        
+
         authService.changePassword(principal.getUsername(), currentPassword, newPassword);
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }

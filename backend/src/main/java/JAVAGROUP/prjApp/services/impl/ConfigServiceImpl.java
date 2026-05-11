@@ -4,7 +4,6 @@ import javagroup.prjApp.services.ConfigService;
 
 import javagroup.prjApp.dtos.ConfigDTO;
 import javagroup.prjApp.entities.IntegrationConfig;
-import javagroup.prjApp.entities.Group;
 import javagroup.prjApp.repositories.IntegrationConfigRepository;
 import javagroup.prjApp.repositories.GroupRepository;
 
@@ -59,7 +58,7 @@ public class ConfigServiceImpl implements ConfigService {
         conf.setApiToken(dto.getApiToken());
         conf.setProjectKey(dto.getProjectKey());
         conf.setRepoUrl(dto.getRepoUrl());
-        
+
         integrationConfigRepository.save(conf);
     }
 

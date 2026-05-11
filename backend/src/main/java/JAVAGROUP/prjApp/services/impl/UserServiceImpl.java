@@ -1,8 +1,8 @@
 package javagroup.prjApp.services.impl;
 
 import javagroup.prjApp.services.UserService;
-import javagroup.prjApp.utils.enums.UserStatus;
-import javagroup.prjApp.utils.enums.UserRole;
+import javagroup.prjApp.enums.UserStatus;
+import javagroup.prjApp.enums.UserRole;
 import javagroup.prjApp.dtos.UserDTO;
 import javagroup.prjApp.entities.Teacher;
 import javagroup.prjApp.entities.User;
@@ -28,8 +28,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository,
-                       StudentRepository studentRepository,
-                       PasswordEncoder passwordEncoder) {
+            StudentRepository studentRepository,
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
     public void createAccount(UserDTO dto) {
         User user;
         UserRole role = dto.getRoleCode();
-        
+
         if (UserRole.ADMIN.equals(role)) {
             Admin admin = new Admin();
             admin.setAdminCode("AD_" + dto.getUsername());
@@ -58,13 +58,14 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setUsername(dto.getUsername());
-        String password = (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) ? dto.getPassword() : "123456";
-        user.setPasswordHash(passwordEncoder.encode(password)); 
+        String password = (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) ? dto.getPassword()
+                : "123456";
+        user.setPasswordHash(passwordEncoder.encode(password));
         user.setFullName(dto.getFullName());
         user.setEmail(dto.getEmail());
         user.setRoleCode(role);
         user.setStatus(UserStatus.ACTIVE);
-        
+
         userRepository.save(user);
     }
 

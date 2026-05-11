@@ -16,4 +16,3 @@ public interface VcsCommitRepository extends JpaRepository<VcsCommit, String> {
 
     List<VcsCommit> findByRequirementIsNull();
 }
-

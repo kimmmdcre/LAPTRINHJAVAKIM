@@ -22,8 +22,7 @@ public class GlobalExceptionHandler {
                 "timestamp", LocalDateTime.now().toString(),
                 "status", HttpStatus.FORBIDDEN.value(),
                 "error", "Forbidden",
-                "message", "Bạn không có quyền thực hiện hành động này!"
-        ));
+                "message", "Bạn không có quyền thực hiện hành động này!"));
     }
 
     @ExceptionHandler(RuntimeException.class)
@@ -32,8 +31,7 @@ public class GlobalExceptionHandler {
                 "timestamp", LocalDateTime.now().toString(),
                 "status", HttpStatus.BAD_REQUEST.value(),
                 "error", "Bad Request",
-                "message", ex.getMessage()
-        ));
+                "message", ex.getMessage()));
     }
 
     @ExceptionHandler(UnsupportedOperationException.class)
@@ -42,8 +40,7 @@ public class GlobalExceptionHandler {
                 "timestamp", LocalDateTime.now().toString(),
                 "status", HttpStatus.NOT_IMPLEMENTED.value(),
                 "error", "Not Implemented",
-                "message", ex.getMessage()
-        ));
+                "message", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
@@ -52,7 +49,6 @@ public class GlobalExceptionHandler {
                 "timestamp", LocalDateTime.now().toString(),
                 "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "error", "Internal Server Error",
-                "message", ex.getMessage()
-        ));
+                "message", ex.getMessage()));
     }
 }

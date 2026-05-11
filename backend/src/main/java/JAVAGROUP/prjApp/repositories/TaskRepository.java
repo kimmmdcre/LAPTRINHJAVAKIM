@@ -13,4 +13,3 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     List<Task> findByRequirement_ProjectGroup_GroupId(UUID groupId);
 }
-

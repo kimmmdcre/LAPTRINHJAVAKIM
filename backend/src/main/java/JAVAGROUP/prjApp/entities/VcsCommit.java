@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import javagroup.prjApp.entities.Student;
 
 @Entity
 @Table(name = "vcs_commits")

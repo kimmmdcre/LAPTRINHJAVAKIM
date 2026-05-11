@@ -1,7 +1,9 @@
-package javagroup.prjApp.config;
+package javagroup.prjApp.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import javagroup.prjApp.security.user.UserPrincipal;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;

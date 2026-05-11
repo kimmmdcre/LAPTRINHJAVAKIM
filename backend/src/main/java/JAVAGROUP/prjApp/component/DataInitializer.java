@@ -1,8 +1,8 @@
-package javagroup.prjApp.config;
+package javagroup.prjApp.component;
 
 import javagroup.prjApp.entities.*;
 import javagroup.prjApp.repositories.*;
-import javagroup.prjApp.utils.enums.*;
+import javagroup.prjApp.enums.*;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -22,10 +22,10 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
-                           AdminRepository adminRepository,
-                           TeacherRepository teacherRepository,
-                           StudentRepository studentRepository,
-                           PasswordEncoder passwordEncoder) {
+            AdminRepository adminRepository,
+            TeacherRepository teacherRepository,
+            StudentRepository studentRepository,
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.adminRepository = adminRepository;
         this.teacherRepository = teacherRepository;
@@ -40,11 +40,11 @@ public class DataInitializer implements CommandLineRunner {
 
         seedAdmin("admin", "admin", "System Administrator", "admin@system.com", "AD001");
         seedTeacher("teacher", "teacher", "Default Teacher", "teacher@system.com", "TC001");
-        
+
         // Students for testing group roles
         seedStudent("leader", "leader", "Group Leader", "leader@system.com", "ST_LEAD");
         seedStudent("member", "member", "Group Member", "member@system.com", "ST_MEM");
-        
+
         seedStudent("student1", "student1", "Student One", "student1@system.com", "ST001");
         seedStudent("student2", "student2", "Student Two", "student2@system.com", "ST002");
 

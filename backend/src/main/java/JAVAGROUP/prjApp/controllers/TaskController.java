@@ -1,13 +1,12 @@
 package javagroup.prjApp.controllers;
 
-
 import javagroup.prjApp.dtos.TaskDTO;
+import javagroup.prjApp.security.user.UserPrincipal;
 import javagroup.prjApp.dtos.RequirementDTO;
 import javagroup.prjApp.dtos.CommitDTO;
 
 import javagroup.prjApp.services.TaskService;
 
-import javagroup.prjApp.config.UserPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.ResponseEntity;
@@ -37,8 +36,6 @@ public class TaskController {
             @RequestParam("groupId") UUID groupId) {
         return ResponseEntity.ok(taskService.getTasksByGroup(groupId));
     }
-
-
 
     /**
      * GET /api/tasks/requirements?groupId={uuid}

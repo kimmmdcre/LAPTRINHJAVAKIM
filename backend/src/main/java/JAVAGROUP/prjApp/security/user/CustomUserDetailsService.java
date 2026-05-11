@@ -1,4 +1,4 @@
-package javagroup.prjApp.config;
+package javagroup.prjApp.security.user;
 
 import javagroup.prjApp.entities.User;
 import javagroup.prjApp.repositories.UserRepository;

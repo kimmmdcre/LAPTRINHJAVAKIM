@@ -1,4 +1,4 @@
-package javagroup.prjApp.utils.adapters;
+package javagroup.prjApp.adapters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,26 +46,27 @@ public class GitHubAdapter implements IGitHubClient {
                 log.warn("WARNING: Token is empty or too short!");
             }
             log.info("--------------------------------------------------");
- 
+
             Object responseBody = webClient.get()
                     .uri(uri)
                     .header("Authorization", "token " + accessToken)
                     .header("Accept", "application/vnd.github+json")
                     .retrieve()
-                    .onStatus(status -> status.isError(), response -> 
-                        response.bodyToMono(Map.class).flatMap(errorBody -> {
-                            String msg = (String) errorBody.get("message");
-                            return Mono.error(new RuntimeException("GitHub API Error: " + (msg != null ? msg : "Unknown error")));
-                        })
-                    )
+                    .onStatus(status -> status.isError(),
+                            response -> response.bodyToMono(Map.class).flatMap(errorBody -> {
+                                String msg = (String) errorBody.get("message");
+                                return Mono.error(new RuntimeException(
+                                        "GitHub API Error: " + (msg != null ? msg : "Unknown error")));
+                            }))
                     .bodyToMono(Object.class)
                     .block();
 
             if (!(responseBody instanceof List)) {
                 log.error("GitHub API returned an object instead of a list: {}", responseBody);
-                throw new RuntimeException("GitHub API returned unexpected data format. Please check your repository URL.");
+                throw new RuntimeException(
+                        "GitHub API returned unexpected data format. Please check your repository URL.");
             }
-            
+
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> rawCommits = (List<Map<String, Object>>) responseBody;
 
@@ -77,9 +78,10 @@ public class GitHubAdapter implements IGitHubClient {
                 String sha = (String) raw.get("sha");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> commitInfo = (Map<String, Object>) raw.get("commit");
-                if (commitInfo == null) continue;
+                if (commitInfo == null)
+                    continue;
                 String message = (String) commitInfo.get("message");
-                
+
                 LocalDateTime commitTime = LocalDateTime.now();
                 String authorName = null;
                 String authorEmail = null;
@@ -97,14 +99,16 @@ public class GitHubAdapter implements IGitHubClient {
                     log.warn("Error parsing commit author info for {}: {}", sha, e.getMessage());
                 }
 
-                CommitDTO dto = new CommitDTO(sha, message != null ? message : "", commitTime, null, null, authorName, authorEmail);
+                CommitDTO dto = new CommitDTO(sha, message != null ? message : "", commitTime, null, null, authorName,
+                        authorEmail);
                 result.add(dto);
             }
             log.info("Successfully fetched {} commits from GitHub", result.size());
             return result;
 
         } catch (WebClientResponseException e) {
-            log.error("GitHub API error: {} {} - {}", e.getStatusCode(), e.getStatusText(), e.getResponseBodyAsString());
+            log.error("GitHub API error: {} {} - {}", e.getStatusCode(), e.getStatusText(),
+                    e.getResponseBodyAsString());
             throw new RuntimeException("GitHub API error: " + e.getStatusCode().value() + " - " + e.getStatusText());
         } catch (Exception e) {
             log.error("Unexpected error fetching GitHub commits: ", e);
@@ -134,7 +138,8 @@ public class GitHubAdapter implements IGitHubClient {
             } else if (e.getStatusCode().value() == 401) {
                 throw new RuntimeException("Invalid or expired GitHub token.");
             }
-            throw new RuntimeException("GitHub connection error: " + e.getStatusCode().value() + " - " + e.getStatusText());
+            throw new RuntimeException(
+                    "GitHub connection error: " + e.getStatusCode().value() + " - " + e.getStatusText());
         } catch (Exception e) {
             log.error("Unexpected GitHub test error", e);
             throw new RuntimeException("Unknown error during GitHub test: " + e.getMessage());
@@ -142,7 +147,8 @@ public class GitHubAdapter implements IGitHubClient {
     }
 
     String parseRepoPath(String input) {
-        if (input == null || input.isEmpty()) return "";
+        if (input == null || input.isEmpty())
+            return "";
         // Remove fragment/anchor and then remove all whitespace
         String path = input.split("#")[0].replaceAll("\\s+", "");
         // Remove protocol and domain (case-insensitive)

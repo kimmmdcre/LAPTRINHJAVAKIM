@@ -2,7 +2,7 @@ package javagroup.prjApp.services.impl;
 
 import javagroup.prjApp.services.GroupService;
 
-import javagroup.prjApp.utils.enums.GroupRole;
+import javagroup.prjApp.enums.GroupRole;
 
 import javagroup.prjApp.dtos.GroupDTO;
 import javagroup.prjApp.dtos.GroupMemberDTO;
@@ -33,9 +33,9 @@ public class GroupServiceImpl implements GroupService {
     private final StudentRepository studentRepository;
 
     public GroupServiceImpl(GroupRepository groupRepository,
-                        TeacherRepository teacherRepository,
-                        GroupMemberRepository groupMemberRepository,
-                        StudentRepository studentRepository) {
+            TeacherRepository teacherRepository,
+            GroupMemberRepository groupMemberRepository,
+            StudentRepository studentRepository) {
         this.groupRepository = groupRepository;
         this.teacherRepository = teacherRepository;
         this.groupMemberRepository = groupMemberRepository;
@@ -52,7 +52,7 @@ public class GroupServiceImpl implements GroupService {
                     .orElseThrow(() -> new RuntimeException("Teacher not found: " + dto.getTeacherId()));
             group.setTeacher(teacher);
         }
-        
+
         return groupRepository.save(group);
     }
 
@@ -98,14 +98,13 @@ public class GroupServiceImpl implements GroupService {
                 .map(gm -> {
                     Student student = gm.getStudent();
                     return new GroupMemberDTO(
-                            student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole()
-                    );
+                            student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole());
                 })
                 .collect(Collectors.toList());
     }
 
     /**
-     * Add student to group. 
+     * Add student to group.
      */
     public void addMember(UUID groupId, UUID studentId) {
         Group group = groupRepository.findById(groupId)
@@ -120,7 +119,7 @@ public class GroupServiceImpl implements GroupService {
         gm.setId(new GroupMemberId(groupId, studentId));
         gm.setProjectGroup(group);
         gm.setStudent(student);
-        gm.setRole(GroupRole.MEMBER); 
+        gm.setRole(GroupRole.MEMBER);
         groupMemberRepository.save(gm);
     }
 
@@ -133,22 +132,20 @@ public class GroupServiceImpl implements GroupService {
 
     private GroupDTO toDTO(Group group) {
         Teacher teacher = group.getTeacher();
-        List<GroupMemberDTO> members = group.getMembers() == null ? List.of() :
-            group.getMembers().stream()
-                .map(gm -> {
-                    Student student = gm.getStudent();
-                    return new GroupMemberDTO(
-                        student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole()
-                    );
-                })
-                .collect(Collectors.toList());
-                
+        List<GroupMemberDTO> members = group.getMembers() == null ? List.of()
+                : group.getMembers().stream()
+                        .map(gm -> {
+                            Student student = gm.getStudent();
+                            return new GroupMemberDTO(
+                                    student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole());
+                        })
+                        .collect(Collectors.toList());
+
         return new GroupDTO(
                 group.getGroupId(), group.getGroupName(), group.getProjectTopic(),
                 teacher != null ? teacher.getId() : null,
                 teacher != null ? teacher.getFullName() : null,
                 group.getLeaderId(),
-                members
-        );
+                members);
     }
 }

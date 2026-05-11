@@ -1,6 +1,7 @@
-package javagroup.prjApp.config;
+package javagroup.prjApp.security.jwt;
 
 import javagroup.prjApp.repositories.BlacklistedTokenRepository;
+import javagroup.prjApp.security.user.CustomUserDetailsService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

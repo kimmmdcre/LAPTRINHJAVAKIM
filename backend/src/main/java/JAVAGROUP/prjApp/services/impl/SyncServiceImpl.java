@@ -1,8 +1,8 @@
 package javagroup.prjApp.services.impl;
 
 import javagroup.prjApp.services.SyncService;
-import javagroup.prjApp.utils.adapters.IGitHubClient;
-import javagroup.prjApp.utils.adapters.IJiraClient;
+import javagroup.prjApp.adapters.IGitHubClient;
+import javagroup.prjApp.adapters.IJiraClient;
 import javagroup.prjApp.dtos.CommitDTO;
 import javagroup.prjApp.dtos.RequirementDTO;
 import javagroup.prjApp.entities.Group;
@@ -39,10 +39,10 @@ public class SyncServiceImpl implements SyncService {
     private final StudentRepository studentRepository;
 
     public SyncServiceImpl(IJiraClient jiraClient, IGitHubClient gitHubClient,
-                       IntegrationConfigRepository integrationConfigRepository,
-                       GroupRepository groupRepository, RequirementRepository requirementRepository,
-                       VcsCommitRepository vcsCommitRepository,
-                       StudentRepository studentRepository) {
+            IntegrationConfigRepository integrationConfigRepository,
+            GroupRepository groupRepository, RequirementRepository requirementRepository,
+            VcsCommitRepository vcsCommitRepository,
+            StudentRepository studentRepository) {
         this.jiraClient = jiraClient;
         this.gitHubClient = gitHubClient;
         this.integrationConfigRepository = integrationConfigRepository;
@@ -63,31 +63,29 @@ public class SyncServiceImpl implements SyncService {
                 .orElseThrow(() -> new RuntimeException("Jira integration not configured for group: " + groupId));
 
         List<RequirementDTO> issues = jiraClient.getRequirements(
-                jiraConf.getUrl(), 
-                jiraConf.getEmail(), 
-                jiraConf.getApiToken(), 
-                jiraConf.getProjectKey()
-        );
+                jiraConf.getUrl(),
+                jiraConf.getEmail(),
+                jiraConf.getApiToken(),
+                jiraConf.getProjectKey());
 
         for (RequirementDTO dto : issues) {
             requirementRepository.findByJiraKeyAndProjectGroup(dto.getJiraKey(), group)
-                .ifPresentOrElse(
-                    existing -> {
-                        existing.setTitle(dto.getTitle());
-                        existing.setDescription(dto.getDescription());
-                        existing.setStatus(dto.getStatus());
-                        requirementRepository.save(existing);
-                    },
-                    () -> {
-                        Requirement req = new Requirement();
-                        req.setJiraKey(dto.getJiraKey());
-                        req.setProjectGroup(group);
-                        req.setTitle(dto.getTitle());
-                        req.setDescription(dto.getDescription());
-                        req.setStatus(dto.getStatus());
-                        requirementRepository.save(req);
-                    }
-                );
+                    .ifPresentOrElse(
+                            existing -> {
+                                existing.setTitle(dto.getTitle());
+                                existing.setDescription(dto.getDescription());
+                                existing.setStatus(dto.getStatus());
+                                requirementRepository.save(existing);
+                            },
+                            () -> {
+                                Requirement req = new Requirement();
+                                req.setJiraKey(dto.getJiraKey());
+                                req.setProjectGroup(group);
+                                req.setTitle(dto.getTitle());
+                                req.setDescription(dto.getDescription());
+                                req.setStatus(dto.getStatus());
+                                requirementRepository.save(req);
+                            });
         }
     }
 
@@ -103,31 +101,30 @@ public class SyncServiceImpl implements SyncService {
             List<CommitDTO> commits = gitHubClient.getCommits(ghConf.getRepoUrl(), ghConf.getApiToken(), null);
             for (CommitDTO dto : commits) {
                 vcsCommitRepository.findById(dto.getSha()).ifPresentOrElse(
-                    existing -> {
-                        existing.setAuthorEmail(dto.getAuthorEmail());
-                        existing.setAuthorName(dto.getAuthorName());
-                        
-                        if (existing.getStudent() == null && dto.getAuthorEmail() != null) {
-                            studentRepository.findByEmail(dto.getAuthorEmail())
-                                    .ifPresent(existing::setStudent);
-                        }
-                        vcsCommitRepository.save(existing);
-                    },
-                    () -> {
-                        VcsCommit commit = new VcsCommit();
-                        commit.setSha(dto.getSha());
-                        commit.setMessage(dto.getMessage());
-                        commit.setCommitTime(dto.getCommitTime());
-                        commit.setAuthorEmail(dto.getAuthorEmail());
-                        commit.setAuthorName(dto.getAuthorName());
-                        
-                        if (dto.getAuthorEmail() != null) {
-                            studentRepository.findByEmail(dto.getAuthorEmail())
-                                    .ifPresent(commit::setStudent);
-                        }
-                        vcsCommitRepository.save(commit);
-                    }
-                );
+                        existing -> {
+                            existing.setAuthorEmail(dto.getAuthorEmail());
+                            existing.setAuthorName(dto.getAuthorName());
+
+                            if (existing.getStudent() == null && dto.getAuthorEmail() != null) {
+                                studentRepository.findByEmail(dto.getAuthorEmail())
+                                        .ifPresent(existing::setStudent);
+                            }
+                            vcsCommitRepository.save(existing);
+                        },
+                        () -> {
+                            VcsCommit commit = new VcsCommit();
+                            commit.setSha(dto.getSha());
+                            commit.setMessage(dto.getMessage());
+                            commit.setCommitTime(dto.getCommitTime());
+                            commit.setAuthorEmail(dto.getAuthorEmail());
+                            commit.setAuthorName(dto.getAuthorName());
+
+                            if (dto.getAuthorEmail() != null) {
+                                studentRepository.findByEmail(dto.getAuthorEmail())
+                                        .ifPresent(commit::setStudent);
+                            }
+                            vcsCommitRepository.save(commit);
+                        });
             }
         } catch (Exception e) {
             log.error("Error syncing GitHub for group {}: {}", groupId, e.getMessage());
@@ -143,7 +140,8 @@ public class SyncServiceImpl implements SyncService {
         Pattern donePattern = Pattern.compile("(?i)(done|base|fix|fixed|close|closed)\\s+([A-Z]+-\\d+)");
 
         for (VcsCommit commit : commits) {
-            if (commit.getMessage() == null) continue;
+            if (commit.getMessage() == null)
+                continue;
 
             Matcher matcher = taskPattern.matcher(commit.getMessage());
             if (matcher.find()) {
@@ -151,7 +149,7 @@ public class SyncServiceImpl implements SyncService {
                 requirementRepository.findByJiraKey(jiraKey).ifPresent(req -> {
                     commit.setRequirement(req);
                     vcsCommitRepository.save(commit);
-                    
+
                     Matcher doneMatcher = donePattern.matcher(commit.getMessage());
                     if (doneMatcher.find()) {
                         req.setStatus("DONE");

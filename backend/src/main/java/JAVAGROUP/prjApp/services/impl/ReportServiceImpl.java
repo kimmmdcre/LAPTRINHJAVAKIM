@@ -44,9 +44,9 @@ public class ReportServiceImpl implements ReportService {
     private final RequirementRepository requirementRepository;
 
     public ReportServiceImpl(TaskRepository taskRepository,
-                         VcsCommitRepository vcsCommitRepository,
-                         GroupMemberRepository groupMemberRepository,
-                         RequirementRepository requirementRepository) {
+            VcsCommitRepository vcsCommitRepository,
+            GroupMemberRepository groupMemberRepository,
+            RequirementRepository requirementRepository) {
         this.taskRepository = taskRepository;
         this.vcsCommitRepository = vcsCommitRepository;
         this.groupMemberRepository = groupMemberRepository;
@@ -81,7 +81,7 @@ public class ReportServiceImpl implements ReportService {
 
             if (name != null) {
                 commitsByStudent.merge(name, 1, (oldVal, newVal) -> oldVal + newVal);
-                
+
                 if (c.getCommitTime() != null) {
                     LocalDate date = c.getCommitTime().toLocalDate();
                     commitDaysByStudent.computeIfAbsent(name, k -> new HashSet<>())
@@ -90,10 +90,13 @@ public class ReportServiceImpl implements ReportService {
 
                 double score = 0.0;
                 if (c.getMessage() != null) {
-                    if (c.getMessage().length() > 20) score += 0.4;
-                    if (c.getMessage().matches(".*[A-Z]+-\\d+.*")) score += 0.6;
+                    if (c.getMessage().length() > 20)
+                        score += 0.4;
+                    if (c.getMessage().matches(".*[A-Z]+-\\d+.*"))
+                        score += 0.6;
                 }
-                totalQualityScore.merge(name, Double.valueOf(score), (v1, v2) -> Double.valueOf(v1.doubleValue() + v2.doubleValue()));
+                totalQualityScore.merge(name, Double.valueOf(score),
+                        (v1, v2) -> Double.valueOf(v1.doubleValue() + v2.doubleValue()));
             }
         }
 
@@ -117,20 +120,23 @@ public class ReportServiceImpl implements ReportService {
         List<Requirement> reqs = requirementRepository.findByProjectGroup_GroupId(groupId).stream()
                 .filter(req -> "DONE".equalsIgnoreCase(req.getStatus()))
                 .sorted((a, b) -> {
-                    java.time.LocalDateTime t1 = a.getUpdatedAt() != null ? a.getUpdatedAt() : (a.getCreatedAt() != null ? a.getCreatedAt() : java.time.LocalDateTime.now());
-                    java.time.LocalDateTime t2 = b.getUpdatedAt() != null ? b.getUpdatedAt() : (b.getCreatedAt() != null ? b.getCreatedAt() : java.time.LocalDateTime.now());
+                    java.time.LocalDateTime t1 = a.getUpdatedAt() != null ? a.getUpdatedAt()
+                            : (a.getCreatedAt() != null ? a.getCreatedAt() : java.time.LocalDateTime.now());
+                    java.time.LocalDateTime t2 = b.getUpdatedAt() != null ? b.getUpdatedAt()
+                            : (b.getCreatedAt() != null ? b.getCreatedAt() : java.time.LocalDateTime.now());
                     return t1.compareTo(t2);
                 })
                 .collect(Collectors.toList());
 
         Map<String, Integer> completionsByDay = new LinkedHashMap<>();
         int currentTotal = 0;
-        
+
         for (Requirement req : reqs) {
-            java.time.LocalDateTime ts = req.getUpdatedAt() != null ? req.getUpdatedAt() : (req.getCreatedAt() != null ? req.getCreatedAt() : java.time.LocalDateTime.now());
+            java.time.LocalDateTime ts = req.getUpdatedAt() != null ? req.getUpdatedAt()
+                    : (req.getCreatedAt() != null ? req.getCreatedAt() : java.time.LocalDateTime.now());
             String date = ts.toLocalDate().toString();
             currentTotal++;
-            completionsByDay.put(date, currentTotal); 
+            completionsByDay.put(date, currentTotal);
         }
 
         List<Map<String, Object>> data = new ArrayList<>();
@@ -146,7 +152,8 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public List<Map<String, Object>> getPersonalCommitHistory(UUID studentId) {
         List<VcsCommit> commits = vcsCommitRepository.findAll().stream()
-                .filter(c -> c.getStudent() != null && studentId.equals(c.getStudent().getId()) && c.getCommitTime() != null)
+                .filter(c -> c.getStudent() != null && studentId.equals(c.getStudent().getId())
+                        && c.getCommitTime() != null)
                 .sorted(Comparator.comparing(VcsCommit::getCommitTime))
                 .collect(Collectors.toList());
 
@@ -212,16 +219,36 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<ContributionDTO> getPersonalContributions(UUID groupId) {
+        // Lấy tất cả commit của nhóm này một lần để tối ưu hiệu năng
+        List<VcsCommit> groupCommits = vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId);
+
         return groupMemberRepository.findById_GroupId(groupId).stream()
                 .map(gm -> {
                     Student student = gm.getStudent();
-                    List<Task> tasks = taskRepository.findByStudent_Id(student.getId());
-                    long doneTasks = tasks.stream()
+
+                    // 1. Đếm các Task thủ công được giao và đã DONE
+                    List<Task> manualTasks = taskRepository.findByStudent_Id(student.getId());
+                    long doneManualTasks = manualTasks.stream()
                             .filter(task -> "DONE".equalsIgnoreCase(task.getStatus())).count();
-                    long commitCount = vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId).stream()
+
+                    // 2. Đếm các Requirement (từ Jira) mà sinh viên này có đóng góp commit và đã
+                    // DONE
+                    long doneJiraRequirements = groupCommits.stream()
+                            .filter(c -> c.getStudent() != null && student.getId().equals(c.getStudent().getId()))
+                            .filter(c -> c.getRequirement() != null
+                                    && "DONE".equalsIgnoreCase(c.getRequirement().getStatus()))
+                            .map(c -> c.getRequirement().getRequirementId())
+                            .distinct() // Mỗi requirement chỉ tính 1 lần
+                            .count();
+
+                    long commitCount = groupCommits.stream()
                             .filter(c -> c.getStudent() != null && student.getId().equals(c.getStudent().getId()))
                             .count();
-                    return new ContributionDTO(student.getId(), student.getFullName(), (int) doneTasks, (int) commitCount);
+
+                    int totalCompleted = (int) (doneManualTasks + doneJiraRequirements);
+
+                    return new ContributionDTO(student.getId(), student.getFullName(), totalCompleted,
+                            (int) commitCount);
                 })
                 .collect(Collectors.toList());
     }
@@ -253,8 +280,8 @@ public class ReportServiceImpl implements ReportService {
         List<ContributionDTO> contributions = getPersonalContributions(groupId);
 
         try (XWPFDocument doc = new XWPFDocument();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
             XWPFParagraph title = doc.createParagraph();
             title.setAlignment(ParagraphAlignment.CENTER);
             XWPFRun titleRun = title.createRun();
@@ -263,7 +290,8 @@ public class ReportServiceImpl implements ReportService {
             titleRun.setFontSize(20);
 
             XWPFParagraph p1 = doc.createParagraph();
-            p1.createRun().setText("Tiên độ tổng quát: " + String.format("%.1f", progress.getProgressPercentage()) + "%");
+            p1.createRun()
+                    .setText("Tiên độ tổng quát: " + String.format("%.1f", progress.getProgressPercentage()) + "%");
 
             XWPFTable table = doc.createTable();
             XWPFTableRow header = table.getRow(0);
@@ -299,7 +327,8 @@ public class ReportServiceImpl implements ReportService {
             document.add(title);
             document.add(new Paragraph(" "));
 
-            document.add(new Paragraph("Tien do du an: " + String.format("%.1f", progress.getProgressPercentage()) + "%"));
+            document.add(
+                    new Paragraph("Tien do du an: " + String.format("%.1f", progress.getProgressPercentage()) + "%"));
             document.add(new Paragraph(" "));
 
             PdfPTable table = new PdfPTable(3);
@@ -325,8 +354,8 @@ public class ReportServiceImpl implements ReportService {
         List<Requirement> requirements = requirementRepository.findByProjectGroup_GroupId(groupId);
 
         try (XWPFDocument doc = new XWPFDocument();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
             XWPFParagraph title = doc.createParagraph();
             title.setAlignment(ParagraphAlignment.CENTER);
             XWPFRun titleRun = title.createRun();
@@ -334,20 +363,21 @@ public class ReportServiceImpl implements ReportService {
             titleRun.setBold(true);
             titleRun.setFontSize(22);
             titleRun.addBreak();
-            
+
             XWPFParagraph info = doc.createParagraph();
             info.createRun().setText("Mã nhóm: " + groupId);
             info.createRun().addBreak();
             info.createRun().setText("Ngày xuất: " + LocalDate.now());
-            
+
             XWPFParagraph section1 = doc.createParagraph();
             XWPFRun r1 = section1.createRun();
             r1.setText("1. GIỚI THIỆU");
             r1.setBold(true);
             r1.setFontSize(14);
-            
+
             XWPFParagraph p1 = doc.createParagraph();
-            p1.createRun().setText("Tài liệu này đặc tả các yêu cầu chức năng cho dự án môn học Java, được đồng bộ trực tiếp từ hệ thống quản lý Jira.");
+            p1.createRun().setText(
+                    "Tài liệu này đặc tả các yêu cầu chức năng cho dự án môn học Java, được đồng bộ trực tiếp từ hệ thống quản lý Jira.");
 
             XWPFParagraph section2 = doc.createParagraph();
             XWPFRun r2 = section2.createRun();
@@ -361,11 +391,12 @@ public class ReportServiceImpl implements ReportService {
                 XWPFRun run = p.createRun();
                 run.setText((i + 1) + ". " + req.getTitle());
                 run.setBold(true);
-                
+
                 XWPFParagraph desc = doc.createParagraph();
-                desc.setIndentationLeft(720); 
-                desc.createRun().setText("Mô tả: " + (req.getDescription() != null ? req.getDescription() : "Không có mô tả."));
-                
+                desc.setIndentationLeft(720);
+                desc.createRun()
+                        .setText("Mô tả: " + (req.getDescription() != null ? req.getDescription() : "Không có mô tả."));
+
                 XWPFParagraph status = doc.createParagraph();
                 status.setIndentationLeft(720);
                 status.createRun().setText("Trạng thái hiện tại: " + req.getStatus());

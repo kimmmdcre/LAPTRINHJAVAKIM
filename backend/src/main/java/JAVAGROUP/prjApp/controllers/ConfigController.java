@@ -62,8 +62,7 @@ public class ConfigController {
     public ResponseEntity<Map<String, Object>> testConnection(@RequestBody ConfigDTO dto) {
         boolean success = configService.testConnection(dto);
         return ResponseEntity.ok(Map.of(
-            "success", success,
-            "message", success ? "Connection successful" : "Connection failed"
-        ));
+                "success", success,
+                "message", success ? "Connection successful" : "Connection failed"));
     }
 }

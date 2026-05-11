@@ -1,4 +1,4 @@
-package javagroup.prjApp.utils.enums;
+package javagroup.prjApp.enums;
 
 public enum UserRole {
     ADMIN,
