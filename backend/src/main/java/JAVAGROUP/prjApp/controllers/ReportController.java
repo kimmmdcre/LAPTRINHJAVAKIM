@@ -92,36 +92,6 @@ public class ReportController {
     }
 
     /**
-     * GET /api/reports/{groupId}/export/csv
-     * Export summary report as CSV
-     */
-    @GetMapping("/{groupId}/export/csv")
-    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
-    public ResponseEntity<Resource> exportSummaryReport(@PathVariable UUID groupId) {
-        Resource file = reportService.exportSummaryReport(groupId);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"group-report-" + groupId + ".csv\"")
-                .body(file);
-    }
-
-    /**
-     * GET /api/reports/{groupId}/export/docx
-     * Export summary report as Docx
-     */
-    @GetMapping("/{groupId}/export/docx")
-    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
-    public ResponseEntity<Resource> exportDocxReport(@PathVariable UUID groupId) throws java.io.IOException {
-        Resource file = reportService.exportDocxReport(groupId);
-        return ResponseEntity.ok()
-                .contentType(MediaType
-                        .parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report-" + groupId + ".docx\"")
-                .body(file);
-    }
-
-    /**
      * GET /api/reports/{groupId}/export/pdf
      * Export summary report as PDF
      */
@@ -135,18 +105,13 @@ public class ReportController {
                 .body(file);
     }
 
-    /**
-     * GET /api/reports/{groupId}/export/srs
-     * Export SRS document as Docx
-     */
     @GetMapping("/{groupId}/export/srs")
     @PreAuthorize("hasRole('STUDENT') or hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<Resource> exportSrsReport(@PathVariable UUID groupId) throws java.io.IOException {
         Resource file = reportService.exportSrsReport(groupId);
         return ResponseEntity.ok()
-                .contentType(MediaType
-                        .parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"SRS-" + groupId + ".docx\"")
+                .contentType(MediaType.parseMediaType("application/pdf"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"SRS-" + groupId + ".pdf\"")
                 .body(file);
     }
 }

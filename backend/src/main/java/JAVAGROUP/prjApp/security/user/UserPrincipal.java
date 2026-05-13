@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -22,11 +23,14 @@ public class UserPrincipal implements UserDetails {
     private UserRole roleCode;
     private String groupRole; // LEADER, MEMBER
     private UUID groupId;
+    private javagroup.prjApp.enums.UserStatus status;
+    private LocalDateTime createdAt;
     private Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(UUID id, String username, String passwordHash, String fullName, String email,
-            UserRole roleCode,
-            String groupRole, UUID groupId, Collection<? extends GrantedAuthority> authorities) {
+            UserRole roleCode, String groupRole, UUID groupId, javagroup.prjApp.enums.UserStatus status,
+            LocalDateTime createdAt,
+            Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
         this.passwordHash = passwordHash;
@@ -35,6 +39,8 @@ public class UserPrincipal implements UserDetails {
         this.roleCode = roleCode;
         this.groupRole = groupRole;
         this.groupId = groupId;
+        this.status = status;
+        this.createdAt = createdAt;
         this.authorities = authorities;
     }
 
@@ -62,6 +68,8 @@ public class UserPrincipal implements UserDetails {
                 user.getRoleCode(),
                 groupRole,
                 groupId,
+                user.getStatus(),
+                user.getCreatedAt(),
                 authorities);
     }
 
@@ -104,6 +112,10 @@ public class UserPrincipal implements UserDetails {
         return groupId;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -111,7 +123,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return status != javagroup.prjApp.enums.UserStatus.BANNED;
     }
 
     @Override
@@ -121,6 +133,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return status == javagroup.prjApp.enums.UserStatus.ACTIVE;
     }
 }

@@ -26,6 +26,16 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get('error');
+    if (errorParam) {
+      setError(errorParam);
+      // Clean up the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');

@@ -105,9 +105,13 @@ public class SyncServiceImpl implements SyncService {
                             existing.setAuthorEmail(dto.getAuthorEmail());
                             existing.setAuthorName(dto.getAuthorName());
 
-                            if (existing.getStudent() == null && dto.getAuthorEmail() != null) {
-                                studentRepository.findByEmail(dto.getAuthorEmail())
-                                        .ifPresent(existing::setStudent);
+                            if (existing.getStudent() == null) {
+                                if (dto.getAuthorEmail() != null) {
+                                    studentRepository.findByEmail(dto.getAuthorEmail()).ifPresent(existing::setStudent);
+                                }
+                                if (existing.getStudent() == null && dto.getAuthorName() != null) {
+                                    studentRepository.findByFullNameIgnoreCase(dto.getAuthorName()).ifPresent(existing::setStudent);
+                                }
                             }
                             vcsCommitRepository.save(existing);
                         },
@@ -120,8 +124,10 @@ public class SyncServiceImpl implements SyncService {
                             commit.setAuthorName(dto.getAuthorName());
 
                             if (dto.getAuthorEmail() != null) {
-                                studentRepository.findByEmail(dto.getAuthorEmail())
-                                        .ifPresent(commit::setStudent);
+                                studentRepository.findByEmail(dto.getAuthorEmail()).ifPresent(commit::setStudent);
+                            }
+                            if (commit.getStudent() == null && dto.getAuthorName() != null) {
+                                studentRepository.findByFullNameIgnoreCase(dto.getAuthorName()).ifPresent(commit::setStudent);
                             }
                             vcsCommitRepository.save(commit);
                         });
@@ -134,29 +140,57 @@ public class SyncServiceImpl implements SyncService {
 
     @Override
     @Transactional
-    public void mapTasksToCommits() {
-        List<VcsCommit> commits = vcsCommitRepository.findByRequirementIsNull();
+    public int mapTasksToCommits(UUID groupId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại: " + groupId));
+
+        // Kiểm tra xem đã có dữ liệu Jira chưa
+        List<Requirement> groupTasks = requirementRepository.findByProjectGroup(group);
+        if (groupTasks.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy dữ liệu Jira. Vui lòng ấn 'Đồng bộ Jira' trước.");
+        }
+
+        // Tìm các commit chưa được khớp
+        List<VcsCommit> unmappedCommits = vcsCommitRepository.findByRequirementIsNull();
+        if (unmappedCommits.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy dữ liệu GitHub mới (Commit) để khớp. Vui lòng ấn 'Đồng bộ GitHub' trước.");
+        }
+
         Pattern taskPattern = Pattern.compile("([A-Z]+-\\d+)");
         Pattern donePattern = Pattern.compile("(?i)(done|base|fix|fixed|close|closed)\\s+([A-Z]+-\\d+)");
+        int count = 0;
 
-        for (VcsCommit commit : commits) {
-            if (commit.getMessage() == null)
-                continue;
+        for (VcsCommit commit : unmappedCommits) {
+            if (commit.getMessage() == null) continue;
 
             Matcher matcher = taskPattern.matcher(commit.getMessage());
             if (matcher.find()) {
                 String jiraKey = matcher.group(1);
-                requirementRepository.findByJiraKey(jiraKey).ifPresent(req -> {
-                    commit.setRequirement(req);
-                    vcsCommitRepository.save(commit);
+                // Chỉ khớp nếu Task thuộc về nhóm này
+                for (Requirement req : groupTasks) {
+                    if (req.getJiraKey().equalsIgnoreCase(jiraKey)) {
+                        commit.setRequirement(req);
+                        vcsCommitRepository.save(commit);
+                        count++;
 
-                    Matcher doneMatcher = donePattern.matcher(commit.getMessage());
-                    if (doneMatcher.find()) {
-                        req.setStatus("DONE");
-                        requirementRepository.save(req);
+                        Matcher doneMatcher = donePattern.matcher(commit.getMessage());
+                        if (doneMatcher.find()) {
+                            req.setStatus("DONE");
+                            requirementRepository.save(req);
+                        }
+                        break;
                     }
-                });
+                }
             }
         }
+        return count;
+    }
+
+    @Override
+    @Transactional
+    public void syncFull(UUID groupId) {
+        syncJira(groupId);
+        syncGithub(groupId);
+        mapTasksToCommits(groupId);
     }
 }

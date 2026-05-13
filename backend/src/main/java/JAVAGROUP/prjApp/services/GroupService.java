@@ -16,4 +16,5 @@ public interface GroupService {
     public List<GroupMemberDTO> getGroupMembers(UUID groupId);
     public void addMember(UUID groupId, UUID studentId);
     public void removeMember(UUID groupId, UUID studentId);
+    public void setLeader(UUID groupId, UUID studentId);
 }

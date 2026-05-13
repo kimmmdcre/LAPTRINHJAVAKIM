@@ -105,4 +105,15 @@ public class GroupController {
         groupService.removeMember(groupId, studentId);
         return ResponseEntity.ok(Map.of("message", "Member removed from group"));
     }
+
+    /**
+     * PATCH /api/groups/{id}/leader
+     */
+    @PatchMapping("/{id}/leader")
+    public ResponseEntity<Map<String, String>> setLeader(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body) {
+        groupService.setLeader(id, UUID.fromString(body.get("leaderId")));
+        return ResponseEntity.ok(Map.of("message", "Group leader set successfully"));
+    }
 }

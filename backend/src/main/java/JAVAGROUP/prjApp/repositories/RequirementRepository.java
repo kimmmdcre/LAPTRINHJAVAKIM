@@ -15,5 +15,7 @@ public interface RequirementRepository extends JpaRepository<Requirement, UUID> 
 
     Optional<Requirement> findByJiraKey(String jiraKey);
 
+    List<Requirement> findByProjectGroup(Group group);
+
     Optional<Requirement> findByJiraKeyAndProjectGroup(String jiraKey, Group group);
 }

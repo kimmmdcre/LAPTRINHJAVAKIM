@@ -6,6 +6,8 @@ import javagroup.prjApp.dtos.ConfigDTO;
 import javagroup.prjApp.entities.IntegrationConfig;
 import javagroup.prjApp.repositories.IntegrationConfigRepository;
 import javagroup.prjApp.repositories.GroupRepository;
+import javagroup.prjApp.adapters.IJiraClient;
+import javagroup.prjApp.adapters.IGitHubClient;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +21,17 @@ public class ConfigServiceImpl implements ConfigService {
 
     private final IntegrationConfigRepository integrationConfigRepository;
     private final GroupRepository groupRepository;
+    private final IJiraClient jiraClient;
+    private final IGitHubClient gitHubClient;
 
-    public ConfigServiceImpl(IntegrationConfigRepository integrationConfigRepository, GroupRepository groupRepository) {
+    public ConfigServiceImpl(IntegrationConfigRepository integrationConfigRepository, 
+                            GroupRepository groupRepository,
+                            IJiraClient jiraClient,
+                            IGitHubClient gitHubClient) {
         this.integrationConfigRepository = integrationConfigRepository;
         this.groupRepository = groupRepository;
+        this.jiraClient = jiraClient;
+        this.gitHubClient = gitHubClient;
     }
 
     @Transactional(readOnly = true)
@@ -73,11 +82,27 @@ public class ConfigServiceImpl implements ConfigService {
      * Dry run test connection logic
      */
     public boolean testConnection(ConfigDTO dto) {
-        // Simple validation for now
-        if ("JIRA".equals(dto.getPlatformType())) {
-            return dto.getUrl() != null && dto.getApiToken() != null && dto.getProjectKey() != null;
-        } else if ("GITHUB".equals(dto.getPlatformType())) {
-            return dto.getRepoUrl() != null && dto.getApiToken() != null;
+        try {
+            if ("JIRA".equals(dto.getPlatformType())) {
+                if (dto.getUrl() == null || dto.getUrl().trim().isEmpty() ||
+                    dto.getApiToken() == null || dto.getApiToken().trim().isEmpty() ||
+                    dto.getProjectKey() == null || dto.getProjectKey().trim().isEmpty() ||
+                    dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+                    return false;
+                }
+                jiraClient.checkConnection(dto.getUrl(), dto.getEmail(), dto.getApiToken(), dto.getProjectKey());
+                return true;
+            } else if ("GITHUB".equals(dto.getPlatformType())) {
+                if (dto.getRepoUrl() == null || dto.getRepoUrl().trim().isEmpty() ||
+                    dto.getApiToken() == null || dto.getApiToken().trim().isEmpty()) {
+                    return false;
+                }
+                gitHubClient.checkConnection(dto.getRepoUrl(), dto.getApiToken());
+                return true;
+            }
+        } catch (Exception e) {
+            // If any exception occurs during checkConnection (e.g. 401, 404), return false
+            return false;
         }
         return false;
     }

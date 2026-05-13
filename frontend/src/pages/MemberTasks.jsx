@@ -24,6 +24,7 @@ const MemberTasks = () => {
   const { showToast } = useUI();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState(false);
   const [filter, setFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -34,6 +35,7 @@ const MemberTasks = () => {
       setTasks(res.data);
     } catch (err) {
       console.error('Lỗi tải nhiệm vụ:', err);
+      setConnectionError(true);
       showToast('Không thể kết nối danh sách nhiệm vụ.', 'danger');
     } finally {
       setLoading(false);
@@ -102,6 +104,18 @@ const MemberTasks = () => {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
+           </div>
+           <div className="glass-card" style={{ 
+             padding: '0.5rem 1rem', 
+             display: 'flex', 
+             alignItems: 'center', 
+             gap: '0.75rem', 
+             background: connectionError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 122, 255, 0.1)', 
+             color: connectionError ? 'var(--danger)' : 'var(--primary)', 
+             border: 'none' 
+           }}>
+              {connectionError ? <WifiOff size={18} /> : <CheckCircle2 size={18} />}
+              <span style={{ fontSize: '0.85rem', fontWeight: '800' }}>{connectionError ? 'Jira Disconnected' : 'Jira Cloud Linked'}</span>
            </div>
         </div>
       </div>

@@ -15,6 +15,8 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     Optional<Student> findByEmail(String email);
 
+    Optional<Student> findByFullNameIgnoreCase(String fullName);
+
     @Query("SELECT s FROM Student s WHERE NOT EXISTS (SELECT tm FROM GroupMember tm WHERE tm.student.id = s.id)")
     List<Student> findUnassignedStudents();
 }

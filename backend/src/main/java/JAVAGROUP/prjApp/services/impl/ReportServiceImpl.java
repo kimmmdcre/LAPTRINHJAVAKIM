@@ -185,15 +185,22 @@ public class ReportServiceImpl implements ReportService {
                     if (c.getStudent() != null) {
                         dto.setAuthorName(c.getStudent().getFullName());
                         dto.setAuthorEmail(c.getStudent().getEmail());
+                        dto.setExternalAuthor(false);
                     } else if (c.getAuthorName() != null) {
-                        dto.setAuthorName(c.getAuthorName() + " (GitHub)");
+                        dto.setAuthorName(c.getAuthorName());
                         dto.setAuthorEmail(c.getAuthorEmail());
+                        dto.setExternalAuthor(true);
                     } else {
                         dto.setAuthorName("Unknown");
+                        dto.setExternalAuthor(true);
                     }
+
                     if (c.getRequirement() != null) {
                         dto.setRequirementId(c.getRequirement().getRequirementId().toString());
                         dto.setRequirementTitle(c.getRequirement().getTitle());
+                        dto.setUnlinkedTask(false);
+                    } else {
+                        dto.setUnlinkedTask(true);
                     }
                     return dto;
                 })
@@ -247,8 +254,14 @@ public class ReportServiceImpl implements ReportService {
 
                     int totalCompleted = (int) (doneManualTasks + doneJiraRequirements);
 
-                    return new ContributionDTO(student.getId(), student.getFullName(), totalCompleted,
-                            (int) commitCount);
+                    ContributionDTO dto = new ContributionDTO();
+                    dto.setStudentId(student.getId());
+                    dto.setStudentName(student.getFullName());
+                    dto.setStudentCode(student.getStudentCode());
+                    dto.setCompletedTaskCount(totalCompleted);
+                    dto.setCommitCount((int) commitCount);
+                    dto.setStatus(student.getStatus() != null ? student.getStatus().toString() : "ACTIVE");
+                    return dto;
                 })
                 .collect(Collectors.toList());
     }
@@ -321,27 +334,94 @@ public class ReportServiceImpl implements ReportService {
             PdfWriter.getInstance(document, out);
             document.open();
 
+            // Fonts
+            Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
             Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-            Paragraph title = new Paragraph("BAO CAO TONG HOP NHOM", fontTitle);
+            Font fontSection = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+            Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+            Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 11);
+
+            // University Header
+            Paragraph header1 = new Paragraph("HO CHI MINH CITY UNIVERSITY OF TRANSPORT", fontHeader);
+            header1.setAlignment(Element.ALIGN_CENTER);
+            document.add(header1);
+            Paragraph header2 = new Paragraph("FACULTY OF INFORMATION TECHNOLOGY", fontHeader);
+            header2.setAlignment(Element.ALIGN_CENTER);
+            document.add(header2);
+            document.add(new Paragraph("--------------------------------------------------", fontHeader) {{ setAlignment(Element.ALIGN_CENTER); }});
+            document.add(new Paragraph(" "));
+
+            // Title
+            Paragraph title = new Paragraph("PROJECT SUMMARY REPORT", fontTitle);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
             document.add(new Paragraph(" "));
 
-            document.add(
-                    new Paragraph("Tien do du an: " + String.format("%.1f", progress.getProgressPercentage()) + "%"));
+            // Info Section
+            PdfPTable infoTable = new PdfPTable(1);
+            infoTable.setWidthPercentage(100);
+            infoTable.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph("Group ID: " + groupId, fontBold)) {{
+                setPadding(10);
+                setBorderColor(java.awt.Color.LIGHT_GRAY);
+                setBackgroundColor(new java.awt.Color(245, 245, 245));
+            }});
+            document.add(infoTable);
+            document.add(new Paragraph(" "));
+
+            // Progress Section
+            document.add(new Paragraph("1. OVERALL PROGRESS", fontSection));
+            document.add(new Paragraph("Total Requirements: " + progress.getTotalTasks(), fontNormal));
+            document.add(new Paragraph("Completed: " + progress.getCompletedTasks(), fontNormal));
+            document.add(new Paragraph("Completion Rate: " + String.format("%.1f", progress.getProgressPercentage()) + "%", fontBold));
+            document.add(new Paragraph(" "));
+
+            // Member Contributions
+            document.add(new Paragraph("2. MEMBER CONTRIBUTIONS", fontSection));
             document.add(new Paragraph(" "));
 
             PdfPTable table = new PdfPTable(3);
-            table.addCell("Ten Sinh Vien");
-            table.addCell("Nhiem Vu Xong");
-            table.addCell("So Commits");
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{3, 1, 1});
+
+            // Table Header
+            com.lowagie.text.pdf.PdfPCell h1 = new com.lowagie.text.pdf.PdfPCell(new Paragraph("Student Name", fontBold));
+            h1.setBackgroundColor(java.awt.Color.DARK_GRAY);
+            h1.setPadding(8);
+            h1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            com.lowagie.text.pdf.PdfPCell h2 = new com.lowagie.text.pdf.PdfPCell(new Paragraph("Done Tasks", fontBold));
+            h2.setBackgroundColor(java.awt.Color.DARK_GRAY);
+            h2.setPadding(8);
+            h2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            com.lowagie.text.pdf.PdfPCell h3 = new com.lowagie.text.pdf.PdfPCell(new Paragraph("Commits", fontBold));
+            h3.setBackgroundColor(java.awt.Color.DARK_GRAY);
+            h3.setPadding(8);
+            h3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            
+            table.addCell(h1);
+            table.addCell(h2);
+            table.addCell(h3);
 
             for (ContributionDTO contribution : contributions) {
-                table.addCell(contribution.getStudentName());
-                table.addCell(String.valueOf(contribution.getCompletedTaskCount()));
-                table.addCell(String.valueOf(contribution.getCommitCount()));
+                table.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph(contribution.getStudentName(), fontNormal)) {{ setPadding(6); }});
+                table.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph(String.valueOf(contribution.getCompletedTaskCount()), fontNormal)) {{ setPadding(6); setHorizontalAlignment(Element.ALIGN_CENTER); }});
+                table.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph(String.valueOf(contribution.getCommitCount()), fontNormal)) {{ setPadding(6); setHorizontalAlignment(Element.ALIGN_CENTER); }});
             }
             document.add(table);
+
+            // Footer / Signature
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph(" "));
+            Paragraph datePara = new Paragraph("Date: " + LocalDate.now(), fontNormal);
+            datePara.setAlignment(Element.ALIGN_RIGHT);
+            document.add(datePara);
+            
+            PdfPTable signTable = new PdfPTable(2);
+            signTable.setWidthPercentage(100);
+            signTable.getDefaultCell().setBorder(com.lowagie.text.Rectangle.NO_BORDER);
+            signTable.addCell(new Paragraph("\nGroup Leader Signature", fontBold) {{ setAlignment(Element.ALIGN_CENTER); }});
+            signTable.addCell(new Paragraph("\nCourse Instructor Signature", fontBold) {{ setAlignment(Element.ALIGN_CENTER); }});
+            document.add(signTable);
+
             document.close();
             return new ByteArrayResource(out.toByteArray());
         } catch (Exception e) {
@@ -353,57 +433,90 @@ public class ReportServiceImpl implements ReportService {
     public Resource exportSrsReport(UUID groupId) throws IOException {
         List<Requirement> requirements = requirementRepository.findByProjectGroup_GroupId(groupId);
 
-        try (XWPFDocument doc = new XWPFDocument();
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document document = new Document();
+            PdfWriter.getInstance(document, out);
+            document.open();
 
-            XWPFParagraph title = doc.createParagraph();
-            title.setAlignment(ParagraphAlignment.CENTER);
-            XWPFRun titleRun = title.createRun();
-            titleRun.setText("SOFTWARE REQUIREMENTS SPECIFICATION (SRS)");
-            titleRun.setBold(true);
-            titleRun.setFontSize(22);
-            titleRun.addBreak();
+            // Fonts
+            Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22);
+            Font fontSection = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+            Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+            Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 11);
 
-            XWPFParagraph info = doc.createParagraph();
-            info.createRun().setText("Mã nhóm: " + groupId);
-            info.createRun().addBreak();
-            info.createRun().setText("Ngày xuất: " + LocalDate.now());
+            // University Header
+            Paragraph uHeader = new Paragraph("HO CHI MINH CITY UNIVERSITY OF TRANSPORT\nFACULTY OF INFORMATION TECHNOLOGY", fontHeader);
+            uHeader.setAlignment(Element.ALIGN_CENTER);
+            document.add(uHeader);
+            document.add(new Paragraph("--------------------------------------------------", fontHeader) {{ setAlignment(Element.ALIGN_CENTER); }});
+            document.add(new Paragraph(" "));
 
-            XWPFParagraph section1 = doc.createParagraph();
-            XWPFRun r1 = section1.createRun();
-            r1.setText("1. GIỚI THIỆU");
-            r1.setBold(true);
-            r1.setFontSize(14);
+            // Title
+            Paragraph title = new Paragraph("SOFTWARE REQUIREMENTS SPECIFICATION (SRS)", fontTitle);
+            title.setAlignment(Element.ALIGN_CENTER);
+            document.add(title);
+            document.add(new Paragraph(" "));
 
-            XWPFParagraph p1 = doc.createParagraph();
-            p1.createRun().setText(
-                    "Tài liệu này đặc tả các yêu cầu chức năng cho dự án môn học Java, được đồng bộ trực tiếp từ hệ thống quản lý Jira.");
+            PdfPTable info = new PdfPTable(2);
+            info.setWidthPercentage(100);
+            info.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph("Group ID:", fontBold)) {{ setBorder(com.lowagie.text.Rectangle.NO_BORDER); }});
+            info.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph(groupId.toString(), fontNormal)) {{ setBorder(com.lowagie.text.Rectangle.NO_BORDER); }});
+            info.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph("Export Date:", fontBold)) {{ setBorder(com.lowagie.text.Rectangle.NO_BORDER); }});
+            info.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph(LocalDate.now().toString(), fontNormal)) {{ setBorder(com.lowagie.text.Rectangle.NO_BORDER); }});
+            document.add(info);
+            document.add(new Paragraph(" "));
 
-            XWPFParagraph section2 = doc.createParagraph();
-            XWPFRun r2 = section2.createRun();
-            r2.setText("2. YÊU CẦU CHỨC NĂNG");
-            r2.setBold(true);
-            r2.setFontSize(14);
+            // Section 1
+            document.add(new Paragraph("1. INTRODUCTION", fontSection));
+            document.add(new Paragraph("This document specifies the functional requirements for the Java project, synchronized directly from the Jira management system.", fontNormal));
+            document.add(new Paragraph(" "));
+
+            // Section 2
+            document.add(new Paragraph("2. FUNCTIONAL REQUIREMENTS", fontSection));
+            document.add(new Paragraph(" "));
+
+            PdfPTable table = new PdfPTable(3);
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{1, 4, 1.5f});
+
+            // Table Header
+            com.lowagie.text.pdf.PdfPCell th1 = new com.lowagie.text.pdf.PdfPCell(new Paragraph("ID", fontBold));
+            th1.setBackgroundColor(java.awt.Color.LIGHT_GRAY);
+            th1.setPadding(8);
+            com.lowagie.text.pdf.PdfPCell th2 = new com.lowagie.text.pdf.PdfPCell(new Paragraph("Task Title & Description", fontBold));
+            th2.setBackgroundColor(java.awt.Color.LIGHT_GRAY);
+            th2.setPadding(8);
+            com.lowagie.text.pdf.PdfPCell th3 = new com.lowagie.text.pdf.PdfPCell(new Paragraph("Status", fontBold));
+            th3.setBackgroundColor(java.awt.Color.LIGHT_GRAY);
+            th3.setPadding(8);
+
+            table.addCell(th1);
+            table.addCell(th2);
+            table.addCell(th3);
 
             for (int i = 0; i < requirements.size(); i++) {
                 Requirement req = requirements.get(i);
-                XWPFParagraph p = doc.createParagraph();
-                XWPFRun run = p.createRun();
-                run.setText((i + 1) + ". " + req.getTitle());
-                run.setBold(true);
+                
+                table.addCell(new com.lowagie.text.pdf.PdfPCell(new Paragraph(req.getJiraKey() != null ? req.getJiraKey() : "REQ-" + (i+1), fontBold)) {{ setPadding(6); }});
+                
+                com.lowagie.text.pdf.PdfPCell cellDesc = new com.lowagie.text.pdf.PdfPCell();
+                cellDesc.addElement(new Paragraph(req.getTitle(), fontBold));
+                cellDesc.addElement(new Paragraph(req.getDescription() != null ? req.getDescription() : "No description provided.", fontNormal));
+                cellDesc.setPadding(6);
+                table.addCell(cellDesc);
 
-                XWPFParagraph desc = doc.createParagraph();
-                desc.setIndentationLeft(720);
-                desc.createRun()
-                        .setText("Mô tả: " + (req.getDescription() != null ? req.getDescription() : "Không có mô tả."));
-
-                XWPFParagraph status = doc.createParagraph();
-                status.setIndentationLeft(720);
-                status.createRun().setText("Trạng thái hiện tại: " + req.getStatus());
+                com.lowagie.text.pdf.PdfPCell cellStatus = new com.lowagie.text.pdf.PdfPCell(new Paragraph(req.getStatus(), fontNormal));
+                cellStatus.setPadding(6);
+                cellStatus.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(cellStatus);
             }
+            document.add(table);
 
-            doc.write(out);
+            document.close();
             return new ByteArrayResource(out.toByteArray());
+        } catch (Exception e) {
+            throw new IOException("Lỗi tạo PDF cho SRS", e);
         }
     }
 }

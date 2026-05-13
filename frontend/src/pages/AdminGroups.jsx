@@ -15,7 +15,8 @@ import {
   UserPlus,
   UserMinus,
   GitCommit,
-  Activity
+  Activity,
+  Crown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -84,6 +85,26 @@ const AdminGroups = () => {
     fetchData();
   }, [fetchData]);
 
+  // Handle Escape key to close modals
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (showCreateModal) setShowCreateModal(false);
+        if (showAssignModal) setShowAssignModal(false);
+      }
+    };
+
+    if (showCreateModal || showAssignModal) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, showAssignModal]);
+
   const handleAssignStudent = async (groupId, studentId) => {
     if (!groupId || !studentId) return;
     try {
@@ -146,6 +167,18 @@ const AdminGroups = () => {
         console.error(err);
         showToast('Lỗi khi xóa nhóm.', 'danger');
       }
+    }
+  };
+  
+  const handleSetLeader = async (groupId, studentId) => {
+    if (!window.confirm('Xác nhận chỉ định sinh viên này làm Trưởng nhóm?')) return;
+    try {
+      await groupService.setLeader(groupId, studentId);
+      showToast('Đã cập nhật trưởng nhóm.', 'success');
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      showToast('Lỗi khi thiết lập trưởng nhóm.', 'danger');
     }
   };
 
@@ -317,8 +350,18 @@ const AdminGroups = () => {
                       onDragEnd={() => setDraggedStudent(null)}
                       style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '0.75rem', cursor: 'grab', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: m.studentId === group.leaderId ? 'var(--warning)' : 'var(--primary)' }}></div>
-                      {m.fullName}
+                       <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: m.studentId === group.leaderId ? 'var(--warning)' : 'var(--primary)' }}></div>
+                       {m.fullName}
+                       {m.studentId !== group.leaderId && (
+                         <button 
+                           onClick={(e) => { e.stopPropagation(); handleSetLeader(group.groupId, m.studentId); }}
+                           style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                           title="Đặt làm Trưởng nhóm"
+                         >
+                           <Crown size={12} className="hover-warning" />
+                         </button>
+                       )}
+                       {m.studentId === group.leaderId && <Crown size={12} color="var(--warning)" />}
                     </div>
                   ))}
                   {(!group.members || group.members.length < 5) && (

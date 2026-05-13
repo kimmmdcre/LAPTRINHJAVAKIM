@@ -19,7 +19,8 @@ import {
   FileText,
   Award,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  WifiOff
 } from 'lucide-react';
 
 const TeacherReports = () => {
@@ -35,6 +36,7 @@ const TeacherReports = () => {
   const [historyData, setHistoryData] = useState([]);
   const [gitStats, setGitStats] = useState({ chartData: [], totalCommits: 0 });
   const [contributions, setContributions] = useState([]);
+  const [connectionError, setConnectionError] = useState(false);
 
   const fetchReportData = useCallback(async () => {
     try {
@@ -81,6 +83,7 @@ const TeacherReports = () => {
       });
     } catch (err) {
       console.error('Lỗi tải báo cáo:', err);
+      setConnectionError(true);
       showToast('Có lỗi khi trích xuất dữ liệu báo cáo.', 'danger');
     } finally {
       setLoading(false);
@@ -104,7 +107,7 @@ const TeacherReports = () => {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      const fileName = format === 'srs' ? `SRS-Nhom-${groupInfo?.groupName}.docx` : `Bao-cao-nhom-${groupInfo?.groupName}.${format}`;
+      const fileName = format === 'srs' ? `SRS-Nhom-${groupInfo?.groupName}.pdf` : `Bao-cao-nhom-${groupInfo?.groupName}.${format}`;
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
@@ -154,18 +157,30 @@ const TeacherReports = () => {
              <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>Đề tài: <span style={{ color: 'white', fontWeight: '600' }}>{groupInfo?.projectTopic || 'Chưa cập nhật'}</span></p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-           <button className="btn btn-outline" onClick={() => handleExport('srs')}>
-             <FileText size={18} /> Xuất SRS
-           </button>
-           <button className="btn btn-outline" onClick={() => handleExport('docx')}>
-             <FileDown size={18} /> Microsoft Word
-           </button>
-           <button className="btn btn-primary" onClick={() => handleExport('pdf')}>
-             <Download size={18} /> Xuất PDF
-           </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+             <div className="glass-card" style={{ 
+               padding: '0.5rem 1.25rem', 
+               display: 'flex', 
+               alignItems: 'center', 
+               gap: '0.75rem', 
+               background: connectionError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', 
+               color: connectionError ? 'var(--danger)' : 'var(--success)', 
+               border: 'none',
+               borderRadius: '12px'
+             }}>
+                {connectionError ? <WifiOff size={18} /> : <CheckCircle2 size={18} />}
+                <span style={{ fontSize: '0.85rem', fontWeight: '900' }}>{connectionError ? 'Integration Loss' : 'Systems Connected'}</span>
+             </div>
+             <div style={{ display: 'flex', gap: '0.75rem' }}>
+               <button className="btn btn-outline" onClick={() => handleExport('srs')}>
+                 <FileText size={18} /> Xuất SRS
+               </button>
+               <button className="btn btn-primary" onClick={() => handleExport('pdf')}>
+                 <Download size={18} /> Xuất PDF
+               </button>
+             </div>
+          </div>
         </div>
-      </div>
 
       {/* Summary Widgets */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
@@ -211,8 +226,16 @@ const TeacherReports = () => {
                 <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--surface-border)', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
-                  itemStyle={{ color: 'white', fontWeight: 'bold' }}
+                  cursor={{ stroke: 'var(--primary)', strokeWidth: 2, strokeDasharray: '5 5' }}
+                  contentStyle={{ 
+                    background: 'rgba(15, 23, 42, 0.95)', 
+                    border: '1px solid var(--glass-border)', 
+                    borderRadius: '12px', 
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                  }}
+                  labelStyle={{ color: '#fff', fontWeight: '900' }}
+                  itemStyle={{ color: '#fff', fontWeight: 'bold' }}
                 />
                 <Area type="monotone" dataKey="completed" stroke="var(--primary)" fillOpacity={1} fill="url(#colorProgress)" strokeWidth={3} />
               </AreaChart>
@@ -232,8 +255,16 @@ const TeacherReports = () => {
                 <XAxis type="number" hide />
                 <YAxis dataKey="username" type="category" stroke="var(--text-muted)" fontSize={11} width={100} axisLine={false} tickLine={false} />
                 <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                  contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--surface-border)', borderRadius: '12px' }}
+                  cursor={{fill: 'rgba(255,255,255,0.12)'}}
+                  contentStyle={{ 
+                    background: 'rgba(15, 23, 42, 0.95)', 
+                    border: '1px solid var(--glass-border)', 
+                    borderRadius: '12px', 
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                  }}
+                  labelStyle={{ color: '#fff', fontWeight: '900', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}
+                  itemStyle={{ color: '#00d2ff', fontWeight: '700', fontSize: '0.85rem' }}
                 />
                 <Bar dataKey="commits" radius={[0, 6, 6, 0]} barSize={24}>
                   {gitStats.chartData.map((entry, index) => (
@@ -276,12 +307,12 @@ const TeacherReports = () => {
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                           <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '0.8rem' }}>
-                             {m.studentName?.[0]}
+                           <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', border: '1px solid rgba(99, 102, 241, 0.2)', fontWeight: '800', fontSize: '0.8rem' }}>
+                             {m.studentName?.charAt(0)}
                            </div>
                            <div>
                              <p style={{ fontWeight: '700' }}>{m.studentName}</p>
-                             <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.studentId?.toString().substring(0, 8)}</p>
+                             <p style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '700' }}>{m.studentCode || 'N/A'}</p>
                            </div>
                         </div>
                       </td>
@@ -296,9 +327,19 @@ const TeacherReports = () => {
                         </div>
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '20px', background: m.completedTaskCount > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: m.completedTaskCount > 0 ? 'var(--success)' : 'var(--danger)', fontSize: '0.7rem', fontWeight: '900' }}>
-                           {m.completedTaskCount > 0 ? <CheckCircle2 size={12} /> : <Zap size={12} />}
-                           {m.completedTaskCount > 0 ? 'ACTIVE' : 'INACTIVE'}
+                        <div style={{ 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '6px', 
+                          padding: '4px 12px', 
+                          borderRadius: '20px', 
+                          background: m.status === 'ACTIVE' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                          color: m.status === 'ACTIVE' ? 'var(--success)' : 'var(--danger)', 
+                          fontSize: '0.7rem', 
+                          fontWeight: '900' 
+                        }}>
+                           {m.status === 'ACTIVE' ? <CheckCircle2 size={12} /> : <Zap size={12} />}
+                           {m.status || 'INACTIVE'}
                         </div>
                       </td>
                     </tr>

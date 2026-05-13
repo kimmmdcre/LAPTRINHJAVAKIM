@@ -16,15 +16,35 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor to handle account status
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 403) {
+      const message = error.response.data?.message || '';
+      if (message.includes('khóa') || message.includes('vô hiệu hóa') || message.includes('kích hoạt')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = `/login?error=${encodeURIComponent(message)}`;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Structured API services
 export const userService = {
   getAll: () => api.get('/users'),
   getTeachers: () => api.get('/users?role=TEACHER'),
   create: (data) => api.post('/users', data),
   update: (id, data) => api.put(`/users/${id}`, data),
+  updateProfile: (data) => api.put('/users/profile', data),
   delete: (id) => api.delete(`/users/${id}`),
   getUnassigned: () => api.get('/users?status=UNASSIGNED'),
+  getById: (id) => api.get(`/users/${id}`),
   assignRole: (id, role) => api.patch(`/users/${id}/role`, { role }),
+  updateStatus: (id, status) => api.patch(`/users/${id}/status`, { status }),
+  bulkCreate: (data) => api.post('/users/bulk', data),
 };
 
 export const groupService = {
@@ -37,6 +57,7 @@ export const groupService = {
   assignTeacher: (groupId, teacherId) => api.patch(`/groups/${groupId}/assign`, { teacherId }),
   addMember: (groupId, studentId) => api.post(`/groups/${groupId}/members/${studentId}`),
   removeMember: (groupId, studentId) => api.delete(`/groups/${groupId}/members/${studentId}`),
+  setLeader: (groupId, leaderId) => api.patch(`/groups/${groupId}/leader`, { leaderId }),
 };
 
 export const taskService = {
@@ -47,6 +68,7 @@ export const taskService = {
   syncJira: (groupId) => api.post(`/sync/${groupId}/jira`),
   syncGithub: (groupId) => api.post(`/sync/${groupId}/github`),
   mapping: () => api.post('/sync/mapping'),
+  syncFull: (groupId) => api.post(`/sync/${groupId}/full`),
 };
 
 export const reportService = {
@@ -57,8 +79,6 @@ export const reportService = {
   getDetailedCommits: (groupId) => api.get(`/reports/${groupId}/commits/detailed`),
   getContributions: (groupId) => api.get(`/reports/${groupId}/contributions`),
   getPersonalHistory: (studentId) => api.get(`/reports/personal/${studentId}/history`),
-  exportCsv: (groupId) => api.get(`/reports/${groupId}/export/csv`, { responseType: 'blob' }),
-  exportDocx: (groupId) => api.get(`/reports/${groupId}/export/docx`, { responseType: 'blob' }),
   exportPdf: (groupId) => api.get(`/reports/${groupId}/export/pdf`, { responseType: 'blob' }),
   exportSRS: (groupId) => api.get(`/reports/${groupId}/export/srs`, { responseType: 'blob' }),
 };

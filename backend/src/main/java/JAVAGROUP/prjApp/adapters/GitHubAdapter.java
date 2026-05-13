@@ -99,8 +99,14 @@ public class GitHubAdapter implements IGitHubClient {
                     log.warn("Error parsing commit author info for {}: {}", sha, e.getMessage());
                 }
 
-                CommitDTO dto = new CommitDTO(sha, message != null ? message : "", commitTime, null, null, authorName,
-                        authorEmail);
+                CommitDTO dto = new CommitDTO();
+                dto.setSha(sha);
+                dto.setMessage(message != null ? message : "");
+                dto.setCommitTime(commitTime);
+                dto.setAuthorName(authorName);
+                dto.setAuthorEmail(authorEmail);
+                dto.setExternalAuthor(false); // Will be verified in Service
+                dto.setUnlinkedTask(false);   // Will be verified in Service
                 result.add(dto);
             }
             log.info("Successfully fetched {} commits from GitHub", result.size());

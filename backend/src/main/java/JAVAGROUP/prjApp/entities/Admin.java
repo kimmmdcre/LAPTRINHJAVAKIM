@@ -17,7 +17,4 @@ import lombok.Setter;
 public class Admin extends User {
     @Column(name = "admin_code", nullable = false, unique = true)
     private String adminCode;
-
-    @Column(name = "admin_level")
-    private String adminLevel;
 }

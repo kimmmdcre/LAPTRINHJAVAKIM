@@ -16,8 +16,19 @@ import {
   Mail,
   UserCheck,
   GraduationCap,
-  ShieldAlert
+  ShieldAlert,
+  Lock,
+  Unlock,
+  Phone,
+  ShieldCheck,
+  LayoutGrid,
+  CheckCircle,
+  GitCommit,
+  Zap,
+  Award
 } from 'lucide-react';
+import { reportService } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -32,16 +43,120 @@ const AdminUsers = () => {
     fullName: '',
     email: '',
     roleCode: 'STUDENT',
+    status: 'ACTIVE',
     password: '',
     confirmPassword: ''
   });
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [gridData, setGridData] = useState([
+    { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+    { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+    { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+    { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+    { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+  ]);
+
+  const gridStyles = `
+    .grid-row {
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .grid-input {
+      transition: all 0.15s ease;
+      border-radius: 4px !important;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+      font-weight: 500 !important;
+      color: #e2e8f0 !important;
+    }
+    .grid-input:focus {
+      background: rgba(255, 255, 255, 0.03) !important;
+      outline: 1px solid var(--primary) !important;
+      color: white !important;
+    }
+    .grid-input::placeholder {
+      color: rgba(255, 255, 255, 0.2);
+    }
+  `;
+
+  const addGridRow = () => {
+    setGridData([...gridData, { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' }]);
+  };
+
+  const updateGridCell = (index, field, value) => {
+    const newData = [...gridData];
+    newData[index][field] = value;
+    setGridData(newData);
+  };
+
+  const removeGridRow = (index) => {
+    if (gridData.length > 1) {
+      setGridData(gridData.filter((_, i) => i !== index));
+    }
+  };
 
   const { showToast } = useUI();
   const { user: currentUser } = useAuth();
 
   useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') {
+        setShowBulkModal(false);
+        setShowAddModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
+
+  const navigate = useNavigate();
+
+  // Modal Profile State
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberHistory, setMemberHistory] = useState([]);
+  const [memberLoading, setMemberLoading] = useState(false);
+
+  const handleShowMemberInfo = async (memberId) => {
+    setShowProfileModal(true);
+    setMemberLoading(true);
+    try {
+      const [userRes, historyRes] = await Promise.all([
+        userService.getById(memberId),
+        reportService.getPersonalHistory(memberId)
+      ]);
+      setSelectedMember(userRes.data);
+      setMemberHistory(historyRes.data || []);
+    } catch (err) {
+      console.error('Lỗi tải chi tiết thành viên:', err);
+      setSelectedMember({ id: memberId, fullName: 'Đang tải...' });
+      setMemberHistory([]);
+    } finally {
+      setMemberLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showAddModal) {
+        closeModal();
+      }
+    };
+
+    if (showAddModal) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showAddModal]);
 
   const fetchUsers = async () => {
     try {
@@ -87,7 +202,7 @@ const AdminUsers = () => {
   const closeModal = () => {
     setShowAddModal(false);
     setEditingId(null);
-    setFormData({ username: '', fullName: '', email: '', roleCode: 'STUDENT', password: '', confirmPassword: '' });
+    setFormData({ username: '', fullName: '', email: '', roleCode: 'STUDENT', status: 'ACTIVE', password: '', confirmPassword: '' });
   };
 
   const handleDelete = async (id) => {
@@ -100,6 +215,23 @@ const AdminUsers = () => {
         console.error(err);
         showToast('Không thể xóa người dùng này.', 'danger');
       }
+    }
+  };
+
+  const handleToggleStatus = async (targetUser) => {
+    if (targetUser.id === currentUser?.id) {
+        showToast('Bạn không thể tự chặn chính mình!', 'warning');
+        return;
+    }
+    
+    try {
+      const newStatus = targetUser.status === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
+      await userService.updateStatus(targetUser.id, newStatus);
+      showToast(`Đã ${newStatus === 'BANNED' ? 'chặn' : 'kích hoạt'} tài khoản @${targetUser.username}`, 'success');
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      showToast('Lỗi khi cập nhật trạng thái người dùng.', 'danger');
     }
   };
 
@@ -134,15 +266,22 @@ const AdminUsers = () => {
 
   return (
     <div className="animate-fade-in">
+      <style>{gridStyles}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
         <div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Quản lý Nhân sự</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Quản trị viên có thể điều phối tài khoản và phân quyền hệ thống</p>
         </div>
-        <button className="btn btn-primary animate-slide-up" onClick={() => setShowAddModal(true)} style={{ padding: '0.8rem 1.5rem' }}>
-          <UserPlus size={18} />
-          Tạo tài khoản mới
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button className="btn btn-outline animate-slide-up" onClick={() => setShowBulkModal(true)} style={{ padding: '0.8rem 1.5rem', borderColor: 'var(--primary)', color: 'var(--primary)', fontWeight: '800', fontFamily: "'Inter', sans-serif" }}>
+            <LayoutGrid size={18} />
+            Chế độ Bảng tính
+          </button>
+          <button className="btn btn-primary animate-slide-up" onClick={() => setShowAddModal(true)} style={{ padding: '0.8rem 1.5rem' }}>
+            <UserPlus size={18} />
+            Tạo tài khoản mới
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
@@ -190,12 +329,17 @@ const AdminUsers = () => {
                           background: 'linear-gradient(135deg, var(--glass), rgba(255,255,255,0.05))',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           border: '1px solid var(--glass-border)',
-                          color: 'var(--text-secondary)'
+                          color: 'var(--text-secondary)',
+                          overflow: 'hidden'
                         }}>
-                          {u.roleCode === 'TEACHER' ? <GraduationCap size={20} /> : <User size={20} />}
+                          {getRoleIcon(u.roleCode)}
                         </div>
-                        <div>
-                          <p style={{ fontWeight: '700', fontSize: '0.95rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <p 
+                            style={{ fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer' }}
+                            onClick={() => handleShowMemberInfo(u.id)}
+                            className="hover-text-primary"
+                          >
                             {u.fullName}
                             {currentUser?.id === u.id && <span style={{ marginLeft: '8px', fontSize: '0.65rem', color: 'var(--primary)', background: 'var(--primary-glow)', padding: '2px 8px', borderRadius: '10px' }}>TÔI</span>}
                           </p>
@@ -222,8 +366,22 @@ const AdminUsers = () => {
                     </td>
                     <td style={{ padding: '1.25rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: u.status === 'ACTIVE' ? 'var(--success)' : 'var(--danger)' }}></div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>{u.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa'}</span>
+                        <div style={{ 
+                            width: '8px', height: '8px', borderRadius: '50%', 
+                            background: u.status === 'ACTIVE' ? 'var(--success)' : 
+                                       u.status === 'BANNED' ? 'var(--danger)' : 
+                                       u.status === 'PENDING' ? 'var(--warning)' : 'var(--text-muted)' 
+                        }}></div>
+                        <span style={{ 
+                            fontSize: '0.85rem', fontWeight: '600', 
+                            color: u.status === 'ACTIVE' ? 'var(--text-primary)' : 
+                                   u.status === 'BANNED' ? 'var(--danger)' : 
+                                   u.status === 'PENDING' ? 'var(--warning)' : 'var(--text-muted)'
+                        }}>
+                            {u.status === 'ACTIVE' ? 'Đang hoạt động' : 
+                             u.status === 'BANNED' ? 'Bị chặn' : 
+                             u.status === 'PENDING' ? 'Đang chờ' : 'Ngưng hoạt động'}
+                        </span>
                       </div>
                     </td>
                     <td style={{ padding: '1.25rem', textAlign: 'right' }}>
@@ -236,6 +394,7 @@ const AdminUsers = () => {
                               fullName: u.fullName || '',
                               email: u.email || '',
                               roleCode: u.roleCode || 'STUDENT',
+                              status: u.status || 'ACTIVE',
                               password: '',
                               confirmPassword: ''
                             });
@@ -243,6 +402,19 @@ const AdminUsers = () => {
                           }}
                           className="btn btn-outline" style={{ padding: '0.6rem' }} title="Chỉnh sửa">
                           <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          className={`btn btn-outline ${currentUser?.id === u.id ? 'disabled' : ''}`}
+                          style={{ 
+                            padding: '0.6rem', 
+                            color: u.status === 'ACTIVE' ? 'var(--warning)' : 'var(--success)',
+                            opacity: currentUser?.id === u.id ? 0.3 : 1 
+                          }}
+                          disabled={currentUser?.id === u.id}
+                          title={u.status === 'ACTIVE' ? "Chặn tài khoản" : "Bỏ chặn tài khoản"}
+                        >
+                          {u.status === 'ACTIVE' ? <Lock size={16} /> : <Unlock size={16} />}
                         </button>
                         <button
                           onClick={() => handleDelete(u.id)}
@@ -269,6 +441,140 @@ const AdminUsers = () => {
           </table>
         </div>
       </div>
+
+      {/* Bulk Import Grid Modal */}
+      {showBulkModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '1rem' }}>
+          <div className="glass-card animate-scale-in" style={{ width: '95%', maxWidth: '1100px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif" }}>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: '900', letterSpacing: '-0.02em' }}>Chế độ Nhập liệu Bảng tính</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Điền thông tin trực tiếp vào bảng bên dưới để tạo tài khoản hàng loạt</p>
+              </div>
+              <button onClick={() => setShowBulkModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            <div style={{ padding: '0', flex: 1, overflowY: 'auto' }} className="custom-scrollbar">
+              <table style={{ width: '100%', borderCollapse: 'collapse', borderSpacing: 0 }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f0f13', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+                  <tr>
+                    <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: '800', width: '25%' }}>Họ và tên</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: '800', width: '20%' }}>Username</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: '800', width: '25%' }}>Email (Khớp GitHub)</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: '800', width: '15%' }}>Vai trò</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: '800', width: '10%' }}>Mật khẩu</th>
+                    <th style={{ width: '50px' }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gridData.map((row, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--glass-border)' }} className="grid-row">
+                      <td style={{ padding: '0.5rem' }}>
+                        <input 
+                          className="input-field grid-input" 
+                          style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', border: 'none' }}
+                          value={row.fullName}
+                          onChange={(e) => updateGridCell(idx, 'fullName', e.target.value)}
+                          placeholder="Nguyễn Văn A..."
+                        />
+                      </td>
+                      <td style={{ padding: '0.5rem' }}>
+                        <input 
+                          className="input-field grid-input" 
+                          style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', border: 'none', color: 'var(--accent)' }}
+                          value={row.username}
+                          onChange={(e) => updateGridCell(idx, 'username', e.target.value)}
+                          placeholder="nva_sv"
+                        />
+                      </td>
+                      <td style={{ padding: '0.5rem' }}>
+                        <input 
+                          className="input-field grid-input" 
+                          style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', border: 'none', color: 'var(--success)' }}
+                          value={row.email}
+                          onChange={(e) => updateGridCell(idx, 'email', e.target.value)}
+                          placeholder="email@github.com"
+                        />
+                      </td>
+                      <td style={{ padding: '0.5rem' }}>
+                        <select 
+                          className="input-field grid-input" 
+                          style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', border: 'none' }}
+                          value={row.roleCode}
+                          onChange={(e) => updateGridCell(idx, 'roleCode', e.target.value)}
+                        >
+                          <option value="STUDENT">STUDENT</option>
+                          <option value="TEACHER">TEACHER</option>
+                        </select>
+                      </td>
+                      <td style={{ padding: '0.5rem' }}>
+                        <input 
+                          className="input-field grid-input" 
+                          style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'transparent', border: 'none', color: 'var(--text-muted)' }}
+                          value={row.password}
+                          onChange={(e) => updateGridCell(idx, 'password', e.target.value)}
+                          type="text"
+                        />
+                      </td>
+                      <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                        <button 
+                          onClick={() => removeGridRow(idx)}
+                          style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', opacity: 0.5 }}
+                          title="Xóa dòng"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                 <button onClick={addGridRow} className="btn btn-outline" style={{ borderStyle: 'dashed', width: '200px' }}>
+                    + Thêm dòng mới
+                 </button>
+              </div>
+            </div>
+
+            <div style={{ padding: '1.5rem 2rem', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <strong>Lưu ý:</strong> Hệ thống sẽ tự động bỏ qua các dòng để trống cả tên và email.
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button className="btn btn-outline" onClick={() => setShowBulkModal(false)} style={{ padding: '0.6rem 1.5rem' }}>Hủy bỏ</button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={async () => {
+                    const validData = gridData.filter(d => d.fullName.trim() && d.email.trim());
+                    if (validData.length === 0) {
+                      showToast('Vui lòng nhập ít nhất một tài khoản hợp lệ!', 'warning');
+                      return;
+                    }
+                    try {
+                      await userService.bulkCreate(validData);
+                      showToast(`Đã tạo thành công ${validData.length} tài khoản!`);
+                      setShowBulkModal(false);
+                      setGridData([
+                        { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+                        { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+                        { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+                        { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+                        { fullName: '', username: '', email: '', roleCode: 'STUDENT', password: '123456' },
+                      ]);
+                      fetchUsers();
+                    } catch (err) {
+                      showToast(err.response?.data?.message || 'Có lỗi khi tạo tài khoản hàng loạt.', 'danger');
+                    }
+                  }}
+                  style={{ padding: '0.6rem 2rem', fontWeight: '800' }}
+                >
+                  Xác nhận Tạo {gridData.filter(d => d.fullName.trim() && d.email.trim()).length} tài khoản
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal - Modern Design */}
       {showAddModal && (
@@ -329,14 +635,31 @@ const AdminUsers = () => {
               </div>
 
               <div className="input-group">
-                <label className="input-label">Địa chỉ Email</label>
+                <label className="input-label">Trạng thái tài khoản</label>
+                <select
+                  className="input-field"
+                  value={formData.status}
+                  onChange={e => setFormData({ ...formData, status: e.target.value })}
+                >
+                  <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
+                  <option value="INACTIVE">Ngưng hoạt động (INACTIVE)</option>
+                  <option value="BANNED">Bị chặn / Khóa (BANNED)</option>
+                  <option value="PENDING">Đang chờ (PENDING)</option>
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Địa chỉ Email</span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '800' }}>QUAN TRỌNG ĐỂ KHỚP GITHUB</span>
+                </label>
                 <input
                   type="email"
                   className="input-field"
                   required
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="student@ut.edu.vn"
+                  placeholder="Nhập email sinh viên dùng trên GitHub..."
                 />
               </div>
 
@@ -383,9 +706,207 @@ const AdminUsers = () => {
         </div>
       )}
 
+      {/* Member Detail Modal - UNIFIED PREMIUM DESIGN */}
+      {showProfileModal && (
+        <div 
+          onClick={(e) => { if(e.target === e.currentTarget) setShowProfileModal(false); }}
+          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(20px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+        >
+          <div className="glass-card animate-scale-in custom-scrollbar" style={{ 
+            width: '95%', 
+            maxWidth: '800px', 
+            maxHeight: '90vh', 
+            padding: 0, 
+            overflowY: 'auto', 
+            position: 'relative', 
+            border: '1px solid rgba(255,255,255,0.08)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            background: 'rgba(20, 20, 25, 0.9)',
+            display: 'block'
+          }}>
+            
+            {/* Close Button Overlay */}
+            <button 
+              onClick={() => setShowProfileModal(false)} 
+              style={{ 
+                position: 'absolute', 
+                top: '1rem', 
+                right: '1rem', 
+                background: 'rgba(0, 0, 0, 0.5)', 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                color: 'white', 
+                cursor: 'pointer', 
+                width: '32px', 
+                height: '32px', 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                zIndex: 10
+              }}
+            >
+              &times;
+            </button>
+
+            {/* Premium Header */}
+            <div style={{ 
+              height: '140px', 
+              background: 'linear-gradient(135deg, #0062ff 0%, #00a2ff 50%, #00d2ff 100%)', 
+              position: 'relative'
+            }}>
+              <div style={{ position: 'absolute', bottom: '-40px', left: '2rem', display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
+                <div style={{ 
+                  width: '100px', 
+                  height: '100px', 
+                  borderRadius: '24px', 
+                  background: '#0f0f13', 
+                  border: '4px solid #141419', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  color: 'var(--primary)', 
+                  boxShadow: '0 10px 20px rgba(0,0,0,0.3)'
+                }}>
+                  <User size={50} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: '50px 2rem 2rem 2rem' }}>
+              {memberLoading ? (
+                <div style={{ padding: '4rem', textAlign: 'center' }}>
+                   <div className="animate-spin" style={{ width: '30px', height: '30px', border: '3px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 1rem' }}></div>
+                   <p style={{ color: 'var(--text-muted)' }}>Đang truy xuất dữ liệu hồ sơ...</p>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', gap: '1rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                        <h2 style={{ fontSize: '1.75rem', fontWeight: '900', letterSpacing: '-0.03em', color: '#fff' }}>
+                          {selectedMember?.fullName}
+                        </h2>
+                        <span style={{ 
+                          padding: '3px 10px', 
+                          background: selectedMember?.status === 'ACTIVE' ? 'rgba(34, 197, 94, 0.1)' : 
+                                     selectedMember?.status === 'PENDING' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                          color: selectedMember?.status === 'ACTIVE' ? '#4ade80' : 
+                                 selectedMember?.status === 'PENDING' ? '#fbbf24' : '#f87171', 
+                          borderRadius: '100px', 
+                          fontSize: '0.65rem', 
+                          fontWeight: '800', 
+                          textTransform: 'uppercase',
+                          border: `1px solid ${selectedMember?.status === 'ACTIVE' ? 'rgba(34, 197, 94, 0.2)' : 
+                                               selectedMember?.status === 'PENDING' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                        }}>
+                          {selectedMember?.status === 'ACTIVE' ? 'Đang hoạt động' : 
+                           selectedMember?.status === 'BANNED' ? 'Bị chặn' : 
+                           selectedMember?.status === 'INACTIVE' ? 'Ngưng hoạt động' : 
+                           selectedMember?.status === 'PENDING' ? 'Đang chờ' : 'Không xác định'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><ShieldCheck size={14} color="var(--accent)" /> {selectedMember?.roleCode}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Mail size={14} color="var(--primary)" /> {selectedMember?.email}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                    {/* Left: Contact Details */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      <section>
+                        <h4 style={{ fontSize: '0.7rem', fontWeight: '800', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ width: '15px', height: '1px', background: 'currentColor' }}></div>
+                          Thông tin chi tiết
+                        </h4>
+                        
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                          <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <Phone size={18} color="#c084fc" />
+                            <div>
+                              <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>SỐ ĐIỆN THOẠI</p>
+                              <p style={{ fontSize: '0.9rem', fontWeight: '600', color: '#e2e8f0' }}>{selectedMember?.phoneNumber || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '1rem' }}>
+                            <div style={{ flex: 1, padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                               <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>GIỚI TÍNH</p>
+                               <p style={{ fontSize: '0.9rem', fontWeight: '700' }}>{selectedMember?.gender || 'N/A'}</p>
+                            </div>
+                            <div style={{ flex: 1, padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                               <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: '700' }}>THAM GIA</p>
+                               <p style={{ fontSize: '0.9rem', fontWeight: '700' }}>
+                                 {selectedMember?.createdAt ? new Date(selectedMember.createdAt).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' }) : '12/2024'}
+                               </p>
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+                    </div>
+
+                    {/* Right: Contributions (Hide for Teachers/Admins) */}
+                    {selectedMember?.roleCode !== 'TEACHER' && selectedMember?.roleCode !== 'ADMIN' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <section>
+                          <h4 style={{ fontSize: '0.7rem', fontWeight: '800', color: '#00a2ff', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ width: '15px', height: '1px', background: 'currentColor' }}></div>
+                            Đóng góp dự án
+                          </h4>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{ padding: '1rem', background: 'rgba(0, 122, 255, 0.1)', borderRadius: '16px', border: '1px solid rgba(0, 122, 255, 0.2)', textAlign: 'center' }}>
+                              <p style={{ fontSize: '1.5rem', fontWeight: '900', color: '#007AFF', margin: 0 }}>{memberHistory.filter(h => h.type === 'TASK').length}</p>
+                              <p style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--text-muted)' }}>TASKS</p>
+                            </div>
+                            <div style={{ padding: '1rem', background: 'rgba(90, 200, 250, 0.1)', borderRadius: '16px', border: '1px solid rgba(90, 200, 250, 0.2)', textAlign: 'center' }}>
+                              <p style={{ fontSize: '1.5rem', fontWeight: '900', color: '#5AC8FA', margin: 0 }}>{memberHistory.filter(h => h.type === 'COMMIT').length}</p>
+                              <p style={{ fontSize: '0.65rem', fontWeight: '700', color: 'var(--text-muted)' }}>COMMITS</p>
+                            </div>
+                          </div>
+
+                          <div style={{ background: 'rgba(255,255,255,0.01)', borderRadius: '16px', padding: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <p style={{ fontSize: '0.75rem', fontWeight: '700', color: '#e2e8f0', marginBottom: '0.75rem' }}>Hoạt động mới nhất</p>
+                            <div style={{ maxHeight: '120px', overflowY: 'auto' }} className="custom-scrollbar">
+                              {memberHistory.length > 0 ? (
+                                memberHistory.slice(0, 3).map((h, i) => (
+                                  <div key={i} style={{ padding: '0.5rem 0', borderBottom: i === 2 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
+                                    <p style={{ fontSize: '0.8rem', fontWeight: '600', color: '#cbd5e1', marginBottom: '2px' }}>{h.description}</p>
+                                    <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{new Date(h.timestamp).toLocaleDateString()}</p>
+                                  </div>
+                                ))
+                              ) : <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Chưa có dữ liệu.</p>}
+                            </div>
+                          </div>
+                        </section>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+                         <ShieldCheck size={48} color="var(--primary)" style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                         <h4 style={{ color: 'white', fontWeight: '700', marginBottom: '0.5rem' }}>Hồ sơ Nhân sự</h4>
+                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Tài khoản này thuộc quyền quản lý/giảng dạy, không tham gia trực tiếp vào việc thực hiện dự án.</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            
+            <div style={{ padding: '1.5rem 2rem', background: 'rgba(15, 15, 20, 0.6)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'flex-end' }}>
+               <button onClick={() => setShowProfileModal(false)} className="btn btn-outline" style={{ padding: '0.6rem 2rem' }}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .table-row-hover:hover {
           background: rgba(255,255,255,0.02);
+        }
+        .hover-text-primary:hover {
+          color: var(--primary) !important;
+          text-decoration: underline;
         }
       `}</style>
     </div>

@@ -11,6 +11,8 @@ import java.util.UUID;
 public class ContributionDTO {
     private UUID studentId;
     private String studentName;
+    private String studentCode;
     private int completedTaskCount;
     private int commitCount;
+    private String status;
 }

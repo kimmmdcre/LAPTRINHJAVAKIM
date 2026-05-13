@@ -79,6 +79,25 @@ const LeaderTasks = () => {
     }
   }, [user, initLeaderData]);
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showAssignModal) {
+        setShowAssignModal(false);
+      }
+    };
+
+    if (showAssignModal) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showAssignModal]);
+
   const handleSyncJira = async () => {
     if (!groupId) return;
     try {

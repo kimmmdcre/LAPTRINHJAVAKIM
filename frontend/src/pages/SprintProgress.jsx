@@ -135,7 +135,8 @@ const SprintProgress = () => {
                   <XAxis dataKey="date" stroke="var(--text-hidden)" hide />
                   <YAxis stroke="var(--text-muted)" fontSize={11} axisLine={false} tickLine={false} />
                   <Tooltip 
-                    contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
+                    cursor={{ stroke: 'var(--primary)', strokeWidth: 2, strokeDasharray: '5 5' }}
+                    contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid var(--glass-border)', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
                     itemStyle={{ color: 'white', fontWeight: 'bold' }}
                   />
                   <Area type="monotone" dataKey="completed" stroke="var(--primary)" fillOpacity={1} fill="url(#colorSprint)" strokeWidth={4} />
@@ -178,7 +179,7 @@ const SprintProgress = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '10px' }} />
+                    <Tooltip contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid var(--glass-border)', borderRadius: '10px', backdropFilter: 'blur(10px)' }} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>

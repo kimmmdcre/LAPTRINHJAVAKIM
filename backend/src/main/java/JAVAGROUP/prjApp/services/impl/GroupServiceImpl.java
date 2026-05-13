@@ -31,15 +31,18 @@ public class GroupServiceImpl implements GroupService {
     private final TeacherRepository teacherRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final StudentRepository studentRepository;
+    private final javagroup.prjApp.repositories.IntegrationConfigRepository integrationConfigRepository;
 
     public GroupServiceImpl(GroupRepository groupRepository,
             TeacherRepository teacherRepository,
             GroupMemberRepository groupMemberRepository,
-            StudentRepository studentRepository) {
+            StudentRepository studentRepository,
+            javagroup.prjApp.repositories.IntegrationConfigRepository integrationConfigRepository) {
         this.groupRepository = groupRepository;
         this.teacherRepository = teacherRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.studentRepository = studentRepository;
+        this.integrationConfigRepository = integrationConfigRepository;
     }
 
     public Group createGroup(GroupDTO dto) {
@@ -98,7 +101,7 @@ public class GroupServiceImpl implements GroupService {
                 .map(gm -> {
                     Student student = gm.getStudent();
                     return new GroupMemberDTO(
-                            student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole());
+                            student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole(), student.getStatus());
                 })
                 .collect(Collectors.toList());
     }
@@ -130,6 +133,32 @@ public class GroupServiceImpl implements GroupService {
         groupMemberRepository.deleteById(new GroupMemberId(groupId, studentId));
     }
 
+    public void setLeader(UUID groupId, UUID studentId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
+        
+        // Verify student is actually in the group
+        boolean isInGroup = group.getMembers().stream()
+                .anyMatch(m -> m.getStudent().getId().equals(studentId));
+        if (!isInGroup) {
+            throw new RuntimeException("Student is not a member of this group");
+        }
+
+        // 1. Update Group entity
+        group.setLeaderId(studentId);
+        groupRepository.save(group);
+
+        // 2. Sync GroupMember roles
+        for (GroupMember gm : group.getMembers()) {
+            if (gm.getStudent().getId().equals(studentId)) {
+                gm.setRole(GroupRole.LEADER);
+            } else {
+                gm.setRole(GroupRole.MEMBER);
+            }
+            groupMemberRepository.save(gm);
+        }
+    }
+
     private GroupDTO toDTO(Group group) {
         Teacher teacher = group.getTeacher();
         List<GroupMemberDTO> members = group.getMembers() == null ? List.of()
@@ -137,15 +166,27 @@ public class GroupServiceImpl implements GroupService {
                         .map(gm -> {
                             Student student = gm.getStudent();
                             return new GroupMemberDTO(
-                                    student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole());
+                                    student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole(), student.getStatus());
                         })
                         .collect(Collectors.toList());
+
+        List<javagroup.prjApp.entities.IntegrationConfig> configs = integrationConfigRepository.findByGroupId(group.getGroupId());
+        String jiraUrl = configs.stream()
+                .filter(c -> "JIRA".equalsIgnoreCase(c.getPlatformType()))
+                .map(javagroup.prjApp.entities.IntegrationConfig::getUrl)
+                .findFirst().orElse(null);
+        String githubUrl = configs.stream()
+                .filter(c -> "GITHUB".equalsIgnoreCase(c.getPlatformType()))
+                .map(javagroup.prjApp.entities.IntegrationConfig::getRepoUrl)
+                .findFirst().orElse(null);
 
         return new GroupDTO(
                 group.getGroupId(), group.getGroupName(), group.getProjectTopic(),
                 teacher != null ? teacher.getId() : null,
                 teacher != null ? teacher.getFullName() : null,
                 group.getLeaderId(),
+                jiraUrl,
+                githubUrl,
                 members);
     }
 }

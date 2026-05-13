@@ -16,5 +16,7 @@ public class GroupDTO {
     private UUID teacherId;
     private String teacherName;
     private UUID leaderId;
+    private String jiraUrl;
+    private String githubUrl;
     private List<GroupMemberDTO> members;
 }

@@ -15,7 +15,9 @@ import {
   Award,
   ChevronRight,
   Info,
-  ArrowLeft
+  ArrowLeft,
+  WifiOff,
+  CheckCircle2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,6 +29,7 @@ const ContributionTracking = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [groupInfo, setGroupInfo] = useState(null);
+  const [connectionError, setConnectionError] = useState(false);
 
   const fetchAnalyticsData = useCallback(async () => {
     try {
@@ -66,6 +69,7 @@ const ContributionTracking = () => {
       }
     } catch (err) {
       console.error('Lỗi phân tích đóng góp:', err);
+      setConnectionError(true);
       showToast('Không thể kết nối tới dữ liệu đóng góp.', 'danger');
     } finally {
       setLoading(false);
@@ -78,12 +82,22 @@ const ContributionTracking = () => {
     }
   }, [user, fetchAnalyticsData]);
 
+  const CHART_COLORS = [
+    '#007AFF', // Royal Blue
+    '#5AC8FA', // Sky Blue
+    '#00D2FF', // Cyan
+    '#6366F1', // Indigo
+    '#A855F7', // Purple
+    '#EC4899', // Pink
+  ];
+
   const getHeatmapColor = (count) => {
-    if (count === 0) return 'rgba(255,255,255,0.03)';
-    if (count <= 1) return '#1e3a8a'; // Deep blue
-    if (count <= 3) return '#3b82f6'; // Bright blue
-    if (count <= 5) return '#60a5fa'; // Light blue
-    return 'var(--primary)'; // Accent blue
+    if (count === 0) return 'rgba(255,255,255,0.05)';
+    if (count <= 1) return 'rgba(0, 122, 255, 0.15)';
+    if (count <= 3) return 'rgba(0, 122, 255, 0.35)';
+    if (count <= 5) return 'rgba(0, 122, 255, 0.6)';
+    if (count <= 8) return 'rgba(0, 122, 255, 0.85)';
+    return '#007AFF';
   };
 
   if (loading && !groupInfo) return (
@@ -110,8 +124,23 @@ const ContributionTracking = () => {
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Phân tích chuyên sâu về tần suất commit và chất lượng mã nguồn của từng thành viên</p>
           </div>
         </div>
-        <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', padding: '0.6rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '800' }}>
-           Group: {groupInfo?.groupName || 'N/A'}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="glass-card" style={{ 
+               padding: '0.4rem 1rem', 
+               display: 'flex', 
+               alignItems: 'center', 
+               gap: '0.6rem', 
+               background: connectionError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', 
+               color: connectionError ? 'var(--danger)' : 'var(--success)', 
+               border: 'none',
+               borderRadius: '10px'
+            }}>
+                {connectionError ? <WifiOff size={16} /> : <CheckCircle2 size={16} />}
+                <span style={{ fontSize: '0.75rem', fontWeight: '800' }}>{connectionError ? 'Connection Lost' : 'Live Connection'}</span>
+            </div>
+            <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', padding: '0.6rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '800' }}>
+               Group: {groupInfo?.groupName || 'N/A'}
+            </div>
         </div>
       </div>
 
@@ -131,12 +160,24 @@ const ContributionTracking = () => {
                 <XAxis dataKey="studentName" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <YAxis fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <Tooltip
-                  cursor={{fill: 'rgba(255,255,255,0.03)'}}
-                  contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                  cursor={{fill: 'rgba(255,255,255,0.12)'}}
+                  contentStyle={{ 
+                    background: 'rgba(15, 23, 42, 0.95)', 
+                    border: '1px solid var(--glass-border)', 
+                    borderRadius: '12px', 
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                  }}
+                  labelStyle={{ color: '#fff', fontWeight: '900', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}
+                  itemStyle={{ color: '#00d2ff', fontWeight: '700', fontSize: '0.85rem' }}
                 />
-                <Bar dataKey="commitCount" fill="var(--primary)" radius={[6, 6, 0, 0]} barSize={40}>
+                <Bar name="Số Commits" dataKey="commitCount" radius={[6, 6, 0, 0]} barSize={40}>
                    {contributions.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fillOpacity={entry.studentId === user.id ? 1 : 0.4} />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={CHART_COLORS[index % CHART_COLORS.length]} 
+                      fillOpacity={entry.studentId === user.id ? 1 : 0.6} 
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -159,12 +200,24 @@ const ContributionTracking = () => {
                 <XAxis dataKey="studentName" fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <YAxis fontSize={11} stroke="var(--text-muted)" axisLine={false} tickLine={false} />
                 <Tooltip
-                  cursor={{fill: 'rgba(255,255,255,0.03)'}}
-                  contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                  cursor={{fill: 'rgba(255,255,255,0.12)'}}
+                  contentStyle={{ 
+                    background: 'rgba(15, 23, 42, 0.95)', 
+                    border: '1px solid var(--glass-border)', 
+                    borderRadius: '12px', 
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                  }}
+                  labelStyle={{ color: '#fff', fontWeight: '900', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}
+                  itemStyle={{ color: '#4ade80', fontWeight: '700', fontSize: '0.85rem' }}
                 />
-                <Bar dataKey="completedTaskCount" fill="var(--success)" radius={[6, 6, 0, 0]} barSize={40}>
+                <Bar name="Nhiệm vụ hoàn thành" dataKey="completedTaskCount" radius={[6, 6, 0, 0]} barSize={40}>
                    {contributions.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fillOpacity={entry.studentId === user.id ? 1 : 0.4} />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={CHART_COLORS[(index + 2) % CHART_COLORS.length]} 
+                      fillOpacity={entry.studentId === user.id ? 1 : 0.6} 
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -182,10 +235,12 @@ const ContributionTracking = () => {
                Chỉ số Nỗ lực (Activity Heatmap)
              </h3>
              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Less <div style={{width:10, height:10, background:'rgba(255,255,255,0.03)', borderRadius:2 }}></div>
-                <div style={{width:10, height:10, background:'#1e3a8a', borderRadius:2 }}></div>
-                <div style={{width:10, height:10, background:'#3b82f6', borderRadius:2 }}></div>
-                <div style={{width:10, height:10, background:'var(--primary)', borderRadius:2 }}></div> More
+                Ít <div style={{width:10, height:10, background:'rgba(255,255,255,0.05)', borderRadius:2 }}></div>
+                <div style={{width:10, height:10, background:'rgba(0, 122, 255, 0.15)', borderRadius:2 }}></div>
+                <div style={{width:10, height:10, background:'rgba(0, 122, 255, 0.35)', borderRadius:2 }}></div>
+                <div style={{width:10, height:10, background:'rgba(0, 122, 255, 0.6)', borderRadius:2 }}></div>
+                <div style={{width:10, height:10, background:'rgba(0, 122, 255, 0.85)', borderRadius:2 }}></div>
+                <div style={{width:10, height:10, background:'#007AFF', borderRadius:2 }}></div> Nhiều
              </div>
           </div>
           
@@ -223,7 +278,15 @@ const ContributionTracking = () => {
                 <XAxis dataKey="date" hide />
                 <YAxis hide />
                 <Tooltip 
-                   contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}
+                   contentStyle={{ 
+                     background: 'rgba(15, 23, 42, 0.95)', 
+                     border: '1px solid var(--glass-border)', 
+                     borderRadius: '12px', 
+                     backdropFilter: 'blur(10px)',
+                     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                   }}
+                   labelStyle={{ color: '#fff', fontWeight: '900' }}
+                   itemStyle={{ color: '#00d2ff', fontWeight: '700' }}
                 />
                 <Area type="monotone" dataKey="count" stroke="var(--primary)" fillOpacity={1} fill="url(#colorCount)" strokeWidth={3} />
               </AreaChart>
@@ -249,8 +312,8 @@ const ContributionTracking = () => {
                       return (
                         <>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ width: '40px', height: '40px', background: 'var(--warning)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
-                                <Zap size={20} fill="black" />
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255, 159, 10, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--warning)', border: '2px solid var(--warning)' }}>
+                              <Award size={20} />
                             </div>
                             <div>
                                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>TOP CONTRIBUTOR</p>

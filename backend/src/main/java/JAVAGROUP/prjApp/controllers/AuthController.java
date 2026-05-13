@@ -32,26 +32,41 @@ public class AuthController {
         String username = body.get("username");
         String password = body.get("password");
 
-        String token = authService.login(username, password);
+        try {
+            String token = authService.login(username, password);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", token);
-        response.put("type", "Bearer");
-        response.put("message", "Login successful");
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("type", "Bearer");
+            response.put("message", "Login successful");
 
-        response.put("id", principal.getId());
-        response.put("username", principal.getUsername());
-        response.put("fullName", principal.getFullName());
-        response.put("email", principal.getEmail());
-        response.put("roleCode", principal.getRoleCode().name());
-        response.put("role", principal.getRoleCode().name());
-        response.put("groupRole", principal.getGroupRole());
-        response.put("groupId", principal.getGroupId());
+            response.put("id", principal.getId());
+            response.put("username", principal.getUsername());
+            response.put("fullName", principal.getFullName());
+            response.put("email", principal.getEmail());
+            response.put("roleCode", principal.getRoleCode().name());
+            response.put("role", principal.getRoleCode().name());
+            response.put("groupRole", principal.getGroupRole());
+            response.put("groupId", principal.getGroupId());
+            response.put("createdAt", principal.getCreatedAt());
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "Tài khoản của bạn đang ở trạng thái chờ kích hoạt hoặc đã bị vô hiệu hóa.");
+            return ResponseEntity.status(403).body(error);
+        } catch (org.springframework.security.authentication.LockedException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "Tài khoản của bạn đã bị khóa (Banned). Vui lòng liên hệ quản trị viên.");
+            return ResponseEntity.status(403).body(error);
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "Tên đăng nhập hoặc mật khẩu không chính xác.");
+            return ResponseEntity.status(401).body(error);
+        }
     }
 
     /**

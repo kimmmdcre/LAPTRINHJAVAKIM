@@ -21,7 +21,8 @@ import {
   ChevronRight,
   Wifi,
   WifiOff,
-  ArrowLeft
+  ArrowLeft,
+  Zap
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -36,7 +37,8 @@ const AdminConfig = () => {
 
   const [jiraData, setJiraData] = useState({ url: '', email: '', token: '', projectKey: '', doneStatusName: 'Done' });
   const [githubData, setGithubData] = useState({ repo: '', token: '', since: '2024-01-01T00:00:00Z' });
-  const [syncing, setSyncing] = useState({ jira: false, github: false, mapping: false });
+  const [syncing, setSyncing] = useState({ jira: false, github: false, mapping: false, full: false });
+  const [connectionStatus, setConnectionStatus] = useState({ jira: false, github: false });
 
   const { user } = useAuth();
   const { showToast } = useUI();
@@ -75,6 +77,10 @@ const AdminConfig = () => {
 
       setJiraData(newJira);
       setGithubData(newGithub);
+      setConnectionStatus({
+        jira: configs.some(c => c?.platformType === 'JIRA' && c?.url),
+        github: configs.some(c => c?.platformType === 'GITHUB' && c?.repoUrl)
+      });
     } catch (err) {
       console.error('Config Fetch Error:', err);
       showToast('Lỗi khi truy xuất dữ liệu cấu hình.', 'danger');
@@ -148,6 +154,57 @@ const AdminConfig = () => {
     fetchGroups();
   }, [fetchGroups]);
 
+  const handleJiraUrlChange = (val) => {
+    let url = val;
+    let projectKey = jiraData.projectKey;
+
+    try {
+      if (val.includes('atlassian.net')) {
+        // Extract base URL: https://xxx.atlassian.net
+        const match = val.match(/(https?:\/\/[^/]+\.atlassian\.net)/i);
+        if (match) {
+          url = match[1];
+        }
+
+        // Try to extract Project Key
+        // Patterns: /projects/KEY, /browse/KEY-123, /board/KEY
+        const projectMatch = val.match(/\/projects\/([^/?#]+)/i) || 
+                           val.match(/\/browse\/([^/-]+)-/i) ||
+                           val.match(/\/classic\/projects\/([^/?#]+)/i);
+        
+        if (projectMatch && projectMatch[1]) {
+          projectKey = projectMatch[1].toUpperCase();
+        }
+      }
+    } catch (e) {
+      console.error('URL Parsing Error:', e);
+    }
+
+    setJiraData(prev => ({ 
+      ...prev, 
+      url: url,
+      projectKey: projectKey 
+    }));
+    setConnectionStatus(prev => ({ ...prev, jira: false }));
+  };
+
+  const handleGithubRepoChange = (val) => {
+    let repo = val;
+    try {
+      if (val.includes('github.com/')) {
+        // Extract user/repo from https://github.com/user/repo
+        const match = val.match(/github\.com\/([^/]+\/[^/?#]+)/i);
+        if (match && match[1]) {
+          repo = match[1];
+        }
+      }
+    } catch (e) {
+      console.error('GitHub Parsing Error:', e);
+    }
+    setGithubData(prev => ({ ...prev, repo }));
+    setConnectionStatus(prev => ({ ...prev, github: false }));
+  };
+
   const handleGroupChange = (id) => {
     setActiveGroupId(id);
     fetchCurrentConfig(id);
@@ -198,34 +255,71 @@ const AdminConfig = () => {
   const handleTest = async (type) => {
     try {
       showToast(`Đang thực hiện Ping ${type}...`, 'info');
+      setConnectionStatus(prev => ({ ...prev, [type.toLowerCase()]: false }));
       
       const payload = type === 'Jira' 
         ? { platformType: 'JIRA', url: jiraData.url, email: jiraData.email, apiToken: jiraData.token, projectKey: jiraData.projectKey }
         : { platformType: 'GITHUB', repoUrl: githubData.repo, apiToken: githubData.token };
 
       const res = await configService.testConnection(payload);
-      showToast(res.data?.message || `Kết nối ${type} ổn định!`, 'success');
+      
+      if (res.data?.success) {
+        showToast(res.data?.message || `Kết nối ${type} ổn định!`, 'success');
+        setConnectionStatus(prev => ({ ...prev, [type.toLowerCase()]: true }));
+      } else {
+        showToast(res.data?.message || `Ping ${type} thất bại. Vui lòng kiểm tra lại cấu hình.`, 'danger');
+        setConnectionStatus(prev => ({ ...prev, [type.toLowerCase()]: false }));
+      }
     } catch (err) {
       console.error('Test Connection Error:', err);
       showToast(`Ping ${type} thất bại. Vui lòng kiểm tra lại cấu hình.`, 'danger');
+      setConnectionStatus(prev => ({ ...prev, [type.toLowerCase()]: false }));
     }
   };
 
   const handleSync = async (type) => {
-    try {
-      setSyncing(prev => ({ ...prev, [type]: true }));
-      showToast(`Bắt đầu tiến trình đồng bộ ${type.toUpperCase()}...`, 'info');
-
-      if (type === 'jira') await taskService.syncJira(activeGroupId);
-      else if (type === 'github') await taskService.syncGithub(activeGroupId);
-      else if (type === 'mapping') await taskService.mapping();
+    try {      
+      if (type === 'jira') {
+        await taskService.syncJira(activeGroupId);
+        setConnectionStatus(prev => ({ ...prev, jira: true }));
+      }
+      else if (type === 'github') {
+        await taskService.syncGithub(activeGroupId);
+        setConnectionStatus(prev => ({ ...prev, github: true }));
+      }
+      else if (type === 'mapping') {
+        const res = await taskService.mapping(activeGroupId);
+        showToast(`Đã khớp thành công ${res.data.mappedCount} mục dữ liệu!`, 'success');
+        return;
+      }
 
       showToast(`Đồng bộ ${type.toUpperCase()} hoàn tất!`, 'success');
     } catch (err) {
       console.error('Sync error:', err);
-      showToast(`Đồng bộ ${type} không thành công.`, 'danger');
+      showToast(`Đồng bộ ${type} không thành công. Kiểm tra lại kết nối.`, 'danger');
+      if (type === 'jira' || type === 'github') {
+        setConnectionStatus(prev => ({ ...prev, [type]: false }));
+      }
     } finally {
       setSyncing(prev => ({ ...prev, [type]: false }));
+    }
+  };
+
+  const handleFullSync = async () => {
+    if (!activeGroupId) return;
+    try {
+      setSyncing(prev => ({ ...prev, full: true }));
+      showToast('Đang khởi động tiến trình đồng bộ toàn diện (Jira + GitHub + Mapping)...', 'info');
+      await taskService.syncFull(activeGroupId);
+      showToast('Đã hoàn tất đồng bộ toàn diện dữ liệu dự án!', 'success');
+      setConnectionStatus({ jira: true, github: true });
+      fetchGroups();
+    } catch (err) {
+      console.error('Full Sync Error:', err);
+      showToast('Tiến trình đồng bộ toàn diện thất bại. Kết nối bị ngắt quãng.', 'danger');
+      setConnectionStatus({ jira: false, github: false });
+    } finally {
+      setSyncing(prev => ({ ...prev, full: false }));
     }
   };
 
@@ -317,8 +411,14 @@ const AdminConfig = () => {
                     <ChevronRight size={14} style={{ opacity: isActive ? 1 : 0.2 }} />
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: stats.jira ? 'var(--success)' : 'rgba(255,255,255,0.1)' }}></div>
-                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: stats.github ? 'var(--success)' : 'rgba(255,255,255,0.1)' }}></div>
+                    <div style={{ 
+                      width: '4px', height: '4px', borderRadius: '50%', 
+                      background: (isActive && !connectionStatus.jira) ? 'var(--danger)' : stats.jira ? 'var(--success)' : 'rgba(255,255,255,0.1)' 
+                    }}></div>
+                    <div style={{ 
+                      width: '4px', height: '4px', borderRadius: '50%', 
+                      background: (isActive && !connectionStatus.github) ? 'var(--danger)' : stats.github ? 'var(--success)' : 'rgba(255,255,255,0.1)' 
+                    }}></div>
                   </div>
                 </div>
               )
@@ -337,25 +437,42 @@ const AdminConfig = () => {
               <div style={{ flex: 1 }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.25rem' }}>{activeGroup?.groupName}</h3>
                 <div style={{ display: 'flex', gap: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {groupStats[activeGroupId]?.jira ? <Wifi size={14} color="var(--success)" /> : <WifiOff size={14} />}
-                    Jira Connection: {groupStats[activeGroupId]?.jira ? 'READY' : 'NOT LINKED'}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: (groupStats[activeGroupId]?.jira && connectionStatus.jira) ? 'var(--text-muted)' : 'var(--danger)' }}>
+                    {(groupStats[activeGroupId]?.jira && connectionStatus.jira) ? <Wifi size={14} color="var(--success)" /> : <WifiOff size={14} color="var(--danger)" />}
+                    Kết nối Jira: {(groupStats[activeGroupId]?.jira && connectionStatus.jira) ? 'SẴN SÀNG' : 'MẤT KẾT NỐI'}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {groupStats[activeGroupId]?.github ? <Wifi size={14} color="var(--success)" /> : <WifiOff size={14} />}
-                    GitHub Hook: {groupStats[activeGroupId]?.github ? 'CONNECTED' : 'DISCONNECTED'}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: (groupStats[activeGroupId]?.github && connectionStatus.github) ? 'var(--text-muted)' : 'var(--danger)' }}>
+                    {(groupStats[activeGroupId]?.github && connectionStatus.github) ? <Wifi size={14} color="var(--success)" /> : <WifiOff size={14} color="var(--danger)" />}
+                    Cầu nối GitHub: {(groupStats[activeGroupId]?.github && connectionStatus.github) ? 'ĐÃ KẾT NỐI' : 'MẤT KẾT NỐI'}
                   </div>
                 </div>
               </div>
-              <button
-                className="btn btn-outline"
-                style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
-                onClick={() => handleSync('mapping')}
-                disabled={syncing.mapping}
-              >
-                {syncing.mapping ? <RefreshCw size={16} className="animate-spin" /> : <Activity size={16} />}
-                Khớp dữ liệu (Jira-Git Mapping)
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  className="btn btn-outline"
+                  style={{ 
+                    borderColor: 'var(--accent)', 
+                    color: 'var(--accent)', 
+                    padding: '0.6rem 1rem',
+                    opacity: (groupStats[activeGroupId]?.jira && groupStats[activeGroupId]?.github) ? 1 : 0.5,
+                    cursor: (groupStats[activeGroupId]?.jira && groupStats[activeGroupId]?.github) ? 'pointer' : 'not-allowed'
+                  }}
+                  onClick={() => handleSync('mapping')}
+                  disabled={syncing.mapping || syncing.full || !groupStats[activeGroupId]?.jira || !groupStats[activeGroupId]?.github}
+                >
+                  {syncing.mapping ? <RefreshCw size={16} className="animate-spin" /> : <Activity size={16} />}
+                  Khớp (Mapping)
+                </button>
+                <button
+                  className="btn btn-primary"
+                  style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', border: 'none', padding: '0.6rem 1.25rem' }}
+                  onClick={handleFullSync}
+                  disabled={syncing.full || syncing.jira || syncing.github}
+                >
+                  {syncing.full ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
+                  {syncing.full ? 'Đang xử lý...' : 'ĐỒNG BỘ TOÀN DIỆN'}
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
@@ -365,21 +482,21 @@ const AdminConfig = () => {
                   <div style={{ padding: '10px', background: 'rgba(0, 82, 204, 0.1)', color: '#0052CC', borderRadius: '12px' }}>
                     <Link2 size={24} />
                   </div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: '900' }}>Jira Integration</h4>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: '900' }}>Tích hợp Jira Cloud</h4>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div className="input-group">
-                    <label className="input-label">Workspace Site URL</label>
-                    <input type="text" className="input-field" placeholder="https://cacmkt.atlassian.net" value={jiraData.url} onChange={e => setJiraData({ ...jiraData, url: e.target.value })} />
+                    <label className="input-label">Jira Software URL</label>
+                    <input type="text" className="input-field" placeholder="https://cacmkt.atlassian.net" value={jiraData.url} onChange={e => handleJiraUrlChange(e.target.value)} />
                   </div>
                   <div className="input-group">
-                    <label className="input-label">Admin Identity (Email)</label>
-                    <input type="email" className="input-field" value={jiraData.email} onChange={e => setJiraData({ ...jiraData, email: e.target.value })} />
+                    <label className="input-label">Email Quản trị (Admin)</label>
+                    <input type="email" className="input-field" value={jiraData.email} onChange={e => { setJiraData({ ...jiraData, email: e.target.value }); setConnectionStatus(prev => ({ ...prev, jira: false })); }} />
                   </div>
                   <div className="input-group">
-                    <label className="input-label">Atlassian API Token</label>
-                    <input type="password" className="input-field" value={jiraData.token} onChange={e => setJiraData({ ...jiraData, token: e.target.value })} />
+                    <label className="input-label">Personal access token</label>
+                    <input type="password" className="input-field" value={jiraData.token} onChange={e => { setJiraData({ ...jiraData, token: e.target.value }); setConnectionStatus(prev => ({ ...prev, jira: false })); }} />
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div className="input-group">
@@ -387,8 +504,8 @@ const AdminConfig = () => {
                       <input type="text" className="input-field" value={jiraData.projectKey} onChange={e => setJiraData({ ...jiraData, projectKey: e.target.value })} />
                     </div>
                     <div className="input-group">
-                      <label className="input-label">Done State Name</label>
-                      <input type="text" className="input-field" value={jiraData.doneStatusName} onChange={e => setJiraData({ ...jiraData, doneStatusName: e.target.value })} />
+                      <label className="input-label">Done status name</label>
+                      <input type="text" className="input-field" value={jiraData.doneStatusName} onChange={e => { setJiraData({ ...jiraData, doneStatusName: e.target.value }); setConnectionStatus(prev => ({ ...prev, jira: false })); }} />
                     </div>
                   </div>
                 </div>
@@ -396,10 +513,23 @@ const AdminConfig = () => {
                 <div style={{ marginTop: 'auto', paddingTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <button className="glass-button" style={{ justifyContent: 'center', padding: '0.75rem' }} onClick={() => handleTest('Jira')}>
-                      <Wifi size={18} /> Test Ping
+                      <Wifi size={18} /> Kiểm tra kết nối
                     </button>
-                    <button className="glass-button" style={{ justifyContent: 'center', padding: '0.75rem', background: 'rgba(99, 102, 241, 0.2)', border: '1px solid var(--primary)' }} onClick={handleSaveJira} disabled={isSaving}>
-                      <Save size={18} color="var(--primary)" /> <span style={{ color: 'var(--primary)', fontWeight: '800' }}>Lưu Jira</span>
+                    <button 
+                      className="glass-button" 
+                      style={{ 
+                        justifyContent: 'center', 
+                        padding: '0.75rem', 
+                        background: connectionStatus.jira ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)', 
+                        border: connectionStatus.jira ? '1px solid var(--primary)' : '1px solid var(--glass-border)',
+                        opacity: connectionStatus.jira ? 1 : 0.5,
+                        cursor: connectionStatus.jira ? 'pointer' : 'not-allowed'
+                      }} 
+                      onClick={handleSaveJira} 
+                      disabled={isSaving || !connectionStatus.jira}
+                    >
+                      <Save size={18} color={connectionStatus.jira ? "var(--primary)" : "var(--text-muted)"} /> 
+                      <span style={{ color: connectionStatus.jira ? 'var(--primary)' : 'var(--text-muted)', fontWeight: '800' }}>Lưu cấu hình Jira</span>
                     </button>
                   </div>
                   <button
@@ -409,7 +539,7 @@ const AdminConfig = () => {
                     disabled={syncing.jira}
                   >
                     {syncing.jira ? <RefreshCw size={20} className="animate-spin" /> : <RefreshCw size={20} color="var(--primary)" />}
-                    <span style={{ marginLeft: '0.5rem', fontWeight: '800' }}>FETCH JIRA TASKS</span>
+                    <span style={{ marginLeft: '0.5rem', fontWeight: '800' }}>ĐỒNG BỘ TASK JIRA</span>
                   </button>
                 </div>
               </div>
@@ -420,23 +550,23 @@ const AdminConfig = () => {
                   <div style={{ padding: '10px', background: 'rgba(255,255,255,0.05)', color: 'white', borderRadius: '12px' }}>
                     <GitBranch size={24} />
                   </div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: '900' }}>GitHub Source Sync</h4>
+                  <h4 style={{ fontSize: '1.1rem', fontWeight: '900' }}>Đồng bộ Source GitHub</h4>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div className="input-group">
                     <label className="input-label">GitHub Repository (user/repo)</label>
-                    <input type="text" className="input-field" placeholder="toann-java/prj-backend" value={githubData.repo} onChange={e => setGithubData({ ...githubData, repo: e.target.value })} />
+                    <input type="text" className="input-field" placeholder="toann-java/prj-backend" value={githubData.repo} onChange={e => handleGithubRepoChange(e.target.value)} />
                   </div>
                   <div className="input-group">
-                    <label className="input-label">Dev Access Token (PAT)</label>
-                    <input type="password" className="input-field" value={githubData.token} onChange={e => setGithubData({ ...githubData, token: e.target.value })} />
+                    <label className="input-label">Personal access token</label>
+                    <input type="password" className="input-field" value={githubData.token} onChange={e => { setGithubData({ ...githubData, token: e.target.value }); setConnectionStatus(prev => ({ ...prev, github: false })); }} />
                   </div>
 
                   <div className="glass-card" style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', marginTop: '0.5rem' }}>
                     <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: '1.6' }}>
                       <Terminal size={20} style={{ flexShrink: 0 }} />
-                      <p>Hệ thống sử dụng PAT để quét Commit API. Đảm bảo Scope <strong>repo:status</strong> được bật.</p>
+                      <p>Hệ thống sử dụng PAT để quét Commit API. Đảm bảo Scope <strong>repo:status</strong> đã được kích hoạt.</p>
                     </div>
                   </div>
                 </div>
@@ -444,10 +574,22 @@ const AdminConfig = () => {
                 <div style={{ marginTop: 'auto', paddingTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <button className="glass-button" style={{ justifyContent: 'center', padding: '0.75rem' }} onClick={() => handleTest('GitHub')}>
-                      <Wifi size={18} /> Test Ping
+                      <Wifi size={18} /> Kiểm tra kết nối
                     </button>
-                    <button className="glass-button" style={{ justifyContent: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid white' }} onClick={handleSaveGithub} disabled={isSaving}>
-                      <Save size={18} /> <span style={{ fontWeight: '800' }}>Lưu Git</span>
+                    <button 
+                      className="glass-button" 
+                      style={{ 
+                        justifyContent: 'center', 
+                        padding: '0.75rem', 
+                        background: connectionStatus.github ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)', 
+                        border: connectionStatus.github ? '1px solid white' : '1px solid var(--glass-border)',
+                        opacity: connectionStatus.github ? 1 : 0.5,
+                        cursor: connectionStatus.github ? 'pointer' : 'not-allowed'
+                      }} 
+                      onClick={handleSaveGithub} 
+                      disabled={isSaving || !connectionStatus.github}
+                    >
+                      <Save size={18} /> <span style={{ fontWeight: '800' }}>Lưu cấu hình Git</span>
                     </button>
                   </div>
                   <button
@@ -457,7 +599,7 @@ const AdminConfig = () => {
                     disabled={syncing.github}
                   >
                     {syncing.github ? <RefreshCw size={20} className="animate-spin" /> : <RefreshCw size={20} color="var(--secondary)" />}
-                    <span style={{ marginLeft: '0.5rem', fontWeight: '800' }}>FETCH GITHUB COMMITS</span>
+                    <span style={{ marginLeft: '0.5rem', fontWeight: '800' }}>ĐỒNG BỘ COMMIT GITHUB</span>
                   </button>
                 </div>
               </div>
@@ -466,8 +608,8 @@ const AdminConfig = () => {
         ) : (
           <div className="glass-card" style={{ padding: '8rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Settings size={48} style={{ opacity: 0.1, marginBottom: '2rem' }} />
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Infrastructure Ready</h3>
-            <p style={{ color: 'var(--text-muted)', maxWidth: '300px', marginTop: '0.5rem' }}>Vui lòng chọn một hàng dự án để thực hiện cầu nối dữ liệu (Data Bridge).</p>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Sẵn sàng Cấu hình</h3>
+            <p style={{ color: 'var(--text-muted)', maxWidth: '300px', marginTop: '0.5rem' }}>Vui lòng chọn một nhóm dự án từ danh sách bên trái để thiết lập cầu nối dữ liệu (Data Bridge).</p>
           </div>
         )}
       </div>

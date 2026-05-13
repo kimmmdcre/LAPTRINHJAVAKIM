@@ -25,6 +25,7 @@ const MemberCommits = () => {
   const navigate = useNavigate();
   const [commits, setCommits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [groupInfo, setGroupInfo] = useState(null);
 
@@ -61,6 +62,7 @@ const MemberCommits = () => {
       }
     } catch (err) {
       console.error('Lỗi tải commit:', err);
+      setConnectionError(true);
       showToast('Không thể kết nối tới lịch sử GitHub.', 'danger');
     } finally {
       setLoading(false);
@@ -103,9 +105,17 @@ const MemberCommits = () => {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-           <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', border: 'none' }}>
-              <CheckCircle2 size={18} />
-              <span style={{ fontSize: '0.85rem', fontWeight: '800' }}>GitHub Linked</span>
+           <div className="glass-card" style={{ 
+             padding: '0.5rem 1rem', 
+             display: 'flex', 
+             alignItems: 'center', 
+             gap: '0.75rem', 
+             background: connectionError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', 
+             color: connectionError ? 'var(--danger)' : 'var(--success)', 
+             border: 'none' 
+           }}>
+              {connectionError ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+              <span style={{ fontSize: '0.85rem', fontWeight: '800' }}>{connectionError ? 'GitHub Disconnected' : 'GitHub Linked'}</span>
            </div>
         </div>
       </div>
@@ -145,20 +155,25 @@ const MemberCommits = () => {
                    </div>
                    <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                         <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', fontFamily: 'monospace', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
+                         <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', opacity: 0.9, fontFamily: 'monospace', background: 'rgba(99, 102, 241, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
                            {c.sha?.substring(0, 7)}
                          </span>
-                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                         <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
                            <Clock size={12} /> {c.commitTime ? new Date(c.commitTime).toLocaleString('vi-VN') : 'Vừa xong'}
                          </span>
                       </div>
-                      <p style={{ fontWeight: '600', lineHeight: '1.5', marginBottom: '0.75rem' }}>{c.message}</p>
+                      <p style={{ fontWeight: '700', lineHeight: '1.5', marginBottom: '0.75rem', color: '#fff', fontSize: '1rem' }}>{c.message}</p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--primary)', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>{c.authorName?.charAt(0)}</div>
-                            {c.authorName}
-                            {c.requirementTitle && <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>• {c.requirementTitle}</span>}
-                         </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'white', fontWeight: '600' }}>
+                             <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--primary)', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', boxShadow: '0 0 10px rgba(99, 102, 241, 0.3)' }}>{c.authorName?.charAt(0)}</div>
+                             {c.authorName}
+                             {c.externalAuthor && <span title="Tên GitHub không khớp với bất kỳ sinh viên nào" style={{ color: 'var(--danger)', fontSize: '0.6rem', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 6px', borderRadius: '4px', marginLeft: '4px', border: '1px solid rgba(239, 68, 68, 0.2)', fontWeight: '900' }}>NGOÀI HỆ THỐNG</span>}
+                             {c.requirementTitle ? (
+                               <span style={{ color: 'var(--primary)', fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.1)', padding: '2px 8px', borderRadius: '100px', marginLeft: '8px' }}>{c.requirementTitle}</span>
+                             ) : (
+                               <span title="Commit không gắn mã Task từ Jira" style={{ color: 'var(--warning)', fontSize: '0.65rem', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '100px', marginLeft: '8px', border: '1px solid rgba(245, 158, 11, 0.2)', fontWeight: '800' }}>CHƯA GẮN TASK</span>
+                             )}
+                          </div>
                       </div>
                    </div>
                 </div>

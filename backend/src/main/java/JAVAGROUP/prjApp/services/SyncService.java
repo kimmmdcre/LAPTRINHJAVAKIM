@@ -5,5 +5,6 @@ import java.util.UUID;
 public interface SyncService {
     void syncJira(UUID groupId);
     void syncGithub(UUID groupId);
-    void mapTasksToCommits();
+    int mapTasksToCommits(UUID groupId);
+    void syncFull(UUID groupId);
 }

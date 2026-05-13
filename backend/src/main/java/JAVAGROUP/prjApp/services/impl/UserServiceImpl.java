@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,15 +36,30 @@ public class UserServiceImpl implements UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    private void validatePhoneNumber(String phoneNumber, UUID excludeUserId) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) return;
+        
+        String cleaned = phoneNumber.trim();
+        if (!cleaned.matches("\\d{10}")) {
+            throw new RuntimeException("Số điện thoại không hợp lệ. Phải bao gồm đúng 10 chữ số.");
+        }
+
+        userRepository.findByPhoneNumber(cleaned).ifPresent(existingUser -> {
+            if (excludeUserId == null || !existingUser.getId().equals(excludeUserId)) {
+                throw new RuntimeException("Số điện thoại này đã được sử dụng bởi một người dùng khác.");
+            }
+        });
+    }
+
     @Override
     public void createAccount(UserDTO dto) {
+        validatePhoneNumber(dto.getPhoneNumber(), null);
         User user;
         UserRole role = dto.getRoleCode();
 
         if (UserRole.ADMIN.equals(role)) {
             Admin admin = new Admin();
             admin.setAdminCode("AD_" + dto.getUsername());
-            admin.setAdminLevel("1");
             user = admin;
         } else if (UserRole.TEACHER.equals(role)) {
             Teacher teacher = new Teacher();
@@ -63,6 +79,8 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setFullName(dto.getFullName());
         user.setEmail(dto.getEmail());
+        user.setPhoneNumber(dto.getPhoneNumber());
+        user.setGender(dto.getGender());
         user.setRoleCode(role);
         user.setStatus(UserStatus.ACTIVE);
 
@@ -86,17 +104,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updateStatus(UUID id, UserStatus status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User does not exist: " + id));
+        user.setStatus(status);
+        userRepository.save(user);
+    }
+
+    @Override
     public void updateAccount(UUID id, UserDTO dto) {
+        validatePhoneNumber(dto.getPhoneNumber(), id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User does not exist: " + id));
         user.setFullName(dto.getFullName());
         user.setEmail(dto.getEmail());
-        user.setUsername(dto.getUsername());
+        user.setPhoneNumber(dto.getPhoneNumber());
+        user.setGender(dto.getGender());
+        if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
+            user.setUsername(dto.getUsername());
+        }
         if (dto.getRoleCode() != null) {
             user.setRoleCode(dto.getRoleCode());
         }
         if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
             user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        }
+        if (dto.getStatus() != null) {
+            user.setStatus(dto.getStatus());
         }
         userRepository.save(user);
     }
@@ -126,6 +160,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDTO getUserById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found: " + id));
+        return toDTO(user);
+    }
+
+    @Override
     public UserDTO getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
@@ -136,8 +177,11 @@ public class UserServiceImpl implements UserService {
     public void updateUserProfile(String username, UserDTO userDTO) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        validatePhoneNumber(userDTO.getPhoneNumber(), user.getId());
         user.setFullName(userDTO.getFullName());
         user.setEmail(userDTO.getEmail());
+        user.setPhoneNumber(userDTO.getPhoneNumber());
+        user.setGender(userDTO.getGender());
         userRepository.save(user);
     }
 
@@ -151,6 +195,23 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+
+
+    @Override
+    public void bulkCreateAccounts(List<UserDTO> dtos) {
+        List<String> errors = new ArrayList<>();
+        for (UserDTO dto : dtos) {
+            try {
+                this.createAccount(dto);
+            } catch (Exception e) {
+                errors.add("User " + dto.getUsername() + ": " + e.getMessage());
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new RuntimeException("Bulk creation partial success. Errors: " + String.join("; ", errors));
+        }
+    }
+
     private UserDTO toDTO(User user) {
         return new UserDTO(
                 user.getId(),
@@ -159,6 +220,9 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 user.getStatus(),
                 user.getRoleCode(),
+                user.getPhoneNumber(),
+                user.getGender(),
+                user.getCreatedAt(),
                 null // hide password
         );
     }

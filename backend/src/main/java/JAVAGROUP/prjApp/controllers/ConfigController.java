@@ -40,7 +40,7 @@ public class ConfigController {
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<Map<String, String>> saveConfig(@RequestBody ConfigDTO dto) {
         configService.saveConfig(dto);
-        return ResponseEntity.ok(Map.of("message", "Configuration saved successfully"));
+        return ResponseEntity.ok(Map.of("message", "Lưu cấu hình thành công"));
     }
 
     /**
@@ -51,7 +51,7 @@ public class ConfigController {
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<Map<String, String>> removeConfig(@PathVariable UUID id) {
         configService.removeConfig(id);
-        return ResponseEntity.ok(Map.of("message", "Configuration removed successfully"));
+        return ResponseEntity.ok(Map.of("message", "Xóa cấu hình thành công"));
     }
 
     /**
@@ -63,6 +63,6 @@ public class ConfigController {
         boolean success = configService.testConnection(dto);
         return ResponseEntity.ok(Map.of(
                 "success", success,
-                "message", success ? "Connection successful" : "Connection failed"));
+                "message", success ? "Kết nối thành công" : "Kết nối thất bại"));
     }
 }

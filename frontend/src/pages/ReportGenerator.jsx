@@ -64,16 +64,9 @@ const ReportGenerator = () => {
       let filename = `${template}-nhom-${groupInfo.groupName}.${type}`;
 
       switch (type) {
-        case 'csv':
-          res = await reportService.exportCsv(groupInfo.groupId);
-          filename = `bao-cao-nhom-${groupInfo.groupName}.csv`;
-          break;
         case 'srs':
           res = await reportService.exportSRS(groupInfo.groupId);
-          filename = `SRS-nhom-${groupInfo.groupName}.docx`;
-          break;
-        case 'docx':
-          res = await reportService.exportDocx(groupInfo.groupId);
+          filename = `SRS-nhom-${groupInfo.groupName}.pdf`;
           break;
         case 'pdf':
         default:
@@ -144,9 +137,6 @@ const ReportGenerator = () => {
             <Printer size={18} /> In ngay
           </button>
           <div style={{ position: 'relative', display: 'inline-block' }}>
-            <button className="btn btn-outline" onClick={() => handleDownload('csv')} disabled={exporting}>
-              <FileDown size={18} /> CSV
-            </button>
           </div>
           <button className="btn btn-primary" onClick={() => handleDownload(template === 'srs' ? 'srs' : 'pdf')} disabled={exporting}>
             <Download size={18} /> {exporting ? 'Đang xuất...' : `Xuất ${template.toUpperCase()}`}

@@ -61,7 +61,6 @@ public class DataInitializer implements CommandLineRunner {
             admin.setStatus(UserStatus.ACTIVE);
             admin.setRoleCode(UserRole.ADMIN);
             admin.setAdminCode(adminCode);
-            admin.setAdminLevel("SUPER_ADMIN");
             adminRepository.save(admin);
             logger.info("Created default Admin: {}", username);
         } else {

@@ -15,4 +15,5 @@ public class GroupMemberDTO {
     private String fullName;
     private String studentCode;
     private GroupRole role;
+    private javagroup.prjApp.enums.UserStatus status;
 }

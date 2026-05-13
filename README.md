@@ -20,8 +20,11 @@
 
 ### 📄 Tự Động Hóa Tài Liệu (Report Studio)
 
-- **SRS Generator**: Kết xuất tài liệu Đặc tả yêu cầu phần mềm (Word) chuyên nghiệp chỉ trong vài giây.
-- **Multi-format Export**: Hỗ trợ xuất báo cáo tổng kết, bảng đóng góp thành viên dưới dạng **PDF**, **DOCX**, và **CSV**.
+- **SRS Generator**: Kết xuất tài liệu Đặc tả yêu cầu phần mềm (PDF) chuyên nghiệp, chuẩn academic chỉ trong vài giây.
+- **Unified PDF Export**: Hỗ trợ xuất báo cáo tổng kết, bảng đóng góp thành viên đồng nhất dưới định dạng **PDF** với giao diện tuyệt đẹp.
+
+### 🧑‍💼 Quản Lý Đội Nhóm
+- **Leader Assignment**: Giảng viên và Quản trị viên có quyền chỉ định Nhóm trưởng (Leader) một cách trực quan, đồng bộ chặt chẽ với hệ thống phân quyền (RBAC).
 
 ### 📊 Dashboard Phân Tích Chuyên Sâu
 

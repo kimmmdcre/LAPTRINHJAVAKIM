@@ -45,9 +45,26 @@ public class SyncController {
      * POST /api/sync/mapping
      * Map commits to tasks based on messages
      */
-    @PostMapping("/mapping")
-    public ResponseEntity<Map<String, String>> mapTasksToCommits() {
-        syncService.mapTasksToCommits();
-        return ResponseEntity.ok(Map.of("message", "Commit-task mapping successful"));
+    /**
+     * POST /api/sync/{groupId}/mapping
+     * Trigger commit-to-task mapping for a specific group
+     */
+    @PostMapping("/{groupId}/mapping")
+    public ResponseEntity<Map<String, Object>> mapTasksToCommits(@PathVariable UUID groupId) {
+        int count = syncService.mapTasksToCommits(groupId);
+        return ResponseEntity.ok(Map.of(
+            "message", "Khớp dữ liệu hoàn tất!",
+            "mappedCount", count
+        ));
+    }
+
+    /**
+     * POST /api/sync/{groupId}/full
+     * Trigger Full synchronization (Jira + GitHub + Mapping)
+     */
+    @PostMapping("/{groupId}/full")
+    public ResponseEntity<Map<String, String>> syncFull(@PathVariable UUID groupId) {
+        syncService.syncFull(groupId);
+        return ResponseEntity.ok(Map.of("message", "Full sync successful"));
     }
 }

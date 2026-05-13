@@ -9,13 +9,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
-@Setter
+@Setter 
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class User {
@@ -24,6 +25,14 @@ public abstract class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;
@@ -44,4 +53,10 @@ public abstract class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role_code")
     private UserRole roleCode;
+
+    @Column(name = "phone_number", unique = true)
+    private String phoneNumber;
+
+    @Column(name = "gender")
+    private String gender;
 }

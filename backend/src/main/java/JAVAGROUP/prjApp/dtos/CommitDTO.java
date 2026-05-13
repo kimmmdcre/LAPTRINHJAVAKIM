@@ -17,14 +17,7 @@ public class CommitDTO {
     private String requirementTitle;
     private String authorName;
     private String authorEmail;
+    private boolean isExternalAuthor;
+    private boolean isUnlinkedTask;
 
-    // Manual constructor for 6 arguments used in GitHubAdapter
-    public CommitDTO(String sha, String message, LocalDateTime commitTime, String requirementId, String requirementTitle, String authorName) {
-        this.sha = sha;
-        this.message = message;
-        this.commitTime = commitTime;
-        this.requirementId = requirementId;
-        this.requirementTitle = requirementTitle;
-        this.authorName = authorName;
-    }
 }
