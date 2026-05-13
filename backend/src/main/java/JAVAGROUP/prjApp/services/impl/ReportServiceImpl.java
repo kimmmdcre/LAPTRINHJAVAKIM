@@ -18,7 +18,7 @@ import javagroup.prjApp.repositories.RequirementRepository;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.apache.poi.xwpf.usermodel.*;
+
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
@@ -29,7 +29,7 @@ import com.lowagie.text.pdf.PdfPTable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -266,63 +266,7 @@ public class ReportServiceImpl implements ReportService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public Resource exportSummaryReport(UUID groupId) {
-        ProgressDTO progress = getProjectProgress(groupId);
-        List<ContributionDTO> contributions = getPersonalContributions(groupId);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("BAO CAO NHOM: ").append(groupId).append("\n\n");
-        sb.append("TIEN DO:\nTong NV,NV Hoan Thanh,% Tien Do\n");
-        sb.append(progress.getTotalTasks()).append(",")
-                .append(progress.getCompletedTasks()).append(",")
-                .append(String.format("%.1f", progress.getProgressPercentage())).append("%\n\n");
-
-        sb.append("DONG GOP THANH VIEN:\nTen,Nhiem Vu Hoan Thanh,So Commit\n");
-        for (ContributionDTO contribution : contributions) {
-            sb.append(contribution.getStudentName()).append(",")
-                    .append(contribution.getCompletedTaskCount()).append(",")
-                    .append(contribution.getCommitCount()).append("\n");
-        }
-        return new ByteArrayResource(sb.toString().getBytes(StandardCharsets.UTF_8));
-    }
-
-    @Override
-    public Resource exportDocxReport(UUID groupId) throws IOException {
-        ProgressDTO progress = getProjectProgress(groupId);
-        List<ContributionDTO> contributions = getPersonalContributions(groupId);
-
-        try (XWPFDocument doc = new XWPFDocument();
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-
-            XWPFParagraph title = doc.createParagraph();
-            title.setAlignment(ParagraphAlignment.CENTER);
-            XWPFRun titleRun = title.createRun();
-            titleRun.setText("BAO CAO TONG HOP NHOM");
-            titleRun.setBold(true);
-            titleRun.setFontSize(20);
-
-            XWPFParagraph p1 = doc.createParagraph();
-            p1.createRun()
-                    .setText("Tiên độ tổng quát: " + String.format("%.1f", progress.getProgressPercentage()) + "%");
-
-            XWPFTable table = doc.createTable();
-            XWPFTableRow header = table.getRow(0);
-            header.getCell(0).setText("Tên thành viên");
-            header.addNewTableCell().setText("Nhiệm vụ xong");
-            header.addNewTableCell().setText("Số Commits");
-
-            for (ContributionDTO contribution : contributions) {
-                XWPFTableRow row = table.createRow();
-                row.getCell(0).setText(contribution.getStudentName());
-                row.getCell(1).setText(String.valueOf(contribution.getCompletedTaskCount()));
-                row.getCell(2).setText(String.valueOf(contribution.getCommitCount()));
-            }
-
-            doc.write(out);
-            return new ByteArrayResource(out.toByteArray());
-        }
-    }
 
     @Override
     public Resource exportPdfReport(UUID groupId) {

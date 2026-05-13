@@ -20,8 +20,7 @@ public interface ReportService {
     List<CommitDTO> getGroupCommitDetails(UUID groupId);
     List<Map<String, Object>> getPersonalCommitHistory(UUID studentId);
     
-    Resource exportSummaryReport(UUID groupId);
-    Resource exportDocxReport(UUID groupId) throws IOException;
+
     Resource exportPdfReport(UUID groupId);
     Resource exportSrsReport(UUID groupId) throws IOException;
 }

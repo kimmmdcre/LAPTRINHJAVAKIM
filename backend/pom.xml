@@ -99,30 +99,11 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- JIRA Client -->
-		<dependency>
-			<groupId>com.atlassian.jira</groupId>
-			<artifactId>jira-rest-java-client-core</artifactId>
-			<version>5.2.7</version>
-		</dependency>
-		<dependency>
-			<groupId>io.atlassian.fugue</groupId>
-			<artifactId>fugue</artifactId>
-			<version>4.7.2</version>
-		</dependency>
-
 		<!-- GitHub Client -->
 		<dependency>
 			<groupId>org.kohsuke</groupId>
 			<artifactId>github-api</artifactId>
 			<version>1.318</version>
-		</dependency>
-
-		<!-- Apache POI for DOCX -->
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-			<version>5.2.5</version>
 		</dependency>
 
 		<!-- OpenPDF for PDF (com.lowagie) -->
