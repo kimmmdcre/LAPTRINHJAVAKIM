@@ -1,8 +1,14 @@
 package javagroup.prjApp.controllers;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import javagroup.prjApp.services.SyncService;
 
@@ -13,13 +19,10 @@ import java.util.UUID;
 @RequestMapping("/api/sync")
 @CrossOrigin(origins = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
+@RequiredArgsConstructor
 public class SyncController {
 
     private final SyncService syncService;
-
-    public SyncController(SyncService syncService) {
-        this.syncService = syncService;
-    }
 
     /**
      * POST /api/sync/{groupId}/jira
@@ -53,9 +56,8 @@ public class SyncController {
     public ResponseEntity<Map<String, Object>> mapTasksToCommits(@PathVariable UUID groupId) {
         int count = syncService.mapTasksToCommits(groupId);
         return ResponseEntity.ok(Map.of(
-            "message", "Khớp dữ liệu hoàn tất!",
-            "mappedCount", count
-        ));
+                "message", "Mapping completed successfully!",
+                "mappedCount", count));
     }
 
     /**

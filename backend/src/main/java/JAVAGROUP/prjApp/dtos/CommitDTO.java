@@ -19,5 +19,4 @@ public class CommitDTO {
     private String authorEmail;
     private boolean isExternalAuthor;
     private boolean isUnlinkedTask;
-
 }

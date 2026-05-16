@@ -1,5 +1,7 @@
 package javagroup.prjApp.services.impl;
 
+import lombok.RequiredArgsConstructor;
+
 import javagroup.prjApp.services.AuthService;
 import javagroup.prjApp.entities.BlacklistedToken;
 import javagroup.prjApp.entities.User;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
@@ -27,18 +30,6 @@ public class AuthServiceImpl implements AuthService {
     private final BlacklistedTokenRepository blacklistedTokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public AuthServiceImpl(AuthenticationManager authenticationManager,
-            JwtTokenProvider tokenProvider,
-            BlacklistedTokenRepository blacklistedTokenRepository,
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
-        this.authenticationManager = authenticationManager;
-        this.tokenProvider = tokenProvider;
-        this.blacklistedTokenRepository = blacklistedTokenRepository;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     @Override
     public String login(String username, String password) {

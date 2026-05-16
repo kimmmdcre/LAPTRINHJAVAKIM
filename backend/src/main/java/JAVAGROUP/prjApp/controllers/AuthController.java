@@ -2,30 +2,39 @@ package javagroup.prjApp.controllers;
 
 import javagroup.prjApp.security.user.UserPrincipal;
 import javagroup.prjApp.services.AuthService;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Controller xử lý các tác vụ liên quan đến Xác thực (Authentication).
+ * Bao gồm: Đăng nhập, Đăng xuất và Đổi mật khẩu.
+ */
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
-
     /**
-     * POST /api/auth/login
-     * Body: { "username": "...", "password": "..." }
+     * API Đăng nhập.
+     * Trả về JWT Token và thông tin cơ bản của người dùng nếu thành công.
      */
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
@@ -43,6 +52,7 @@ public class AuthController {
             response.put("type", "Bearer");
             response.put("message", "Login successful");
 
+            // Trả về thêm thông tin user để Frontend lưu vào LocalStorage
             response.put("id", principal.getId());
             response.put("username", principal.getUsername());
             response.put("fullName", principal.getFullName());
@@ -54,23 +64,27 @@ public class AuthController {
             response.put("createdAt", principal.getCreatedAt());
 
             return ResponseEntity.ok(response);
-        } catch (org.springframework.security.authentication.DisabledException e) {
+
+        } catch (DisabledException e) {
             Map<String, Object> error = new HashMap<>();
-            error.put("message", "Tài khoản của bạn đang ở trạng thái chờ kích hoạt hoặc đã bị vô hiệu hóa.");
+            error.put("message", "Your account is pending activation or has been disabled.");
             return ResponseEntity.status(403).body(error);
-        } catch (org.springframework.security.authentication.LockedException e) {
+
+        } catch (LockedException e) {
             Map<String, Object> error = new HashMap<>();
-            error.put("message", "Tài khoản của bạn đã bị khóa (Banned). Vui lòng liên hệ quản trị viên.");
+            error.put("message", "Your account has been locked. Please contact the administrator.");
             return ResponseEntity.status(403).body(error);
-        } catch (org.springframework.security.core.AuthenticationException e) {
+
+        } catch (AuthenticationException e) {
             Map<String, Object> error = new HashMap<>();
-            error.put("message", "Tên đăng nhập hoặc mật khẩu không chính xác.");
+            error.put("message", "Incorrect username or password.");
             return ResponseEntity.status(401).body(error);
         }
     }
 
     /**
-     * POST /api/auth/logout
+     * API Đăng xuất.
+     * Vô hiệu hóa Token hiện tại (đưa vào Blacklist).
      */
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
@@ -81,8 +95,8 @@ public class AuthController {
     }
 
     /**
-     * POST /api/auth/change-password
-     * Body: { "currentPassword": "...", "newPassword": "..." }
+     * API Đổi mật khẩu.
+     * Yêu cầu phải đăng nhập để thực hiện.
      */
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")

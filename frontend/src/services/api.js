@@ -21,8 +21,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 403) {
-      const message = error.response.data?.message || '';
-      if (message.includes('khóa') || message.includes('vô hiệu hóa') || message.includes('kích hoạt')) {
+      const message = (error.response.data?.message || '').toLowerCase();
+      if (message.includes('lock') || message.includes('disable') || message.includes('activation')) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = `/login?error=${encodeURIComponent(message)}`;
@@ -67,7 +67,7 @@ export const taskService = {
   assignMember: (id, studentId) => api.patch(`/tasks/${id}/assign`, { studentId }),
   syncJira: (groupId) => api.post(`/sync/${groupId}/jira`),
   syncGithub: (groupId) => api.post(`/sync/${groupId}/github`),
-  mapping: () => api.post('/sync/mapping'),
+  mapping: (groupId) => api.post(`/sync/${groupId}/mapping`),
   syncFull: (groupId) => api.post(`/sync/${groupId}/full`),
 };
 

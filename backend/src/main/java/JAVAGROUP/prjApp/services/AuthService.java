@@ -2,6 +2,8 @@ package javagroup.prjApp.services;
 
 public interface AuthService {
     String login(String username, String password);
+
     void logout(String token);
+
     void changePassword(String username, String currentPassword, String newPassword);
 }

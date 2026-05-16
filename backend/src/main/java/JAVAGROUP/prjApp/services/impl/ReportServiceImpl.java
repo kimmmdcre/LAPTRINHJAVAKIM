@@ -1,4 +1,6 @@
 package javagroup.prjApp.services.impl;
+ 
+import lombok.RequiredArgsConstructor;
 
 import javagroup.prjApp.services.ReportService;
 
@@ -31,11 +33,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
 @org.springframework.transaction.annotation.Transactional(readOnly = true)
+@RequiredArgsConstructor
+@SuppressWarnings("null")
 public class ReportServiceImpl implements ReportService {
 
     private final TaskRepository taskRepository;
@@ -43,15 +56,7 @@ public class ReportServiceImpl implements ReportService {
     private final GroupMemberRepository groupMemberRepository;
     private final RequirementRepository requirementRepository;
 
-    public ReportServiceImpl(TaskRepository taskRepository,
-            VcsCommitRepository vcsCommitRepository,
-            GroupMemberRepository groupMemberRepository,
-            RequirementRepository requirementRepository) {
-        this.taskRepository = taskRepository;
-        this.vcsCommitRepository = vcsCommitRepository;
-        this.groupMemberRepository = groupMemberRepository;
-        this.requirementRepository = requirementRepository;
-    }
+
 
     @Override
     public ProgressDTO getProjectProgress(UUID groupId) {
@@ -120,10 +125,10 @@ public class ReportServiceImpl implements ReportService {
         List<Requirement> reqs = requirementRepository.findByProjectGroup_GroupId(groupId).stream()
                 .filter(req -> "DONE".equalsIgnoreCase(req.getStatus()))
                 .sorted((a, b) -> {
-                    java.time.LocalDateTime t1 = a.getUpdatedAt() != null ? a.getUpdatedAt()
-                            : (a.getCreatedAt() != null ? a.getCreatedAt() : java.time.LocalDateTime.now());
-                    java.time.LocalDateTime t2 = b.getUpdatedAt() != null ? b.getUpdatedAt()
-                            : (b.getCreatedAt() != null ? b.getCreatedAt() : java.time.LocalDateTime.now());
+                    LocalDateTime t1 = a.getUpdatedAt() != null ? a.getUpdatedAt()
+                            : (a.getCreatedAt() != null ? a.getCreatedAt() : LocalDateTime.now());
+                    LocalDateTime t2 = b.getUpdatedAt() != null ? b.getUpdatedAt()
+                            : (b.getCreatedAt() != null ? b.getCreatedAt() : LocalDateTime.now());
                     return t1.compareTo(t2);
                 })
                 .collect(Collectors.toList());
@@ -132,8 +137,8 @@ public class ReportServiceImpl implements ReportService {
         int currentTotal = 0;
 
         for (Requirement req : reqs) {
-            java.time.LocalDateTime ts = req.getUpdatedAt() != null ? req.getUpdatedAt()
-                    : (req.getCreatedAt() != null ? req.getCreatedAt() : java.time.LocalDateTime.now());
+            LocalDateTime ts = req.getUpdatedAt() != null ? req.getUpdatedAt()
+                    : (req.getCreatedAt() != null ? req.getCreatedAt() : LocalDateTime.now());
             String date = ts.toLocalDate().toString();
             currentTotal++;
             completionsByDay.put(date, currentTotal);
@@ -369,7 +374,7 @@ public class ReportServiceImpl implements ReportService {
             document.close();
             return new ByteArrayResource(out.toByteArray());
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi tạo PDF", e);
+            throw new RuntimeException("Error generating PDF report", e);
         }
     }
 
@@ -460,7 +465,7 @@ public class ReportServiceImpl implements ReportService {
             document.close();
             return new ByteArrayResource(out.toByteArray());
         } catch (Exception e) {
-            throw new IOException("Lỗi tạo PDF cho SRS", e);
+            throw new IOException("Error generating SRS PDF report", e);
         }
     }
 }

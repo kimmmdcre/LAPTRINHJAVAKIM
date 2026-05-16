@@ -40,7 +40,6 @@ const TeacherClasses = () => {
   const [groupStatus, setGroupStatus] = useState({});
   const [selectedMember, setSelectedMember] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [memberLoading, setMemberLoading] = useState(false);
   const [memberHistory, setMemberHistory] = useState([]);
   const { user } = useAuth();
   const { showToast } = useUI();
@@ -79,7 +78,7 @@ const TeacherClasses = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, showToast]);
+  }, [user?.id, user?.role, showToast]);
 
   useEffect(() => {
     if (user?.id) {
@@ -124,7 +123,6 @@ const TeacherClasses = () => {
 
   const handleShowMemberInfo = async (member) => {
     setShowModal(true);
-    setMemberLoading(true);
     try {
       const memberId = (typeof member === 'string') ? member : (member.userId || member.id);
       
@@ -138,8 +136,6 @@ const TeacherClasses = () => {
       console.error('Lỗi tải chi tiết thành viên:', err);
       setSelectedMember(typeof member === 'string' ? { id: member, fullName: 'Đang tải...' } : member);
       setMemberHistory([]);
-    } finally {
-      setMemberLoading(false);
     }
   };
   

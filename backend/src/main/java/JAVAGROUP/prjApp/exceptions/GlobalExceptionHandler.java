@@ -9,10 +9,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-/**
- * Xử lý ngoại lệ toàn cục, trả về JSON nhất quán cho Frontend.
- * Format: { "timestamp": ..., "status": ..., "error": ..., "message": ... }
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -22,7 +18,7 @@ public class GlobalExceptionHandler {
                 "timestamp", LocalDateTime.now().toString(),
                 "status", HttpStatus.FORBIDDEN.value(),
                 "error", "Forbidden",
-                "message", "Bạn không có quyền thực hiện hành động này!"));
+                "message", "Access denied: You do not have permission to perform this action."));
     }
 
     @ExceptionHandler(RuntimeException.class)

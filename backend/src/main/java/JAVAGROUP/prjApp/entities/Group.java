@@ -1,6 +1,17 @@
 package javagroup.prjApp.entities;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,12 +47,17 @@ public class Group {
     @Column(name = "leader_id")
     private UUID leaderId;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
     @OneToMany(mappedBy = "projectGroup", cascade = CascadeType.ALL)
     private List<GroupMember> members;
 
     @OneToMany(mappedBy = "projectGroup")
     private List<Requirement> requirements;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

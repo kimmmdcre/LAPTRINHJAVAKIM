@@ -25,6 +25,7 @@ public class JiraAdapter implements IJiraClient {
         this.webClient = webClientBuilder.build();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<RequirementDTO> getRequirements(String url, String email, String accessToken, String projectKey) {
         log.info("Fetching requirements from Jira: {} for project: {}", url, projectKey);
@@ -52,7 +53,6 @@ public class JiraAdapter implements IJiraClient {
                 return result;
             }
 
-            @SuppressWarnings("unchecked")
             List<Map<String, Object>> issues = (List<Map<String, Object>>) response.get("issues");
             if (issues == null || issues.isEmpty()) {
                 log.warn("No issues found in Jira response.");
@@ -62,7 +62,6 @@ public class JiraAdapter implements IJiraClient {
             for (Map<String, Object> issue : issues) {
                 try {
                     String key = (String) issue.get("key");
-                    @SuppressWarnings("unchecked")
                     Map<String, Object> fields = (Map<String, Object>) issue.get("fields");
 
                     String title = fields != null ? (String) fields.get("summary") : "No Title";
@@ -77,7 +76,6 @@ public class JiraAdapter implements IJiraClient {
 
                     String status = "TODO";
                     if (fields != null && fields.get("status") != null) {
-                        @SuppressWarnings("unchecked")
                         Map<String, Object> statusMap = (Map<String, Object>) fields.get("status");
                         status = statusMap.get("name").toString();
                     }

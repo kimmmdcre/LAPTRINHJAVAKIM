@@ -28,7 +28,6 @@ import {
   Award
 } from 'lucide-react';
 import { reportService } from '../services/api';
-import { useNavigate } from 'react-router-dom';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -108,7 +107,6 @@ const AdminUsers = () => {
   }, []);
 
 
-  const navigate = useNavigate();
 
   // Modal Profile State
   const [showProfileModal, setShowProfileModal] = useState(false);

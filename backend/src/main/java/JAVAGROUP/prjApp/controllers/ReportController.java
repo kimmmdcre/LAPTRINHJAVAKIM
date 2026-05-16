@@ -1,5 +1,7 @@
 package javagroup.prjApp.controllers;
 
+import lombok.RequiredArgsConstructor;
+
 import javagroup.prjApp.dtos.ContributionDTO;
 import javagroup.prjApp.dtos.GitStatsDTO;
 import javagroup.prjApp.dtos.ProgressDTO;
@@ -11,7 +13,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import java.io.IOException;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,19 +27,17 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/reports")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class ReportController {
 
     private final ReportService reportService;
-
-    public ReportController(ReportService reportService) {
-        this.reportService = reportService;
-    }
 
     /**
      * GET /api/reports/{groupId}/progress
      * View project progress: total tasks, completed tasks, % progress
      */
     @GetMapping("/{groupId}/progress")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ProgressDTO> getProjectProgress(@PathVariable UUID groupId) {
         return ResponseEntity.ok(reportService.getProjectProgress(groupId));
     }
@@ -42,59 +47,41 @@ public class ReportController {
      * GitHub commit statistics for the group
      */
     @GetMapping("/{groupId}/commits")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<GitStatsDTO> getGithubStats(@PathVariable UUID groupId) {
         return ResponseEntity.ok(reportService.getGithubStats(groupId));
     }
 
-    /**
-     * GET /api/reports/{groupId}/contributions
-     * View personal contributions of students in the group
-     */
     @GetMapping("/{groupId}/contributions")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ContributionDTO>> getPersonalContributions(@PathVariable UUID groupId) {
         return ResponseEntity.ok(reportService.getPersonalContributions(groupId));
     }
 
-    /**
-     * GET /api/reports/{groupId}/history
-     * Get progress history for AreaChart
-     */
     @GetMapping("/{groupId}/history")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Map<String, Object>>> getProgressHistory(@PathVariable UUID groupId) {
         return ResponseEntity.ok(reportService.getProgressHistory(groupId));
     }
 
-    /**
-     * GET /api/reports/{groupId}/commits/history
-     * Get group commit history for Heatmap
-     */
     @GetMapping("/{groupId}/commits/history")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Map<String, Object>>> getGroupCommitHistory(@PathVariable UUID groupId) {
         return ResponseEntity.ok(reportService.getGroupCommitHistory(groupId));
     }
 
-    /**
-     * GET /api/reports/{groupId}/commits/detailed
-     * Get detailed commit list for the group
-     */
     @GetMapping("/{groupId}/commits/detailed")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<CommitDTO>> getGroupCommitDetails(@PathVariable UUID groupId) {
         return ResponseEntity.ok(reportService.getGroupCommitDetails(groupId));
     }
 
-    /**
-     * GET /api/reports/personal/{studentId}/history
-     * Get personal commit history for line/area chart
-     */
     @GetMapping("/personal/{studentId}/history")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Map<String, Object>>> getPersonalCommitHistory(@PathVariable UUID studentId) {
         return ResponseEntity.ok(reportService.getPersonalCommitHistory(studentId));
     }
 
-    /**
-     * GET /api/reports/{groupId}/export/pdf
-     * Export summary report as PDF
-     */
     @GetMapping("/{groupId}/export/pdf")
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<Resource> exportPdfReport(@PathVariable UUID groupId) {
@@ -107,7 +94,7 @@ public class ReportController {
 
     @GetMapping("/{groupId}/export/srs")
     @PreAuthorize("hasRole('STUDENT') or hasRole('TEACHER') or hasRole('ADMIN')")
-    public ResponseEntity<Resource> exportSrsReport(@PathVariable UUID groupId) throws java.io.IOException {
+    public ResponseEntity<Resource> exportSrsReport(@PathVariable UUID groupId) throws IOException {
         Resource file = reportService.exportSrsReport(groupId);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/pdf"))

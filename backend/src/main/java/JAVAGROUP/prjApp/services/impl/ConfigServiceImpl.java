@@ -1,5 +1,7 @@
 package javagroup.prjApp.services.impl;
 
+import lombok.RequiredArgsConstructor;
+
 import javagroup.prjApp.services.ConfigService;
 
 import javagroup.prjApp.dtos.ConfigDTO;
@@ -17,6 +19,8 @@ import java.util.UUID;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
+@SuppressWarnings("null")
 public class ConfigServiceImpl implements ConfigService {
 
     private final IntegrationConfigRepository integrationConfigRepository;
@@ -24,21 +28,13 @@ public class ConfigServiceImpl implements ConfigService {
     private final IJiraClient jiraClient;
     private final IGitHubClient gitHubClient;
 
-    public ConfigServiceImpl(IntegrationConfigRepository integrationConfigRepository, 
-                            GroupRepository groupRepository,
-                            IJiraClient jiraClient,
-                            IGitHubClient gitHubClient) {
-        this.integrationConfigRepository = integrationConfigRepository;
-        this.groupRepository = groupRepository;
-        this.jiraClient = jiraClient;
-        this.gitHubClient = gitHubClient;
-    }
-
+    @Override
     @Transactional(readOnly = true)
     public List<IntegrationConfig> getConfigsByGroupId(UUID groupId) {
         return integrationConfigRepository.findByGroupId(groupId);
     }
 
+    @Override
     public void saveConfig(ConfigDTO dto) {
         if (dto.getGroupId() == null) {
             throw new RuntimeException("GroupId is required");
@@ -71,6 +67,7 @@ public class ConfigServiceImpl implements ConfigService {
         integrationConfigRepository.save(conf);
     }
 
+    @Override
     public void removeConfig(UUID id) {
         if (!integrationConfigRepository.existsById(id)) {
             throw new RuntimeException("Configuration does not exist: " + id);
@@ -81,20 +78,21 @@ public class ConfigServiceImpl implements ConfigService {
     /**
      * Dry run test connection logic
      */
+    @Override
     public boolean testConnection(ConfigDTO dto) {
         try {
             if ("JIRA".equals(dto.getPlatformType())) {
                 if (dto.getUrl() == null || dto.getUrl().trim().isEmpty() ||
-                    dto.getApiToken() == null || dto.getApiToken().trim().isEmpty() ||
-                    dto.getProjectKey() == null || dto.getProjectKey().trim().isEmpty() ||
-                    dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+                        dto.getApiToken() == null || dto.getApiToken().trim().isEmpty() ||
+                        dto.getProjectKey() == null || dto.getProjectKey().trim().isEmpty() ||
+                        dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
                     return false;
                 }
                 jiraClient.checkConnection(dto.getUrl(), dto.getEmail(), dto.getApiToken(), dto.getProjectKey());
                 return true;
             } else if ("GITHUB".equals(dto.getPlatformType())) {
                 if (dto.getRepoUrl() == null || dto.getRepoUrl().trim().isEmpty() ||
-                    dto.getApiToken() == null || dto.getApiToken().trim().isEmpty()) {
+                        dto.getApiToken() == null || dto.getApiToken().trim().isEmpty()) {
                     return false;
                 }
                 gitHubClient.checkConnection(dto.getRepoUrl(), dto.getApiToken());

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { reportService, groupService } from '../services/api';
+import { reportService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
 import { 

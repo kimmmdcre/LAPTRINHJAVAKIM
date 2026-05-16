@@ -101,7 +101,6 @@ const TeacherReports = () => {
       showToast(`Đang khởi tạo tệp ${format.toUpperCase()}...`, 'info');
       let res;
       if (format === 'pdf') res = await reportService.exportPdf(groupId);
-      else if (format === 'docx') res = await reportService.exportDocx(groupId);
       else if (format === 'srs') res = await reportService.exportSRS(groupId);
       
       const url = window.URL.createObjectURL(new Blob([res.data]));

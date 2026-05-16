@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 
 const PersonalProfile = () => {
-  const { user, logout, updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const { showToast } = useUI();
   const [stats, setStats] = useState({ 
     tasksDone: 0, 
@@ -37,7 +37,6 @@ const PersonalProfile = () => {
 
   // Edit Modal States
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',

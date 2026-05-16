@@ -16,7 +16,6 @@ import {
   Database
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useUI } from '../contexts/UIContext';
 import { configService } from '../services/api';
 
 const Sidebar = () => {
@@ -33,7 +32,9 @@ const Sidebar = () => {
         })
         .catch(err => console.error('Lỗi tải cấu hình sidebar:', err));
     } else {
-      setConfigs([]);
+      setTimeout(() => {
+        if (isMounted) setConfigs([]);
+      }, 0);
     }
     return () => { isMounted = false; };
   }, [user?.groupId]);

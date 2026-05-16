@@ -1,6 +1,14 @@
 package javagroup.prjApp.entities;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,7 +17,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "vcs_commits")
+@Table(name = "vcs_commits") // version control system commits
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,7 +25,7 @@ import java.time.LocalDateTime;
 public class VcsCommit {
 
     @Id
-    @Column(name = "sha", nullable = false)
+    @Column(name = "sha", nullable = false) // sha: Secure Hash Algorithm
     private String sha;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,4 +51,12 @@ public class VcsCommit {
 
     @Column(name = "author_name")
     private String authorName;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

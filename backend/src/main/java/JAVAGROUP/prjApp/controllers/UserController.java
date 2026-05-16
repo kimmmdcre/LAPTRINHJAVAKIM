@@ -2,11 +2,22 @@ package javagroup.prjApp.controllers;
 
 import javagroup.prjApp.dtos.UserDTO;
 import javagroup.prjApp.enums.UserRole;
+import javagroup.prjApp.enums.UserStatus;
 import javagroup.prjApp.services.UserService;
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.util.Map;
 import java.util.UUID;
@@ -15,17 +26,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
     /**
-     * GET /api/users
-     * Get list of all users
+     * Lấy danh sách tất cả người dùng trong hệ thống.
+     * Quyền: ADMIN
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -34,8 +42,8 @@ public class UserController {
     }
 
     /**
-     * GET /api/users?role=TEACHER
-     * Get list of only teachers
+     * Lấy danh sách tất cả Giảng viên.
+     * Quyền: ADMIN
      */
     @GetMapping(params = "role=TEACHER")
     @PreAuthorize("hasRole('ADMIN')")
@@ -44,8 +52,8 @@ public class UserController {
     }
 
     /**
-     * GET /api/users?status=UNASSIGNED
-     * Get list of unassigned students
+     * Lấy danh sách Sinh viên chưa được phân vào nhóm nào.
+     * Quyền: ADMIN
      */
     @GetMapping(params = "status=UNASSIGNED")
     @PreAuthorize("hasRole('ADMIN')")
@@ -54,8 +62,18 @@ public class UserController {
     }
 
     /**
-     * POST /api/users
-     * Create new account
+     * Xem thông tin chi tiết của một người dùng qua ID.
+     * Quyền: Đã đăng nhập
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable UUID id) {
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
+
+    /**
+     * Tạo mới một tài khoản người dùng thủ công.
+     * Quyền: ADMIN
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -64,6 +82,10 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Account created successfully"));
     }
 
+    /**
+     * Tạo hàng loạt tài khoản
+     * Quyền: ADMIN
+     */
     @PostMapping("/bulk")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> bulkCreateAccounts(@RequestBody List<UserDTO> dtos) {
@@ -72,22 +94,9 @@ public class UserController {
     }
 
     /**
-     * DELETE /api/users/{id}
-     * Delete account by ID
+     * Cập nhật thông tin tài khoản cho người dùng khác.
+     * Quyền: ADMIN
      */
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, String>> deleteAccount(@PathVariable UUID id) {
-        userService.deleteAccount(id);
-        return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
-    }
-
-    @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.getUserById(id));
-    }
-
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> updateAccount(@PathVariable UUID id, @RequestBody UserDTO dto) {
@@ -96,8 +105,8 @@ public class UserController {
     }
 
     /**
-     * PUT /api/users/profile
-     * Update current user profile
+     * Người dùng tự cập nhật thông tin cá nhân của chính mình.
+     * Quyền: Đã đăng nhập
      */
     @PutMapping("/profile")
     @PreAuthorize("isAuthenticated()")
@@ -107,10 +116,11 @@ public class UserController {
     }
 
     /**
-     * PATCH /api/users/{id}/role
-     * Update user role
+     * Thay đổi vai trò (ADMIN, TEACHER, STUDENT) cho người dùng.
+     * Quyền: ADMIN
      */
     @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> assignRole(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body) {
@@ -119,15 +129,26 @@ public class UserController {
     }
 
     /**
-     * PATCH /api/users/{id}/status
-     * Update user status (ACTIVE, INACTIVE, BANNED, PENDING)
+     * Cập nhật trạng thái tài khoản (ACTIVE, BANNED, PENDING...).
+     * Quyền: ADMIN
      */
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> updateStatus(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body) {
-        userService.updateStatus(id, javagroup.prjApp.enums.UserStatus.valueOf(body.get("status")));
+        userService.updateStatus(id, UserStatus.valueOf(body.get("status")));
         return ResponseEntity.ok(Map.of("message", "Status updated successfully"));
+    }
+
+    /**
+     * Xóa hoàn toàn một tài khoản người dùng.
+     * Quyền: ADMIN
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> deleteAccount(@PathVariable UUID id) {
+        userService.deleteAccount(id);
+        return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
     }
 }

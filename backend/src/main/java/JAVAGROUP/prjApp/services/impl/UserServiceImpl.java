@@ -1,5 +1,7 @@
 package javagroup.prjApp.services.impl;
 
+import lombok.RequiredArgsConstructor;
+
 import javagroup.prjApp.services.UserService;
 import javagroup.prjApp.enums.UserStatus;
 import javagroup.prjApp.enums.UserRole;
@@ -22,31 +24,26 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
+@SuppressWarnings("null")
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository,
-            StudentRepository studentRepository,
-            PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.studentRepository = studentRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
     private void validatePhoneNumber(String phoneNumber, UUID excludeUserId) {
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) return;
-        
+        if (phoneNumber == null || phoneNumber.trim().isEmpty())
+            return;
+
         String cleaned = phoneNumber.trim();
         if (!cleaned.matches("\\d{10}")) {
-            throw new RuntimeException("Số điện thoại không hợp lệ. Phải bao gồm đúng 10 chữ số.");
+            throw new RuntimeException("Invalid phone number. It must contain exactly 10 digits.");
         }
 
         userRepository.findByPhoneNumber(cleaned).ifPresent(existingUser -> {
             if (excludeUserId == null || !existingUser.getId().equals(excludeUserId)) {
-                throw new RuntimeException("Số điện thoại này đã được sử dụng bởi một người dùng khác.");
+                throw new RuntimeException("This phone number is already in use by another user.");
             }
         });
     }
@@ -195,8 +192,6 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-
-
     @Override
     public void bulkCreateAccounts(List<UserDTO> dtos) {
         List<String> errors = new ArrayList<>();
@@ -216,14 +211,13 @@ public class UserServiceImpl implements UserService {
         return new UserDTO(
                 user.getId(),
                 user.getUsername(),
+                null, // hide password
                 user.getFullName(),
                 user.getEmail(),
                 user.getStatus(),
                 user.getRoleCode(),
                 user.getPhoneNumber(),
                 user.getGender(),
-                user.getCreatedAt(),
-                null // hide password
-        );
+                user.getCreatedAt());
     }
 }

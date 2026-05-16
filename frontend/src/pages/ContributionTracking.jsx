@@ -307,7 +307,6 @@ const ContributionTracking = () => {
                       const sorted = [...contributions].sort((a, b) => b.commitCount - a.commitCount);
                       const top = sorted[0];
                       const totalCommits = contributions.reduce((sum, c) => sum + c.commitCount, 0);
-                      const mappingRate = history.length > 0 ? Math.min(100, Math.round((totalCommits / (groupInfo?.memberCount || 5) * 10))) : 0;
                       
                       return (
                         <>

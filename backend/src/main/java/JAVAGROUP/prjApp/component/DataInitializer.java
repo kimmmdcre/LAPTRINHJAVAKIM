@@ -1,8 +1,14 @@
 package javagroup.prjApp.component;
 
-import javagroup.prjApp.entities.*;
-import javagroup.prjApp.repositories.*;
-import javagroup.prjApp.enums.*;
+import javagroup.prjApp.entities.Admin;
+import javagroup.prjApp.entities.Teacher;
+import javagroup.prjApp.entities.Student;
+import javagroup.prjApp.repositories.UserRepository;
+import javagroup.prjApp.repositories.AdminRepository;
+import javagroup.prjApp.repositories.TeacherRepository;
+import javagroup.prjApp.repositories.StudentRepository;
+import javagroup.prjApp.enums.UserStatus;
+import javagroup.prjApp.enums.UserRole;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;

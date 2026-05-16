@@ -1,5 +1,7 @@
 package javagroup.prjApp.services.impl;
 
+import lombok.RequiredArgsConstructor;
+
 import javagroup.prjApp.services.TaskService;
 
 import javagroup.prjApp.enums.GroupRole;
@@ -21,9 +23,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@SuppressWarnings("null")
 public class TaskServiceImpl implements TaskService {
 
         private final RequirementRepository requirementRepository;
@@ -32,18 +37,7 @@ public class TaskServiceImpl implements TaskService {
         private final GroupMemberRepository groupMemberRepository;
         private final VcsCommitRepository vcsCommitRepository;
 
-        public TaskServiceImpl(RequirementRepository requirementRepository,
-                        TaskRepository taskRepository,
-                        StudentRepository studentRepository,
-                        GroupMemberRepository groupMemberRepository,
-                        VcsCommitRepository vcsCommitRepository) {
-                this.requirementRepository = requirementRepository;
-                this.taskRepository = taskRepository;
-                this.studentRepository = studentRepository;
-                this.groupMemberRepository = groupMemberRepository;
-                this.vcsCommitRepository = vcsCommitRepository;
-        }
-
+        @Override
         public List<RequirementDTO> getRequirementsByGroup(UUID groupId) {
                 return requirementRepository.findByProjectGroup_GroupId(groupId)
                                 .stream()
@@ -57,6 +51,7 @@ public class TaskServiceImpl implements TaskService {
                                 .collect(Collectors.toList());
         }
 
+        @Override
         public List<TaskDTO> getTasksByGroup(UUID groupId) {
                 return taskRepository.findAll().stream()
                                 .filter(task -> task.getRequirement() != null
@@ -65,6 +60,7 @@ public class TaskServiceImpl implements TaskService {
                                 .collect(Collectors.toList());
         }
 
+        @Override
         public void assignTask(UUID taskId, UUID studentId, UUID requesterId) {
                 Task task = taskRepository.findById(taskId)
                                 .orElseThrow(() -> new RuntimeException("Task does not exist: " + taskId));
@@ -88,6 +84,7 @@ public class TaskServiceImpl implements TaskService {
                 taskRepository.save(task);
         }
 
+        @Override
         public List<TaskDTO> getPersonalTasks(UUID studentId) {
                 return taskRepository.findByStudent_Id(studentId)
                                 .stream()
@@ -95,14 +92,16 @@ public class TaskServiceImpl implements TaskService {
                                 .collect(Collectors.toList());
         }
 
+        @Override
         public void updateTaskStatus(UUID taskId, String status) {
                 Task task = taskRepository.findById(taskId)
                                 .orElseThrow(() -> new RuntimeException("Task does not exist: " + taskId));
                 task.setStatus(status);
-                task.setUpdatedAt(java.time.LocalDateTime.now());
+                task.setUpdatedAt(LocalDateTime.now());
                 taskRepository.save(task);
         }
 
+        @Override
         @org.springframework.transaction.annotation.Transactional(readOnly = true)
         public List<CommitDTO> getGroupCommits(UUID groupId) {
                 return vcsCommitRepository.findByRequirement_ProjectGroup_GroupId(groupId)

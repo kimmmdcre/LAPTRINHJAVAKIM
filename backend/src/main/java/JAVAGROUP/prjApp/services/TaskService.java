@@ -8,9 +8,14 @@ import java.util.UUID;
 
 public interface TaskService {
     List<TaskDTO> getTasksByGroup(UUID groupId);
+
     List<RequirementDTO> getRequirementsByGroup(UUID groupId);
+
     List<TaskDTO> getPersonalTasks(UUID studentId);
+
     void updateTaskStatus(UUID id, String status);
+
     void assignTask(UUID taskId, UUID studentId, UUID principalId);
+
     List<CommitDTO> getGroupCommits(UUID groupId);
 }

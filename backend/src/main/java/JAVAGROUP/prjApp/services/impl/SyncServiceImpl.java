@@ -1,4 +1,6 @@
 package javagroup.prjApp.services.impl;
+ 
+import lombok.RequiredArgsConstructor;
 
 import javagroup.prjApp.services.SyncService;
 import javagroup.prjApp.adapters.IGitHubClient;
@@ -26,6 +28,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
+@SuppressWarnings("null")
 public class SyncServiceImpl implements SyncService {
 
     private static final Logger log = LoggerFactory.getLogger(SyncServiceImpl.class);
@@ -38,19 +42,7 @@ public class SyncServiceImpl implements SyncService {
     private final VcsCommitRepository vcsCommitRepository;
     private final StudentRepository studentRepository;
 
-    public SyncServiceImpl(IJiraClient jiraClient, IGitHubClient gitHubClient,
-            IntegrationConfigRepository integrationConfigRepository,
-            GroupRepository groupRepository, RequirementRepository requirementRepository,
-            VcsCommitRepository vcsCommitRepository,
-            StudentRepository studentRepository) {
-        this.jiraClient = jiraClient;
-        this.gitHubClient = gitHubClient;
-        this.integrationConfigRepository = integrationConfigRepository;
-        this.groupRepository = groupRepository;
-        this.requirementRepository = requirementRepository;
-        this.vcsCommitRepository = vcsCommitRepository;
-        this.studentRepository = studentRepository;
-    }
+
 
     @Override
     @Transactional
@@ -142,18 +134,18 @@ public class SyncServiceImpl implements SyncService {
     @Transactional
     public int mapTasksToCommits(UUID groupId) {
         Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Nhóm không tồn tại: " + groupId));
+                .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
 
         // Kiểm tra xem đã có dữ liệu Jira chưa
         List<Requirement> groupTasks = requirementRepository.findByProjectGroup(group);
         if (groupTasks.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy dữ liệu Jira. Vui lòng ấn 'Đồng bộ Jira' trước.");
+            throw new RuntimeException("No Jira data found. Please click 'Sync Jira' first.");
         }
 
         // Tìm các commit chưa được khớp
         List<VcsCommit> unmappedCommits = vcsCommitRepository.findByRequirementIsNull();
         if (unmappedCommits.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy dữ liệu GitHub mới (Commit) để khớp. Vui lòng ấn 'Đồng bộ GitHub' trước.");
+            throw new RuntimeException("No new GitHub data (Commits) found to map. Please click 'Sync GitHub' first.");
         }
 
         Pattern taskPattern = Pattern.compile("([A-Z]+-\\d+)");

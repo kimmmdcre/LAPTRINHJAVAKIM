@@ -1,21 +1,21 @@
 package javagroup.prjApp.services.impl;
 
-import javagroup.prjApp.services.GroupService;
-
-import javagroup.prjApp.enums.GroupRole;
-
 import javagroup.prjApp.dtos.GroupDTO;
 import javagroup.prjApp.dtos.GroupMemberDTO;
 import javagroup.prjApp.entities.Group;
+import javagroup.prjApp.entities.Teacher;
+import javagroup.prjApp.entities.Student;
 import javagroup.prjApp.entities.GroupMember;
 import javagroup.prjApp.entities.GroupMemberId;
-import javagroup.prjApp.entities.Student;
-import javagroup.prjApp.entities.Teacher;
-import javagroup.prjApp.repositories.GroupMemberRepository;
+import javagroup.prjApp.entities.IntegrationConfig;
+import javagroup.prjApp.enums.GroupRole;
 import javagroup.prjApp.repositories.GroupRepository;
-import javagroup.prjApp.repositories.StudentRepository;
 import javagroup.prjApp.repositories.TeacherRepository;
-
+import javagroup.prjApp.repositories.GroupMemberRepository;
+import javagroup.prjApp.repositories.StudentRepository;
+import javagroup.prjApp.repositories.IntegrationConfigRepository;
+import javagroup.prjApp.services.GroupService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,28 +23,22 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Triển khai các dịch vụ liên quan đến Nhóm đồ án.
+ */
 @Service
 @Transactional
+@RequiredArgsConstructor
+@SuppressWarnings("null")
 public class GroupServiceImpl implements GroupService {
 
     private final GroupRepository groupRepository;
     private final TeacherRepository teacherRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final StudentRepository studentRepository;
-    private final javagroup.prjApp.repositories.IntegrationConfigRepository integrationConfigRepository;
+    private final IntegrationConfigRepository integrationConfigRepository;
 
-    public GroupServiceImpl(GroupRepository groupRepository,
-            TeacherRepository teacherRepository,
-            GroupMemberRepository groupMemberRepository,
-            StudentRepository studentRepository,
-            javagroup.prjApp.repositories.IntegrationConfigRepository integrationConfigRepository) {
-        this.groupRepository = groupRepository;
-        this.teacherRepository = teacherRepository;
-        this.groupMemberRepository = groupMemberRepository;
-        this.studentRepository = studentRepository;
-        this.integrationConfigRepository = integrationConfigRepository;
-    }
-
+    @Override
     public Group createGroup(GroupDTO dto) {
         Group group = new Group();
         group.setGroupName(dto.getGroupName());
@@ -59,6 +53,7 @@ public class GroupServiceImpl implements GroupService {
         return groupRepository.save(group);
     }
 
+    @Override
     public void deleteGroup(UUID groupId) {
         if (!groupRepository.existsById(groupId)) {
             throw new RuntimeException("Group does not exist: " + groupId);
@@ -66,6 +61,7 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.deleteById(groupId);
     }
 
+    @Override
     public void assignTeacher(UUID groupId, UUID teacherId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
@@ -75,6 +71,7 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<GroupDTO> getAllGroups(UUID teacherId) {
         if (teacherId == null) {
@@ -87,6 +84,7 @@ public class GroupServiceImpl implements GroupService {
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    @Override
     @Transactional(readOnly = true)
     public GroupDTO getGroupInfo(UUID groupId) {
         Group group = groupRepository.findById(groupId)
@@ -94,6 +92,7 @@ public class GroupServiceImpl implements GroupService {
         return toDTO(group);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<GroupMemberDTO> getGroupMembers(UUID groupId) {
         return groupMemberRepository.findById_GroupId(groupId)
@@ -101,21 +100,27 @@ public class GroupServiceImpl implements GroupService {
                 .map(gm -> {
                     Student student = gm.getStudent();
                     return new GroupMemberDTO(
-                            student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole(), student.getStatus());
+                            groupId,
+                            student.getId(),
+                            student.getFullName(),
+                            student.getStudentCode(),
+                            gm.getRole(),
+                            student.getStatus());
                 })
                 .collect(Collectors.toList());
     }
 
     /**
-     * Add student to group.
+     * Thêm sinh viên vào nhóm.
      */
+    @Override
     public void addMember(UUID groupId, UUID studentId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student does not exist: " + studentId));
 
-        // Remove from old groups if any
+        // Xóa khỏi nhóm cũ nếu có
         groupMemberRepository.deleteById_StudentId(studentId);
 
         GroupMember gm = new GroupMember();
@@ -127,28 +132,30 @@ public class GroupServiceImpl implements GroupService {
     }
 
     /**
-     * Remove student from group.
+     * Xóa sinh viên khỏi nhóm.
      */
+    @Override
     public void removeMember(UUID groupId, UUID studentId) {
         groupMemberRepository.deleteById(new GroupMemberId(groupId, studentId));
     }
 
+    @Override
     public void setLeader(UUID groupId, UUID studentId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group does not exist: " + groupId));
-        
-        // Verify student is actually in the group
+
+        // Kiểm tra sinh viên có trong nhóm không
         boolean isInGroup = group.getMembers().stream()
                 .anyMatch(m -> m.getStudent().getId().equals(studentId));
         if (!isInGroup) {
             throw new RuntimeException("Student is not a member of this group");
         }
 
-        // 1. Update Group entity
+        // 1. Cập nhật LeaderId trong bảng Group
         group.setLeaderId(studentId);
         groupRepository.save(group);
 
-        // 2. Sync GroupMember roles
+        // 2. Đồng bộ Role trong bảng GroupMember
         for (GroupMember gm : group.getMembers()) {
             if (gm.getStudent().getId().equals(studentId)) {
                 gm.setRole(GroupRole.LEADER);
@@ -166,18 +173,23 @@ public class GroupServiceImpl implements GroupService {
                         .map(gm -> {
                             Student student = gm.getStudent();
                             return new GroupMemberDTO(
-                                    student.getId(), student.getFullName(), student.getStudentCode(), gm.getRole(), student.getStatus());
+                                    group.getGroupId(),
+                                    student.getId(),
+                                    student.getFullName(),
+                                    student.getStudentCode(),
+                                    gm.getRole(),
+                                    student.getStatus());
                         })
                         .collect(Collectors.toList());
 
-        List<javagroup.prjApp.entities.IntegrationConfig> configs = integrationConfigRepository.findByGroupId(group.getGroupId());
+        List<IntegrationConfig> configs = integrationConfigRepository.findByGroupId(group.getGroupId());
         String jiraUrl = configs.stream()
                 .filter(c -> "JIRA".equalsIgnoreCase(c.getPlatformType()))
-                .map(javagroup.prjApp.entities.IntegrationConfig::getUrl)
+                .map(IntegrationConfig::getUrl)
                 .findFirst().orElse(null);
         String githubUrl = configs.stream()
                 .filter(c -> "GITHUB".equalsIgnoreCase(c.getPlatformType()))
-                .map(javagroup.prjApp.entities.IntegrationConfig::getRepoUrl)
+                .map(IntegrationConfig::getRepoUrl)
                 .findFirst().orElse(null);
 
         return new GroupDTO(

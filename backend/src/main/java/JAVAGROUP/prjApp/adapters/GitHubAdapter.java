@@ -25,6 +25,7 @@ public class GitHubAdapter implements IGitHubClient {
         this.webClient = webClientBuilder.baseUrl("https://api.github.com").build();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<CommitDTO> getCommits(String repoInput, String accessToken, String sinceDate) {
         String repoPath = parseRepoPath(repoInput);
@@ -47,7 +48,7 @@ public class GitHubAdapter implements IGitHubClient {
             }
             log.info("--------------------------------------------------");
 
-            Object responseBody = webClient.get()
+            List<Map<String, Object>> responseBody = webClient.get()
                     .uri(uri)
                     .header("Authorization", "token " + accessToken)
                     .header("Accept", "application/vnd.github+json")
@@ -58,17 +59,15 @@ public class GitHubAdapter implements IGitHubClient {
                                 return Mono.error(new RuntimeException(
                                         "GitHub API Error: " + (msg != null ? msg : "Unknown error")));
                             }))
-                    .bodyToMono(Object.class)
+                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<List<Map<String, Object>>>() {})
                     .block();
 
-            if (!(responseBody instanceof List)) {
-                log.error("GitHub API returned an object instead of a list: {}", responseBody);
-                throw new RuntimeException(
-                        "GitHub API returned unexpected data format. Please check your repository URL.");
+            if (responseBody == null) {
+                log.error("GitHub API returned null response");
+                throw new RuntimeException("GitHub API returned empty response.");
             }
 
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> rawCommits = (List<Map<String, Object>>) responseBody;
+            List<Map<String, Object>> rawCommits = responseBody;
 
             log.info("GitHub response: found {} commits", rawCommits.size());
 
@@ -76,7 +75,6 @@ public class GitHubAdapter implements IGitHubClient {
 
             for (Map<String, Object> raw : rawCommits) {
                 String sha = (String) raw.get("sha");
-                @SuppressWarnings("unchecked")
                 Map<String, Object> commitInfo = (Map<String, Object>) raw.get("commit");
                 if (commitInfo == null)
                     continue;
@@ -86,7 +84,6 @@ public class GitHubAdapter implements IGitHubClient {
                 String authorName = null;
                 String authorEmail = null;
                 try {
-                    @SuppressWarnings("unchecked")
                     Map<String, Object> author = (Map<String, Object>) commitInfo.get("author");
                     if (author != null) {
                         if (author.get("date") != null) {
@@ -106,7 +103,7 @@ public class GitHubAdapter implements IGitHubClient {
                 dto.setAuthorName(authorName);
                 dto.setAuthorEmail(authorEmail);
                 dto.setExternalAuthor(false); // Will be verified in Service
-                dto.setUnlinkedTask(false);   // Will be verified in Service
+                dto.setUnlinkedTask(false); // Will be verified in Service
                 result.add(dto);
             }
             log.info("Successfully fetched {} commits from GitHub", result.size());

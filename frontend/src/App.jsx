@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { UIProvider } from './contexts/UIContext';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 
@@ -33,13 +34,13 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             
             {/* Admin Routes */}
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/groups" element={<AdminGroups />} />
-            <Route path="/admin/config" element={<AdminConfig />} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/groups" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminGroups /></ProtectedRoute>} />
+            <Route path="/admin/config" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminConfig /></ProtectedRoute>} />
             
             {/* Teacher Routes */}
-            <Route path="/teacher/classes" element={<TeacherClasses />} />
-            <Route path="/teacher/reports" element={<TeacherReports />} />
+            <Route path="/teacher/classes" element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}><TeacherClasses /></ProtectedRoute>} />
+            <Route path="/teacher/reports" element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}><TeacherReports /></ProtectedRoute>} />
             
             {/* Member Routes */}
             <Route path="/member/tasks" element={<MemberTasks />} />

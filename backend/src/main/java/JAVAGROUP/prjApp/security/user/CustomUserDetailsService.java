@@ -1,4 +1,6 @@
 package javagroup.prjApp.security.user;
+ 
+import lombok.RequiredArgsConstructor;
 
 import javagroup.prjApp.entities.User;
 import javagroup.prjApp.repositories.UserRepository;
@@ -9,13 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-
-    public CustomUserDetailsService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     @Override
     @Transactional

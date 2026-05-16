@@ -7,7 +7,10 @@ import java.util.UUID;
 
 public interface ConfigService {
     public List<IntegrationConfig> getConfigsByGroupId(UUID groupId);
+
     public void saveConfig(ConfigDTO dto);
+
     public void removeConfig(UUID id);
+
     public boolean testConnection(ConfigDTO dto);
 }
